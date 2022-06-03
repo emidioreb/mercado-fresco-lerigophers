@@ -70,12 +70,12 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 			return
 		}
 
-		seller, err := s.service.GetOne(parsedId)
+		seller, resp := s.service.GetOne(parsedId)
 
-		if err != nil {
+		if resp.Err != nil {
 			c.JSON(
 				http.StatusNotFound,
-				web.DecodeError(err.Error()),
+				web.DecodeError(resp.Err.Error()),
 			)
 			return
 		}
@@ -90,19 +90,19 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 
 func (s *SellerController) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sellers, err := s.service.GetAll()
+		sellersList, resp := s.service.GetAll()
 
-		if err != nil {
+		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
-				web.DecodeError(err.Error()),
+				resp.Code,
+				web.DecodeError(resp.Err.Error()),
 			)
 			return
 		}
 
 		c.JSON(
 			http.StatusOK,
-			web.NewResponse(sellers),
+			web.NewResponse(sellersList),
 		)
 		return
 	}
@@ -124,13 +124,13 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 			return
 		}
 
-		err = s.service.Delete(parsedId)
-		if err != nil {
-			c.JSON(http.StatusNotFound, web.DecodeError(err.Error()))
+		resp := s.service.Delete(parsedId)
+		if resp.Err != nil {
+			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
 			return
 		}
 
-		c.JSON(http.StatusNoContent, web.NewResponse("seller with id "+id+" was deleted"))
+		c.JSON(resp.Code, web.NewResponse("seller with id "+id+" was deleted"))
 	}
 }
 

@@ -8,9 +8,9 @@ import (
 
 type Service interface {
 	Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
-	GetOne(id int) (Seller, error)
-	GetAll() ([]Seller, error)
-	Delete(id int) error
+	GetOne(id int) (Seller, web.ResponseCode)
+	GetAll() ([]Seller, web.ResponseCode)
+	Delete(id int) web.ResponseCode
 	Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
 	UpdateAddress(id int, address string) (Seller, web.ResponseCode)
 }
@@ -39,31 +39,27 @@ func (s service) Create(cid int, companyName, address, telephone string) (Seller
 	return seller, web.NewCodeResponse(http.StatusCreated, nil)
 }
 
-func (s service) GetOne(id int) (Seller, error) {
+func (s service) GetOne(id int) (Seller, web.ResponseCode) {
 	seller, err := s.repository.GetOne(id)
 
 	if err != nil {
-		return Seller{}, err
+		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return seller, nil
+	return seller, web.NewCodeResponse(http.StatusNotFound, nil)
 }
 
-func (s service) GetAll() ([]Seller, error) {
+func (s service) GetAll() ([]Seller, web.ResponseCode) {
 	sellers, err := s.repository.GetAll()
-
-	if err != nil {
-		return []Seller{}, err
-	}
-	return sellers, nil
+	return sellers, web.NewCodeResponse(http.StatusOK, err)
 }
 
-func (s service) Delete(id int) error {
+func (s service) Delete(id int) web.ResponseCode {
 	err := s.repository.Delete(id)
 
 	if err != nil {
-		return err
+		return web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return nil
+	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
 func (s service) Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
