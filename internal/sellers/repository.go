@@ -11,6 +11,7 @@ type Repository interface {
 	GetAll() ([]Seller, error)
 	Delete(id int) error
 	Update(id, cid int, companyName, address, telephone string) (Seller, error)
+	UpdateAddress(id int, address string) (Seller, error)
 }
 
 type repository struct {
@@ -34,12 +35,14 @@ func (repository) Create(cid int, companyName, address, telephone string) (Selle
 
 	return newSeller, nil
 }
+
 func (repository) GetOne(id int) (Seller, error) {
 	for _, seller := range sellers {
 		if seller.Id == id {
 			return seller, nil
 		}
 	}
+
 	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
 }
 func (repository) GetAll() ([]Seller, error) {
@@ -56,11 +59,21 @@ func (repository) Delete(id int) error {
 }
 func (repository) Update(id, cid int, companyName, address, telephone string) (Seller, error) {
 	updatedSeller := Seller{id, cid, companyName, address, telephone}
-	for _, seller := range sellers {
+	for i, seller := range sellers {
 		if seller.Id == id {
-			seller = updatedSeller
+			sellers[i] = updatedSeller
+			return sellers[i], nil
 		}
-		return updatedSeller, nil
 	}
+	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
+}
+func (repository) UpdateAddress(id int, address string) (Seller, error) {
+	for i, seller := range sellers {
+		if seller.Id == id {
+			sellers[i].Address = address
+			return sellers[i], nil
+		}
+	}
+
 	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
 }
