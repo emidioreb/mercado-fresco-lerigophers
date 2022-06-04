@@ -23,6 +23,7 @@ func NewRepository() Repository {
 
 func (repository) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error) {
 	newWarehouse := Warehouse{
+		Id:                 globalID,
 		WarehouseCode:      warehouseCode,
 		Address:            adress,
 		Telephone:          telephone,
