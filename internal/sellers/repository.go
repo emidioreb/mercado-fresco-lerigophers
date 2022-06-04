@@ -23,11 +23,11 @@ func NewRepository() Repository {
 
 func (repository) Create(cid int, companyName, address, telephone string) (Seller, error) {
 	newSeller := Seller{
+		Id:          globalID,
 		Cid:         cid,
 		CompanyName: companyName,
 		Address:     address,
 		Telephone:   telephone,
-		Id:          globalID,
 	}
 
 	sellers = append(sellers, newSeller)

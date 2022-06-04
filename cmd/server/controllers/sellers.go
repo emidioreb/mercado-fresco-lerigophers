@@ -1,18 +1,19 @@
 package controllers
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strconv"
 )
 
 type SellerController struct {
 	service sellers.Service
 }
 
-type request struct {
+type reqSellers struct {
 	Cid         int    `json:"cid"`
 	CompanyName string `json:"company_name"`
 	Address     string `json:"address"`
@@ -27,7 +28,7 @@ func NewSeller(s sellers.Service) *SellerController {
 
 func (s *SellerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData request
+		var requestData reqSellers
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
@@ -136,7 +137,7 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 
 func (s *SellerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData request
+		var requestData reqSellers
 
 		id := c.Param("id")
 
@@ -183,7 +184,7 @@ func (s *SellerController) UpdateAddress() gin.HandlerFunc {
 			return
 		}
 
-		var requestData request
+		var requestData reqSellers
 		err = c.ShouldBindJSON(&requestData)
 
 		if err != nil {

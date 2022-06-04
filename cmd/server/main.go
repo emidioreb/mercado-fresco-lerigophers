@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +22,20 @@ func main() {
 		sellerGroup.DELETE("/:id", controller.Delete())
 		sellerGroup.PUT("/:id", controller.Update())
 		sellerGroup.PATCH("/:id", controller.UpdateAddress())
+	}
+
+	repoSection := sections.NewRepository()
+	serviceSection := sections.NewService(repoSection)
+	controllerSection := controllers.NewSection(serviceSection)
+
+	sectionGroup := server.Group("/api/v1/sections")
+	{
+		sectionGroup.GET("/:id", controllerSection.GetOne())
+		sectionGroup.GET("/", controllerSection.GetAll())
+		sectionGroup.POST("/", controllerSection.Create())
+		sectionGroup.DELETE("/:id", controllerSection.Delete())
+		sectionGroup.PUT("/:id", controllerSection.Update())
+		//sectionGroup.PATCH("/:id", controllerSection.UpdateAddress())
 	}
 
 	server.Run(":4000")
