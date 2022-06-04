@@ -51,7 +51,7 @@ func main() {
 		sectionGroup.DELETE("/:id", controllerSection.Delete())
 		sectionGroup.PUT("/:id", controllerSection.Update())
 		sectionGroup.PATCH("/:id", controllerSection.UpdateCurrCapacity())
-
-		server.Run(":4000")
 	}
+
+	server.Run(":4000")
 }
