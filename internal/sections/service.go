@@ -13,6 +13,7 @@ type Service interface {
 	GetAll() ([]Section, web.ResponseCode)
 	Delete(id int) web.ResponseCode
 	Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode)
+	UpdateCurrCapacity(id int, currentCapacity int) (Section, web.ResponseCode)
 }
 
 type service struct {
@@ -73,6 +74,16 @@ func (s service) Update(id, sectionNumber, currentTemperature, minimumTemperatur
 	}
 
 	section, err := s.repository.Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId)
+
+	if err != nil {
+		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
+	}
+
+	return section, web.ResponseCode{Code: http.StatusOK, Err: nil}
+}
+
+func (s service) UpdateCurrCapacity(id int, currentCapacity int) (Section, web.ResponseCode) {
+	section, err := s.repository.UpdateCurrCapacity(id, currentCapacity)
 
 	if err != nil {
 		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
