@@ -11,7 +11,6 @@ type Repository interface {
 	GetAll() ([]Section, error)
 	Delete(id int) error
 	Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error)
-	// UpdateAddress(id int, address string) (Section, error)
 }
 
 type repository struct {
@@ -71,14 +70,3 @@ func (repository) Update(id, sectionNumber, currentTemperature, minimumTemperatu
 	}
 	return Section{}, fmt.Errorf("can't find section with id %d", id)
 }
-
-// func (repository) UpdateAddress(id int, address string) (Section, error) {
-// 	for i, section := range sections {
-// 		if section.Id == id {
-// 			sections[i].Address = address
-// 			return sections[i], nil
-// 		}
-// 	}
-
-// 	return Section{}, fmt.Errorf("can't find section with id %d", id)
-// }

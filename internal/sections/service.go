@@ -13,7 +13,6 @@ type Service interface {
 	GetAll() ([]Section, web.ResponseCode)
 	Delete(id int) web.ResponseCode
 	Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode)
-	// UpdateAddress(id int, address string) (Section, web.ResponseCode)
 }
 
 type service struct {
@@ -27,13 +26,13 @@ func NewService(r Repository) Service {
 }
 
 func (s service) Create(sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode) {
-	// allSections, _ := s.GetAll()
+	allSections, _ := s.GetAll()
 
-	// for _, section := range allSections {
-	// 	if section.Cid == cid {
-	// 		return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
-	// 	}
-	// }
+	for _, section := range allSections {
+		if section.SectionNumber == sectionNumber {
+			return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
+		}
+	}
 
 	section, _ := s.repository.Create(sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId)
 
@@ -64,14 +63,14 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode) {
-	// allSections, _ := s.GetAll()
+	allSections, _ := s.GetAll()
 
-	// for _, section := range allSections {
+	for _, section := range allSections {
 
-	// 	if section.Cid == cid && section.Id != id {
-	// 		return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
-	// 	}
-	// }
+		if section.SectionNumber == sectionNumber && section.Id != id {
+			return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
+		}
+	}
 
 	section, err := s.repository.Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId)
 
@@ -81,13 +80,3 @@ func (s service) Update(id, sectionNumber, currentTemperature, minimumTemperatur
 
 	return section, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }
-
-// func (s service) UpdateAddress(id int, address string) (Section, web.ResponseCode) {
-// 	section, err := s.repository.UpdateAddress(id, address)
-
-// 	if err != nil {
-// 		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
-// 	}
-
-// 	return section, web.ResponseCode{Code: http.StatusOK, Err: nil}
-// }

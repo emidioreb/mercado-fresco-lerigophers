@@ -14,7 +14,7 @@ type SectionController struct {
 }
 
 type reqSections struct {
-	SectionNumber      int `json:"section_number"`
+	SectionNumber      int `json:"section_number" binding:"required"`
 	CurrentTemperature int `json:"current_temperature"`
 	MinimumTemperature int `json:"minimum_temperature"`
 	CurrentCapacity    int `json:"current_capacity"`
@@ -188,29 +188,3 @@ func (s *SectionController) Update() gin.HandlerFunc {
 		return
 	}
 }
-
-// func (s *SectionController) UpdateAddress() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		id, err := strconv.Atoi(c.Param("id"))
-// 		if err != nil {
-// 			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-// 			return
-// 		}
-
-// 		var requestData request
-// 		err = c.ShouldBindJSON(&requestData)
-
-// 		if err != nil {
-// 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-// 			return
-// 		}
-
-// 		section, resp := s.service.UpdateAddress(id, requestData.Address)
-
-// 		if resp.Err != nil {
-// 			c.JSON(resp.Code, resp.Err.Error())
-// 		}
-
-// 		c.JSON(resp.Code, web.NewResponse(section))
-// 	}
-// }
