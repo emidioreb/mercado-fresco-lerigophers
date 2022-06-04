@@ -182,7 +182,7 @@ func (s *WarehouseController) UpdateTelephone() gin.HandlerFunc {
 			return
 		}
 
-		var requestData request
+		var requestData reqWarehouses
 		err = c.ShouldBindJSON(&requestData)
 
 		if err != nil {

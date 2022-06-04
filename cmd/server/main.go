@@ -38,7 +38,7 @@ func main() {
 		warehouseGroup.PUT("/:id", controllerWarehouse.Update())
 		warehouseGroup.PATCH("/:id", controllerWarehouse.UpdateTelephone())
 	}
- 
+
 	repoSection := sections.NewRepository()
 	serviceSection := sections.NewService(repoSection)
 	controllerSection := controllers.NewSection(serviceSection)
@@ -51,5 +51,6 @@ func main() {
 		sectionGroup.DELETE("/:id", controllerSection.Delete())
 		sectionGroup.PUT("/:id", controllerSection.Update())
 
-	server.Run(":4000")
+		server.Run(":4000")
+	}
 }
