@@ -4,41 +4,50 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
 )
 
-type SellerController struct {
-	service sellers.Service
+type SectionController struct {
+	service sections.Service
 }
 
-type reqSellers struct {
-	Cid         int    `json:"cid"`
-	CompanyName string `json:"company_name"`
-	Address     string `json:"address"`
-	Telephone   string `json:"telephone"`
+type reqSections struct {
+	SectionNumber      int `json:"section_number" binding:"required"`
+	CurrentTemperature int `json:"current_temperature"`
+	MinimumTemperature int `json:"minimum_temperature"`
+	CurrentCapacity    int `json:"current_capacity"`
+	MininumCapacity    int `json:"minimum_capacity"`
+	MaximumCapacity    int `json:"maximum_capacity"`
+	WarehouseId        int `json:"warehouse_id"`
+	ProductTypeId      int `json:"product_type_id"`
 }
 
-func NewSeller(s sellers.Service) *SellerController {
-	return &SellerController{
+func NewSection(s sections.Service) *SectionController {
+	return &SectionController{
 		service: s,
 	}
 }
 
-func (s *SellerController) Create() gin.HandlerFunc {
+func (s *SectionController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSellers
+		var requestData reqSections
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
 
-		seller, resp := s.service.Create(
-			requestData.Cid,
-			requestData.CompanyName,
-			requestData.Address, requestData.Telephone,
+		section, resp := s.service.Create(
+			requestData.SectionNumber,
+			requestData.CurrentTemperature,
+			requestData.MinimumTemperature,
+			requestData.CurrentCapacity,
+			requestData.MininumCapacity,
+			requestData.MaximumCapacity,
+			requestData.WarehouseId,
+			requestData.ProductTypeId,
 		)
 
 		if resp.Err != nil {
@@ -50,13 +59,13 @@ func (s *SellerController) Create() gin.HandlerFunc {
 
 		c.JSON(
 			resp.Code,
-			web.NewResponse(seller),
+			web.NewResponse(section),
 		)
 		return
 	}
 }
 
-func (s *SellerController) GetOne() gin.HandlerFunc {
+func (s *SectionController) GetOne() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -71,7 +80,7 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 			return
 		}
 
-		seller, resp := s.service.GetOne(parsedId)
+		section, resp := s.service.GetOne(parsedId)
 
 		if resp.Err != nil {
 			c.JSON(
@@ -83,15 +92,15 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			web.NewResponse(seller),
+			web.NewResponse(section),
 		)
 		return
 	}
 }
 
-func (s *SellerController) GetAll() gin.HandlerFunc {
+func (s *SectionController) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sellersList, resp := s.service.GetAll()
+		sectionsList, resp := s.service.GetAll()
 
 		if resp.Err != nil {
 			c.JSON(
@@ -103,13 +112,13 @@ func (s *SellerController) GetAll() gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			web.NewResponse(sellersList),
+			web.NewResponse(sectionsList),
 		)
 		return
 	}
 }
 
-func (s *SellerController) Delete() gin.HandlerFunc {
+func (s *SectionController) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		id := c.Param("id")
@@ -131,13 +140,13 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(resp.Code, web.NewResponse("seller with id "+id+" was deleted"))
+		c.JSON(resp.Code, web.NewResponse("section with id "+id+" was deleted"))
 	}
 }
 
-func (s *SellerController) Update() gin.HandlerFunc {
+func (s *SectionController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSellers
+		var requestData reqSections
 
 		id := c.Param("id")
 
@@ -158,12 +167,16 @@ func (s *SellerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		seller, resp := s.service.Update(
+		section, resp := s.service.Update(
 			parsedId,
-			requestData.Cid,
-			requestData.CompanyName,
-			requestData.Address,
-			requestData.Telephone,
+			requestData.SectionNumber,
+			requestData.CurrentTemperature,
+			requestData.MinimumTemperature,
+			requestData.CurrentCapacity,
+			requestData.MininumCapacity,
+			requestData.MaximumCapacity,
+			requestData.WarehouseId,
+			requestData.ProductTypeId,
 		)
 
 		if resp.Err != nil {
@@ -171,33 +184,7 @@ func (s *SellerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(resp.Code, web.NewResponse(seller))
+		c.JSON(resp.Code, web.NewResponse(section))
 		return
-	}
-}
-
-func (s *SellerController) UpdateAddress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
-
-		var requestData reqSellers
-		err = c.ShouldBindJSON(&requestData)
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
-
-		seller, resp := s.service.UpdateAddress(id, requestData.Address)
-
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
-		}
-
-		c.JSON(resp.Code, web.NewResponse(seller))
 	}
 }
