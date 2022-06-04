@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
@@ -51,7 +52,21 @@ func main() {
 		sectionGroup.DELETE("/:id", controllerSection.Delete())
 		sectionGroup.PUT("/:id", controllerSection.Update())
 		sectionGroup.PATCH("/:id", controllerSection.UpdateCurrCapacity())
-
-		server.Run(":4000")
 	}
+
+	repoProduct := products.NewRepository()
+	serviceProduct := products.NewService(repoProduct)
+	controllerProduct := controllers.NewProduct(serviceProduct)
+
+	productGroup := server.Group("/api/v1/products")
+	{
+		productGroup.GET("/:id", controllerProduct.GetOne())
+		productGroup.GET("/", controllerProduct.GetAll())
+		productGroup.POST("/", controllerProduct.Create())
+		productGroup.DELETE("/:id", controllerProduct.Delete())
+		productGroup.PUT("/:id", controllerProduct.Update())
+		productGroup.PATCH("/:id", controllerProduct.UpdateExpirationRate())
+	}
+
+	server.Run(":4000")
 }
