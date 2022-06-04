@@ -28,11 +28,6 @@ func main() {
 
 	repoWarehouse := warehouses.NewRepository()
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
-	controllerWarehouse := controllers.NewWarehouse(serviceWarehouse)
-
-	warehouseGroup := server.Group("/api/v1/warehouses")
-	{
-		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
 		warehouseGroup.GET("/", controllerWarehouse.GetAll())
 		warehouseGroup.POST("/", controllerWarehouse.Create())
 		warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
@@ -42,6 +37,11 @@ func main() {
 
 	repoSection := sections.NewRepository()
 	serviceSection := sections.NewService(repoSection)
+	controllerWarehouse := controllers.NewWarehouse(serviceWarehouse)
+
+	warehouseGroup := server.Group("/api/v1/warehouses")
+	{
+		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
 	controllerSection := controllers.NewSection(serviceSection)
 
 	sectionGroup := server.Group("/api/v1/sections")
