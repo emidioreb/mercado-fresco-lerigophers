@@ -12,8 +12,7 @@ type Service interface {
 	GetOne(id int) (Section, web.ResponseCode)
 	GetAll() ([]Section, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode)
-	UpdateCurrCapacity(id int, currentCapacity int) (Section, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Section, web.ResponseCode)
 }
 
 type service struct {
@@ -63,27 +62,17 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Section, web.ResponseCode) {
 	allSections, _ := s.GetAll()
+	sectionNumberReqData := int(requestData["section_number"].(float64))
 
 	for _, section := range allSections {
-
-		if section.SectionNumber == sectionNumber && section.Id != id {
+		if section.SectionNumber == sectionNumberReqData && section.Id != id {
 			return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
 		}
 	}
 
-	section, err := s.repository.Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId)
-
-	if err != nil {
-		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
-	}
-
-	return section, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service) UpdateCurrCapacity(id int, currentCapacity int) (Section, web.ResponseCode) {
-	section, err := s.repository.UpdateCurrCapacity(id, currentCapacity)
+	section, err := s.repository.Update(id, requestData)
 
 	if err != nil {
 		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))

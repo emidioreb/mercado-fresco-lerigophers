@@ -7,6 +7,7 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type SectionController struct {
@@ -146,8 +147,8 @@ func (s *SectionController) Delete() gin.HandlerFunc {
 
 func (s *SectionController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSections
-
+		var requestValidatorType reqSections
+		requestData := make(map[string]interface{})
 		id := c.Param("id")
 
 		if id == "" {
@@ -161,23 +162,22 @@ func (s *SectionController) Update() gin.HandlerFunc {
 			return
 		}
 
-		err = c.ShouldBindJSON(&requestData)
-		if err != nil {
+		if err := c.ShouldBindBodyWith(&requestData, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
 			return
 		}
 
-		section, resp := s.service.Update(
-			parsedId,
-			requestData.SectionNumber,
-			requestData.CurrentTemperature,
-			requestData.MinimumTemperature,
-			requestData.CurrentCapacity,
-			requestData.MininumCapacity,
-			requestData.MaximumCapacity,
-			requestData.WarehouseId,
-			requestData.ProductTypeId,
-		)
+		if len(requestData) == 0 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
+			return
+		}
+
+		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
+			return
+		}
+
+		section, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
@@ -186,31 +186,5 @@ func (s *SectionController) Update() gin.HandlerFunc {
 
 		c.JSON(resp.Code, web.NewResponse(section))
 		return
-	}
-}
-
-func (s *SectionController) UpdateCurrCapacity() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
-
-		var requestData reqSections
-		err = c.ShouldBindJSON(&requestData)
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
-
-		section, resp := s.service.UpdateCurrCapacity(id, requestData.CurrentCapacity)
-
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
-		}
-
-		c.JSON(resp.Code, web.NewResponse(section))
 	}
 }

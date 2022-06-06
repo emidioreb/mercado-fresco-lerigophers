@@ -10,7 +10,7 @@ type Repository interface {
 	GetOne(id int) (Section, error)
 	GetAll() ([]Section, error)
 	Delete(id int) error
-	Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error)
+	Update(id int, requestData map[string]interface{}) (Section, error)
 	UpdateCurrCapacity(id int, currentCapacity int) (Section, error)
 }
 
@@ -61,14 +61,40 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find section with id %d", id)
 }
-func (repository) Update(id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error) {
-	updatedSection := Section{id, sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId}
+func (repository) Update(id int, requestData map[string]interface{}) (Section, error) {
+	var s *Section
+
 	for i, section := range sections {
 		if section.Id == id {
-			sections[i] = updatedSection
-			return sections[i], nil
+			s = &sections[i]
+
+			for key, value := range requestData {
+				valueParsed := int(value.(float64))
+
+				switch key {
+				case "section_number":
+					s.SectionNumber = valueParsed
+				case "current_temperature":
+					s.CurrentTemperature = valueParsed
+				case "minimum_temperature":
+					s.MinimumTemperature = valueParsed
+				case "current_capacity":
+					s.CurrentCapacity = valueParsed
+				case "minimum_capacity":
+					s.MininumCapacity = valueParsed
+				case "maximum_capacity":
+					s.MaximumCapacity = valueParsed
+				case "warehouse_id":
+					s.WarehouseId = valueParsed
+				case "product_type_id":
+					s.ProductTypeId = valueParsed
+				}
+			}
+			return *s, nil
 		}
+
 	}
+
 	return Section{}, fmt.Errorf("can't find section with id %d", id)
 }
 
