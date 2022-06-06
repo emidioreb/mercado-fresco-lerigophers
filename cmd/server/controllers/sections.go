@@ -61,7 +61,6 @@ func (s *SectionController) Create() gin.HandlerFunc {
 			resp.Code,
 			web.NewResponse(section),
 		)
-		return
 	}
 }
 
@@ -94,7 +93,6 @@ func (s *SectionController) GetOne() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(section),
 		)
-		return
 	}
 }
 
@@ -114,7 +112,6 @@ func (s *SectionController) GetAll() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(sectionsList),
 		)
-		return
 	}
 }
 
@@ -185,7 +182,6 @@ func (s *SectionController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(section))
-		return
 	}
 }
 

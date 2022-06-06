@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
@@ -11,6 +12,20 @@ import (
 
 func main() {
 	server := gin.Default()
+
+	repoBuyer := buyers.NewRepository()
+	serviceBuyer := buyers.NewService(repoBuyer)
+	controllerBuyer := controllers.NewBuyer(serviceBuyer)
+
+	buyerGroup := server.Group("/api/v1/buyers")
+	{
+		buyerGroup.GET("/:id", controllerBuyer.GetOne())
+		buyerGroup.GET("/", controllerBuyer.GetAll())
+		buyerGroup.POST("/", controllerBuyer.Create())
+		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
+		buyerGroup.PUT("/:id", controllerBuyer.Update())
+		buyerGroup.PATCH("/:id", controllerBuyer.UpdateLastName())
+	}
 
 	repository := sellers.NewRepository()
 	service := sellers.NewService(repository)
