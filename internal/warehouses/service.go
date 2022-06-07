@@ -12,8 +12,7 @@ type Service interface {
 	GetOne(id int) (Warehouse, web.ResponseCode)
 	GetAll() ([]Warehouse, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id int, warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode)
-	UpdateTelephone(id int, telephone string) (Warehouse, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Warehouse, web.ResponseCode)
 }
 
 type service struct {
@@ -63,30 +62,22 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id int, warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
 	allWarehouses, _ := s.GetAll()
+	warehouseCodeReqData := requestData["warehouse_code"]
+
+	if responseCode.Err != nil {
+		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
+	}
 
 	for _, warehouse := range allWarehouses {
-		if warehouse.WarehouseCode == warehouseCode && warehouse.Id != id {
-			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
+		if warehouse.WarehouseCode == warehouseCodeReqData && warehouse.Id != id {
+			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse code already exists"))
 		}
 	}
 
-	warehouse, err := s.repository.Update(id, warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
-
-	if err != nil {
-		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found"))
-	}
-
-	return warehouse, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service) UpdateTelephone(id int, telephone string) (Warehouse, web.ResponseCode) {
-	warehouse, err := s.repository.UpdateTelephone(id, telephone)
-
-	if err != nil {
-		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found"))
-	}
+	warehouse, _ := s.repository.Update(id, requestData)
 
 	return warehouse, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

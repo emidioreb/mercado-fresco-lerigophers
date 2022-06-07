@@ -54,8 +54,7 @@ func main() {
 		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
 		warehouseGroup.POST("/", controllerWarehouse.Create())
 		warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
-		warehouseGroup.PUT("/:id", controllerWarehouse.Update())
-		warehouseGroup.PATCH("/:id", controllerWarehouse.UpdateTelephone())
+		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
 	}
 
 	repoSection := sections.NewRepository()
