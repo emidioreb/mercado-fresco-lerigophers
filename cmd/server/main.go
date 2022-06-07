@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
 
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
@@ -96,8 +96,7 @@ func main() {
 		employeeGroup.GET("/", controllerEmployee.GetAll())
 		employeeGroup.POST("/", controllerEmployee.Create())
 		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
-		employeeGroup.PUT("/:id", controllerEmployee.Update())
-		employeeGroup.PATCH("/:id", controllerEmployee.UpdateFirstName())
+		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
 	server.Run(":4000")

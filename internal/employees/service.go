@@ -2,6 +2,7 @@ package employees
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -12,8 +13,7 @@ type Service interface {
 	GetOne(id int) (Employee, web.ResponseCode)
 	GetAll() ([]Employee, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id int, cardNumber, firstName, lastName string, warehouseId int) (Employee, web.ResponseCode)
-	UpdateFirstName(id int, firstName string) (Employee, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Employee, web.ResponseCode)
 }
 
 type service struct {
@@ -63,30 +63,27 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id int, cardNumber, firstName, lastName string, warehouseId int) (Employee, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Employee, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
 	allEmployees, _ := s.GetAll()
+	var cardNumberReqData string
+	fmt.Println(cardNumberReqData)
+	if requestData["card_number_id"] != nil {
+		cardNumberReqData = requestData["card_number_id"].(string)
+	}
+	fmt.Println(cardNumberReqData)
+
+	if responseCode.Err != nil {
+		return Employee{}, web.NewCodeResponse(http.StatusNotFound, errors.New("employee not found"))
+	}
 
 	for _, employee := range allEmployees {
-		if employee.CardNumberId == cardNumber && employee.Id != id {
+		if employee.CardNumberId == cardNumberReqData && employee.Id != id {
 			return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("card_number_id already exists"))
 		}
 	}
 
-	employee, err := s.repository.Update(id, cardNumber, firstName, lastName, warehouseId)
-
-	if err != nil {
-		return Employee{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Employee not found"))
-	}
-
-	return employee, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service) UpdateFirstName(id int, firstName string) (Employee, web.ResponseCode) {
-	employee, err := s.repository.UpdateFirstName(id, firstName)
-
-	if err != nil {
-		return Employee{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Employee not found"))
-	}
+	employee, _ := s.repository.Update(id, requestData)
 
 	return employee, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

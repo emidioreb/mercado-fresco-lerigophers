@@ -7,6 +7,7 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type EmployeeController struct {
@@ -133,7 +134,8 @@ func (s *EmployeeController) Delete() gin.HandlerFunc {
 
 func (s *EmployeeController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqEmployee
+		var requestValidatorType reqEmployee
+		requestData := make(map[string]interface{})
 
 		id := c.Param("id")
 
@@ -148,49 +150,26 @@ func (s *EmployeeController) Update() gin.HandlerFunc {
 			return
 		}
 
-		err = c.ShouldBindJSON(&requestData)
-		if err != nil {
+		if err := c.ShouldBindBodyWith(&requestData, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
 			return
 		}
 
-		employee, resp := s.service.Update(
-			parsedId,
-			requestData.CardNumberId,
-			requestData.FirstName,
-			requestData.LastName,
-			requestData.WarehouseId,
-		)
+		if len(requestData) == 0 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
+			return
+		}
+
+		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
+			return
+		}
+
+		employee, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
 			return
-		}
-
-		c.JSON(resp.Code, web.NewResponse(employee))
-	}
-}
-
-func (s *EmployeeController) UpdateFirstName() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
-
-		var requestData reqEmployee
-		err = c.ShouldBindJSON(&requestData)
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
-
-		employee, resp := s.service.UpdateFirstName(id, requestData.FirstName)
-
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
 		}
 
 		c.JSON(resp.Code, web.NewResponse(employee))

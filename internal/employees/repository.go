@@ -10,8 +10,7 @@ type Repository interface {
 	GetOne(id int) (Employee, error)
 	GetAll() ([]Employee, error)
 	Delete(id int) error
-	Update(id int, cardNumber, firstName, lastName string, warehouseId int) (Employee, error)
-	UpdateFirstName(id int, firstName string) (Employee, error)
+	Update(id int, requestData map[string]interface{}) (Employee, error)
 }
 
 type repository struct {
@@ -57,23 +56,29 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find Employee with id %d", id)
 }
-func (repository) Update(id int, cardNumber, firstName, lastName string, warehouseId int) (Employee, error) {
-	updatedEmployee := Employee{id, cardNumber, firstName, lastName, warehouseId}
-	for i, Employee := range Employees {
-		if Employee.Id == id {
-			Employees[i] = updatedEmployee
-			return Employees[i], nil
-		}
-	}
-	return Employee{}, fmt.Errorf("can't find Employee with id %d", id)
-}
-func (repository) UpdateFirstName(id int, firstName string) (Employee, error) {
-	for i, Employee := range Employees {
-		if Employee.Id == id {
-			Employees[i].FirstName = firstName
-			return Employees[i], nil
-		}
-	}
+func (repository) Update(id int, requestData map[string]interface{}) (Employee, error) {
+	var e *Employee
 
+	for i, employee := range Employees {
+		if employee.Id == id {
+			e = &Employees[i]
+
+			for key, value := range requestData {
+
+				switch key {
+				case "card_number_id":
+					e.CardNumberId = value.(string)
+				case "first_name":
+					e.FirstName = value.(string)
+				case "last_name":
+					e.LastName = value.(string)
+				case "warehouse_id":
+					e.WarehouseId = int(value.(float64))
+				}
+			}
+			return *e, nil
+		}
+
+	}
 	return Employee{}, fmt.Errorf("can't find Employee with id %d", id)
 }
