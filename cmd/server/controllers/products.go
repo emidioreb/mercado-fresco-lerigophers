@@ -3,7 +3,6 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
@@ -57,7 +56,6 @@ func (s *ProductController) Create() gin.HandlerFunc {
 			resp.Code,
 			web.NewResponse(product),
 		)
-		return
 	}
 }
 
@@ -90,7 +88,6 @@ func (s *ProductController) GetOne() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(product),
 		)
-		return
 	}
 }
 
@@ -110,7 +107,6 @@ func (s *ProductController) GetAll() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(ProductsList),
 		)
-		return
 	}
 }
 
@@ -183,7 +179,6 @@ func (s *ProductController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(product))
-		return
 	}
 }
 
