@@ -10,8 +10,7 @@ type Repository interface {
 	GetOne(id int) (Warehouse, error)
 	GetAll() ([]Warehouse, error)
 	Delete(id int) error
-	Update(id int, warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error)
-	UpdateTelephone(id int, telephone string) (Warehouse, error)
+	Update(id int, requestData map[string]interface{}) (Warehouse, error)
 }
 
 type repository struct {
@@ -58,23 +57,31 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find warehouse with id %d", id)
 }
-func (repository) Update(id int, warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error) {
-	updatedWarehouse := Warehouse{id, warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity}
-	for i, warehouse := range warehouses {
-		if warehouse.Id == id {
-			warehouses[i] = updatedWarehouse
-			return warehouses[i], nil
-		}
-	}
-	return Warehouse{}, fmt.Errorf("can't find warehouse with id %d", id)
-}
-func (repository) UpdateTelephone(id int, telephone string) (Warehouse, error) {
-	for i, warehouse := range warehouses {
-		if warehouse.Id == id {
-			warehouses[i].Telephone = telephone
-			return warehouses[i], nil
-		}
-	}
 
+func (repository) Update(id int, requestData map[string]interface{}) (Warehouse, error) {
+	var w *Warehouse
+
+	for i, warehouse := range warehouses {
+		if warehouse.Id == id {
+			w = &warehouses[i]
+
+			for key, value := range requestData {
+				switch key {
+				case "warehouse_code":
+					w.WarehouseCode = fmt.Sprintf("%v", value)
+				case "adress":
+					w.Address = fmt.Sprintf("%v", value)
+				case "telephone":
+					w.Telephone = fmt.Sprintf("%v", value)
+				case "minimum_capacity":
+					w.MinimumCapacity = value.(int)
+				case "maximum_temperature":
+					w.MaximumTemperature = value.(int)
+				}
+			}
+			return *w, nil
+		}
+
+	}
 	return Warehouse{}, fmt.Errorf("can't find warehouse with id %d", id)
 }
