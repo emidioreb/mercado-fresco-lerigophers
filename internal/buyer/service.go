@@ -13,8 +13,7 @@ type Service interface {
 	GetOne(id int) (Buyer, web.ResponseCode)
 	GetAll() ([]Buyer, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id int, cardNumberId string, firstName, lastName string) (Buyer, web.ResponseCode)
-	UpdateLastName(id int, lastName string) (Buyer, web.ResponseCode)
+	Update(id int, requestData map[string]string) (Buyer, web.ResponseCode)
 }
 
 type service struct {
@@ -65,30 +64,22 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id int, cardNumberId string, firstName, lastName string) (Buyer, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]string) (Buyer, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
 	allBuyers, _ := s.GetAll()
+	buyerNumberReqData := requestData["card_number_id"]
+
+	if responseCode.Err != nil {
+		return Buyer{}, web.NewCodeResponse(http.StatusNotFound, errors.New("buyer not found"))
+	}
 
 	for _, buyer := range allBuyers {
-		if buyer.CardNumberId == cardNumberId && buyer.Id != id {
-			return Buyer{}, web.NewCodeResponse(http.StatusConflict, errors.New("CardNumberId already exists"))
+		if buyer.CardNumberId == buyerNumberReqData && buyer.Id != id {
+			return Buyer{}, web.NewCodeResponse(http.StatusConflict, errors.New("buyer number already exists"))
 		}
 	}
 
-	buyer, err := s.repository.Update(id, cardNumberId, firstName, lastName)
-
-	if err != nil {
-		return Buyer{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Buyer not found"))
-	}
-
-	return buyer, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service)  UpdateLastName(id int, lastName string) (Buyer, web.ResponseCode) {
-	buyer, err := s.repository. UpdateLastName(id , lastName)
-
-	if err != nil {
-		return Buyer{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Buyer not found"))
-	}
+	buyer, _ := s.repository.Update(id, requestData)
 
 	return buyer, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

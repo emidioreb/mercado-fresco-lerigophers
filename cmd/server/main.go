@@ -26,8 +26,7 @@ func main() {
 		buyerGroup.GET("/", controllerBuyer.GetAll())
 		buyerGroup.POST("/", controllerBuyer.Create())
 		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
-		buyerGroup.PUT("/:id", controllerBuyer.Update())
-		buyerGroup.PATCH("/:id", controllerBuyer.UpdateLastName())
+		buyerGroup.PATCH("/:id", controllerBuyer.Update())
 	}
 
 	repository := sellers.NewRepository()
