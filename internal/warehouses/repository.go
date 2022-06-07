@@ -74,9 +74,9 @@ func (repository) Update(id int, requestData map[string]interface{}) (Warehouse,
 				case "telephone":
 					w.Telephone = fmt.Sprintf("%v", value)
 				case "minimum_capacity":
-					w.MinimumCapacity = value.(int)
+					w.MinimumCapacity = int(value.(float64))
 				case "maximum_temperature":
-					w.MaximumTemperature = value.(int)
+					w.MaximumTemperature = int(value.(float64))
 				}
 			}
 			return *w, nil

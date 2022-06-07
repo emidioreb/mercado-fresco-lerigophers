@@ -65,7 +65,7 @@ func (s service) Delete(id int) web.ResponseCode {
 func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
 	allWarehouses, _ := s.GetAll()
-	warehouseCodeReqData := requestData["section_number"]
+	warehouseCodeReqData := requestData["warehouse_code"]
 
 	if responseCode.Err != nil {
 		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
@@ -73,7 +73,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, 
 
 	for _, warehouse := range allWarehouses {
 		if warehouse.WarehouseCode == warehouseCodeReqData && warehouse.Id != id {
-			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
+			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse code already exists"))
 		}
 	}
 
