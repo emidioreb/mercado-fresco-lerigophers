@@ -11,7 +11,6 @@ type Repository interface {
 	GetAll() ([]Section, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Section, error)
-	UpdateCurrCapacity(id int, currentCapacity int) (Section, error)
 }
 
 type repository struct {
@@ -93,17 +92,6 @@ func (repository) Update(id int, requestData map[string]interface{}) (Section, e
 			return *s, nil
 		}
 
-	}
-
-	return Section{}, fmt.Errorf("can't find section with id %d", id)
-}
-
-func (repository) UpdateCurrCapacity(id int, currentCapacity int) (Section, error) {
-	for i, section := range sections {
-		if section.Id == id {
-			sections[i].CurrentCapacity = currentCapacity
-			return sections[i], nil
-		}
 	}
 
 	return Section{}, fmt.Errorf("can't find section with id %d", id)
