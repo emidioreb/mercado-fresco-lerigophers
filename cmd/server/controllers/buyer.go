@@ -3,9 +3,11 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type BuyerController struct {
@@ -129,7 +131,8 @@ func (s *BuyerController) Delete() gin.HandlerFunc {
 
 func (s *BuyerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqBuyers
+		var requestValidatorType reqBuyers
+		requestData := make(map[string]string)
 
 		id := c.Param("id")
 
@@ -144,18 +147,22 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		err = c.ShouldBindJSON(&requestData)
-		if err != nil {
+		if err := c.ShouldBindBodyWith(&requestData, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
 			return
 		}
 
-		buyer, resp := s.service.Update(
-			parsedId,
-			requestData.CardNumberId,
-			requestData.FirstName,
-			requestData.LastName,
-		)
+		if len(requestData) == 0 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
+			return
+		}
+
+		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
+			return
+		}
+
+		buyer, resp := s.service.Update(parsedId,requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
@@ -163,31 +170,73 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(buyer))
+		return
 	}
 }
 
-func (s *BuyerController) UpdateLastName() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
 
-		var requestData reqBuyers
-		err = c.ShouldBindJSON(&requestData)
 
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
+// func (s *BuyerController) Update() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		var requestData reqBuyers
 
-		buyer, resp := s.service.UpdateLastName(id, requestData.LastName)
+// 		id := c.Param("id")
 
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
-		}
+// 		if id == "" {
+// 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
+// 			return
+// 		}
 
-		c.JSON(resp.Code, web.NewResponse(buyer))
-	}
-}
+// 		parsedId, err := strconv.Atoi(id)
+// 		if err != nil {
+// 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+// 			return
+// 		}
+
+// 		err = c.ShouldBindJSON(&requestData)
+// 		if err != nil {
+// 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
+// 			return
+// 		}
+
+// 		buyer, resp := s.service.Update(
+// 			parsedId,
+// 			requestData.CardNumberId,
+// 			requestData.FirstName,
+// 			requestData.LastName,
+// 		)
+
+// 		if resp.Err != nil {
+// 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
+// 			return
+// 		}
+
+// 		c.JSON(resp.Code, web.NewResponse(buyer))
+// 	}
+// }
+
+// func (s *BuyerController) UpdateLastName() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		id, err := strconv.Atoi(c.Param("id"))
+// 		if err != nil {
+// 			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
+// 			return
+// 		}
+
+// 		var requestData reqBuyers
+// 		err = c.ShouldBindJSON(&requestData)
+
+// 		if err != nil {
+// 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
+// 			return
+// 		}
+
+// 		buyer, resp := s.service.UpdateLastName(id, requestData.LastName)
+
+// 		if resp.Err != nil {
+// 			c.JSON(resp.Code, resp.Err.Error())
+// 		}
+
+// 		c.JSON(resp.Code, web.NewResponse(buyer))
+// 	}
+// }
