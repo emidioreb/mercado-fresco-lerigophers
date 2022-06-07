@@ -12,7 +12,6 @@ type Repository interface {
 	GetAll() ([]Buyer, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]string) (Buyer, error)
-	// UpdateLastName(id int, lastName string) (Buyer, error)
 }
 
 type repository struct {
