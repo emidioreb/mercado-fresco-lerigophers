@@ -40,8 +40,8 @@ func main() {
 		sellerGroup.GET("/", controller.GetAll())
 		sellerGroup.POST("/", controller.Create())
 		sellerGroup.DELETE("/:id", controller.Delete())
-		sellerGroup.PUT("/:id", controller.Update())
-		sellerGroup.PATCH("/:id", controller.UpdateAddress())
+		sellerGroup.PATCH("/:id", controller.Update())
+		//sellerGroup.PUT("/:id", controller.Update())
 	}
 
 	repoWarehouse := warehouses.NewRepository()

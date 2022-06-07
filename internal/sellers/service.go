@@ -11,7 +11,7 @@ type Service interface {
 	GetOne(id int) (Seller, web.ResponseCode)
 	GetAll() ([]Seller, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode)
 	UpdateAddress(id int, address string) (Seller, web.ResponseCode)
 }
 
@@ -62,17 +62,17 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
 	allSellers, _ := s.GetAll()
+	currentCid := int(requestData["cid"].(float64))
 
 	for _, seller := range allSellers {
-
-		if seller.Cid == cid && seller.Id != id {
+		if seller.Cid == currentCid && seller.Id != id {
 			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 		}
 	}
 
-	seller, err := s.repository.Update(id, cid, companyName, address, telephone)
+	seller, err := s.repository.Update(id, requestData)
 
 	if err != nil {
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
