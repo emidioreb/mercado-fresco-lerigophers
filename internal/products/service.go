@@ -13,9 +13,7 @@ type Service interface {
 	GetOne(id int) (Product, web.ResponseCode)
 	GetAll() ([]Product, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id int, productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate float64, productTypeId int) (Product, web.ResponseCode)
-	UpdateExpirationRate(id int, expiration_rate float64) (Product, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode)
 }
 
 type service struct {
@@ -67,30 +65,22 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id int, productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate float64, productTypeId int) (Product, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
 	allProducts, _ := s.GetAll()
+	productNumberReqData := requestData["product_code"]
+
+	if responseCode.Err != nil {
+		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("product not found"))
+	}
 
 	for _, product := range allProducts {
-		if product.ProductCode == productCode && product.Id != id {
+		if product.ProductCode == productNumberReqData && product.Id != id {
 			return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("Product_code already exists"))
 		}
 	}
 
-	product, err := s.repository.Update(id, productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId)
-
-	if err != nil {
-		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Product not found"))
-	}
-
-	return product, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service) UpdateExpirationRate(id int, expirationRate float64) (Product, web.ResponseCode) {
-	product, err := s.repository.UpdateExpirationRate(id, expirationRate)
-
-	if err != nil {
-		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("Product not found"))
-	}
+	product, _ := s.repository.Update(id, requestData)
 
 	return product, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

@@ -11,9 +11,7 @@ type Repository interface {
 	GetOne(id int) (Product, error)
 	GetAll() ([]Product, error)
 	Delete(id int) error
-	Update(id int, productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate float64, productTypeId int) (Product, error)
-	UpdateExpirationRate(id int, expirationRate float64) (Product, error)
+	Update(id int, requestData map[string]interface{}) (Product, error)
 }
 
 type repository struct {
@@ -66,25 +64,42 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find Product with id %d", id)
 }
-func (repository) Update(id int, productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-	freezingRate float64, productTypeId int) (Product, error) {
-	updatedProduct := Product{id, productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate, productTypeId}
-	for i, Product := range Products {
-		if Product.Id == id {
-			Products[i] = updatedProduct
-			return Products[i], nil
-		}
-	}
-	return Product{}, fmt.Errorf("can't find Product with id %d", id)
-}
-func (repository) UpdateExpirationRate(id int, expirationRate float64) (Product, error) {
-	for i, Product := range Products {
-		if Product.Id == id {
-			Products[i].ExpirationRate = expirationRate
-			return Products[i], nil
+func (repository) Update(id int, requestData map[string]interface{}) (Product, error) {
+	var p *Product
+
+	for i, product := range Products {
+		if product.Id == id {
+			p = &Products[i]
+
+			for key, value := range requestData {
+
+				switch key {
+				case "product_code":
+					p.ProductCode = fmt.Sprintf("%v", value)
+				case "description":
+					p.Description = fmt.Sprintf("%v", value)
+				case "width":
+					p.Width = value.(float64)
+				case "heigth":
+					p.Height = value.(float64)
+				case "length":
+					p.Length = value.(float64)
+				case "net_weight":
+					p.NetWeight = value.(float64)
+				case "expiration_rate":
+					p.ExpirationRate = value.(float64)
+				case "recommended_freezing_temperature":
+					p.RecommendedFreezingTemperature = value.(float64)
+				case "freezing_rate":
+					p.FreezingRate = value.(float64)
+				case "product_type_id":
+					p.ProductTypeId = value.(int)
+				}
+			}
+			return *p, nil
 		}
 	}
 
-	return Product{}, fmt.Errorf("can't find Product with id %d", id)
+	return Product{}, fmt.Errorf("can't find product with id %d", id)
+
 }
