@@ -68,7 +68,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, 
 	warehouseCodeReqData := requestData["warehouse_code"]
 
 	if responseCode.Err != nil {
-		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
+		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found"))
 	}
 
 	for _, warehouse := range allWarehouses {
