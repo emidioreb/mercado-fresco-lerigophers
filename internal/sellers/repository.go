@@ -11,7 +11,6 @@ type Repository interface {
 	GetAll() ([]Seller, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Seller, error)
-	UpdateAddress(id int, address string) (Seller, error)
 }
 
 type repository struct {
@@ -80,15 +79,5 @@ func (repository) Update(id int, requestData map[string]interface{}) (Seller, er
 			return *s, nil
 		}
 	}
-	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
-}
-func (repository) UpdateAddress(id int, address string) (Seller, error) {
-	for i, seller := range sellers {
-		if seller.Id == id {
-			sellers[i].Address = address
-			return sellers[i], nil
-		}
-	}
-
 	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
 }

@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin/binding"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin/binding"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -177,31 +178,5 @@ func (s *SellerController) Update() gin.HandlerFunc {
 
 		c.JSON(resp.Code, web.NewResponse(seller))
 		return
-	}
-}
-
-func (s *SellerController) UpdateAddress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
-
-		var requestData reqSellers
-		err = c.ShouldBindJSON(&requestData)
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
-
-		seller, resp := s.service.UpdateAddress(id, requestData.Address)
-
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
-		}
-
-		c.JSON(resp.Code, web.NewResponse(seller))
 	}
 }
