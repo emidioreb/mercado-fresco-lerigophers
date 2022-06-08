@@ -36,6 +36,10 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
+		if requestData.WarehouseCode == "" {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("warehouse code can't be empty"))
+			return
+		}
 
 		warehouse, resp := s.service.Create(requestData.WarehouseCode, requestData.Address, requestData.Telephone, requestData.MinimumCapacity, requestData.MaximumTemperature)
 
@@ -46,10 +50,7 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(
-			resp.Code,
-			web.NewResponse(warehouse),
-		)
+		c.JSON(resp.Code, web.NewResponse(warehouse))
 	}
 }
 
@@ -78,10 +79,7 @@ func (s *WarehouseController) GetOne() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			web.NewResponse(warehouse),
-		)
+		c.JSON(http.StatusOK, web.NewResponse(warehouse))
 	}
 }
 
@@ -152,6 +150,11 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 			return
 		}
 
+		if requestData["warehouse_code"] == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("warehouse code can't be empty"))
+			return
+		}
+
 		if len(requestData) == 0 {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
 			return
@@ -170,6 +173,5 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(warehouse))
-		return
 	}
 }
