@@ -64,19 +64,22 @@ func (s service) Delete(id int) web.ResponseCode {
 
 func (s service) Update(id int, requestData map[string]interface{}) (Section, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
-	allSections, _ := s.GetAll()
-	sectionNumberReqData := int(requestData["section_number"].(float64))
 
 	if responseCode.Err != nil {
 		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
 	}
 
-	for _, section := range allSections {
-		if section.SectionNumber == sectionNumberReqData && section.Id != id {
-			return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
-		}
-	}
+	allSections, _ := s.GetAll()
+	var sectionNumberReqData = requestData["section_number"]
 
+	if sectionNumberReqData != nil {
+		for _, section := range allSections {
+			if float64(section.SectionNumber) == sectionNumberReqData && section.Id != id {
+				return Section{}, web.NewCodeResponse(http.StatusConflict, errors.New("section number already exists"))
+			}
+		}
+
+	}
 	section, _ := s.repository.Update(id, requestData)
 
 	return section, web.ResponseCode{Code: http.StatusOK, Err: nil}
