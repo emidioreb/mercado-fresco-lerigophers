@@ -11,8 +11,7 @@ type Repository interface {
 	GetOne(id int) (Buyer, error)
 	GetAll() ([]Buyer, error)
 	Delete(id int) error
-	Update(id int, requestData map[string]string) (Buyer, error)
-	// UpdateLastName(id int, lastName string) (Buyer, error)
+	Update(id int, requestData map[string]interface{}) (Buyer, error)
 }
 
 type repository struct {
@@ -57,7 +56,7 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find Buyer with id %d", id)
 }
-func (repository) Update(id int, requestData map[string]string) (Buyer, error) {
+func (repository) Update(id int, requestData map[string]interface{}) (Buyer, error) {
 	var s *Buyer
 
 	for i, buyer := range Buyers {
@@ -65,15 +64,15 @@ func (repository) Update(id int, requestData map[string]string) (Buyer, error) {
 			s = &Buyers[i]
 
 			for key, value := range requestData {
-				valueParsed := value
+				valueString := value.(string)
 
 				switch key {
 				case "card_number_id":
-					s.CardNumberId = valueParsed
+					s.CardNumberId = valueString
 				case "first_name":
-					s.FirstName = valueParsed
+					s.FirstName = valueString
 				case "last_name":
-					s.LastName = valueParsed
+					s.LastName = valueString
 				}
 			}
 			return *s, nil
@@ -82,14 +81,4 @@ func (repository) Update(id int, requestData map[string]string) (Buyer, error) {
 	}
 
 	return Buyer{}, fmt.Errorf("can't find buyer with id %d", id)
-}
-func (repository) UpdateLastName(id int, lastName string) (Buyer, error) {
-	for i, Buyer := range Buyers {
-		if Buyer.Id == id {
-			Buyers[i].LastName= lastName
-			return Buyers[i], nil
-		}
-	}
-
-	return Buyer{}, fmt.Errorf("can't find Buyer with id %d", id)
 }

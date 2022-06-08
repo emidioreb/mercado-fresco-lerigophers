@@ -132,7 +132,7 @@ func (s *BuyerController) Delete() gin.HandlerFunc {
 func (s *BuyerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestValidatorType reqBuyers
-		requestData := make(map[string]string)
+		requestData := make(map[string]interface{})
 
 		id := c.Param("id")
 
@@ -170,73 +170,5 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(buyer))
-		return
 	}
 }
-
-
-
-// func (s *BuyerController) Update() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		var requestData reqBuyers
-
-// 		id := c.Param("id")
-
-// 		if id == "" {
-// 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-// 			return
-// 		}
-
-// 		parsedId, err := strconv.Atoi(id)
-// 		if err != nil {
-// 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
-// 			return
-// 		}
-
-// 		err = c.ShouldBindJSON(&requestData)
-// 		if err != nil {
-// 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-// 			return
-// 		}
-
-// 		buyer, resp := s.service.Update(
-// 			parsedId,
-// 			requestData.CardNumberId,
-// 			requestData.FirstName,
-// 			requestData.LastName,
-// 		)
-
-// 		if resp.Err != nil {
-// 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
-// 			return
-// 		}
-
-// 		c.JSON(resp.Code, web.NewResponse(buyer))
-// 	}
-// }
-
-// func (s *BuyerController) UpdateLastName() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		id, err := strconv.Atoi(c.Param("id"))
-// 		if err != nil {
-// 			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-// 			return
-// 		}
-
-// 		var requestData reqBuyers
-// 		err = c.ShouldBindJSON(&requestData)
-
-// 		if err != nil {
-// 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-// 			return
-// 		}
-
-// 		buyer, resp := s.service.UpdateLastName(id, requestData.LastName)
-
-// 		if resp.Err != nil {
-// 			c.JSON(resp.Code, resp.Err.Error())
-// 		}
-
-// 		c.JSON(resp.Code, web.NewResponse(buyer))
-// 	}
-// }
