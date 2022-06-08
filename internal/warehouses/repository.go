@@ -68,11 +68,11 @@ func (repository) Update(id int, requestData map[string]interface{}) (Warehouse,
 			for key, value := range requestData {
 				switch key {
 				case "warehouse_code":
-					w.WarehouseCode = fmt.Sprintf("%v", value)
+					w.WarehouseCode = value.(string)
 				case "adress":
-					w.Address = fmt.Sprintf("%v", value)
+					w.Address = value.(string)
 				case "telephone":
-					w.Telephone = fmt.Sprintf("%v", value)
+					w.Telephone = value.(string)
 				case "minimum_capacity":
 					w.MinimumCapacity = int(value.(float64))
 				case "maximum_temperature":
