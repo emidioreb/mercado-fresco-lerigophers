@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
 
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
@@ -41,7 +41,6 @@ func main() {
 		sellerGroup.POST("/", controller.Create())
 		sellerGroup.DELETE("/:id", controller.Delete())
 		sellerGroup.PATCH("/:id", controller.Update())
-		//sellerGroup.PUT("/:id", controller.Update())
 	}
 
 	repoWarehouse := warehouses.NewRepository()
