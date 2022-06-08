@@ -64,15 +64,13 @@ func (repository) Update(id int, requestData map[string]interface{}) (Buyer, err
 			s = &Buyers[i]
 
 			for key, value := range requestData {
-				valueString := value.(string)
-
 				switch key {
 				case "card_number_id":
-					s.CardNumberId = valueString
+					s.CardNumberId = value.(string)
 				case "first_name":
-					s.FirstName = valueString
+					s.FirstName = value.(string)
 				case "last_name":
-					s.LastName = valueString
+					s.LastName = value.(string)
 				}
 			}
 			return *s, nil
