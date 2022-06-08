@@ -75,9 +75,9 @@ func (repository) Update(id int, requestData map[string]interface{}) (Product, e
 
 				switch key {
 				case "product_code":
-					p.ProductCode = fmt.Sprintf("%v", value)
+					p.ProductCode = value.(string)
 				case "description":
-					p.Description = fmt.Sprintf("%v", value)
+					p.Description = value.(string)
 				case "width":
 					p.Width = value.(float64)
 				case "heigth":
@@ -93,7 +93,7 @@ func (repository) Update(id int, requestData map[string]interface{}) (Product, e
 				case "freezing_rate":
 					p.FreezingRate = value.(float64)
 				case "product_type_id":
-					p.ProductTypeId = value.(int)
+					p.ProductTypeId = int(value.(float64))
 				}
 			}
 			return *p, nil

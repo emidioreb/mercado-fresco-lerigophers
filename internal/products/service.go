@@ -68,14 +68,14 @@ func (s service) Delete(id int) web.ResponseCode {
 func (s service) Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
 	allProducts, _ := s.GetAll()
-	productNumberReqData := requestData["product_code"]
+	productCodeReqData := requestData["product_code"]
 
 	if responseCode.Err != nil {
 		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("product not found"))
 	}
 
 	for _, product := range allProducts {
-		if product.ProductCode == productNumberReqData && product.Id != id {
+		if product.ProductCode == productCodeReqData && product.Id != id {
 			return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("Product_code already exists"))
 		}
 	}
