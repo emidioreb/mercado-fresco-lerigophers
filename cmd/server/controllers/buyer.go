@@ -132,7 +132,7 @@ func (s *BuyerController) Delete() gin.HandlerFunc {
 func (s *BuyerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestValidatorType reqBuyers
-		requestData := make(map[string]string)
+		requestData := make(map[string]interface{})
 
 		id := c.Param("id")
 

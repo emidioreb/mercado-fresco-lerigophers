@@ -13,7 +13,7 @@ type Service interface {
 	GetOne(id int) (Buyer, web.ResponseCode)
 	GetAll() ([]Buyer, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id int, requestData map[string]string) (Buyer, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Buyer, web.ResponseCode)
 }
 
 type service struct {
@@ -64,7 +64,7 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id int, requestData map[string]string) (Buyer, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Buyer, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
 	allBuyers, _ := s.GetAll()
 	buyerNumberReqData := requestData["card_number_id"]
