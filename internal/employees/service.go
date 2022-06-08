@@ -2,7 +2,6 @@ package employees
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -66,12 +65,8 @@ func (s service) Delete(id int) web.ResponseCode {
 func (s service) Update(id int, requestData map[string]interface{}) (Employee, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
 	allEmployees, _ := s.GetAll()
-	var cardNumberReqData string
-	fmt.Println(cardNumberReqData)
-	if requestData["card_number_id"] != nil {
-		cardNumberReqData = requestData["card_number_id"].(string)
-	}
-	fmt.Println(cardNumberReqData)
+
+	cardNumberReqData := requestData["card_number_id"]
 
 	if responseCode.Err != nil {
 		return Employee{}, web.NewCodeResponse(http.StatusNotFound, errors.New("employee not found"))
