@@ -69,11 +69,13 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 	}
 
 	allSellers, _ := s.GetAll()
-	currentCid := int(requestData["cid"].(float64))
+	currentCid := requestData["cid"]
 
-	for _, seller := range allSellers {
-		if seller.Cid == currentCid && seller.Id != id {
-			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
+	if currentCid != nil {
+		for _, seller := range allSellers {
+			if float64(seller.Cid) == currentCid && seller.Id != id {
+				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
+			}
 		}
 	}
 
