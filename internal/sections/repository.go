@@ -68,25 +68,23 @@ func (repository) Update(id int, requestData map[string]interface{}) (Section, e
 			s = &sections[i]
 
 			for key, value := range requestData {
-				valueParsed := int(value.(float64))
-
 				switch key {
 				case "section_number":
-					s.SectionNumber = valueParsed
+					s.SectionNumber = int(value.(float64))
 				case "current_temperature":
-					s.CurrentTemperature = valueParsed
+					s.CurrentTemperature = int(value.(float64))
 				case "minimum_temperature":
-					s.MinimumTemperature = valueParsed
+					s.MinimumTemperature = int(value.(float64))
 				case "current_capacity":
-					s.CurrentCapacity = valueParsed
+					s.CurrentCapacity = int(value.(float64))
 				case "minimum_capacity":
-					s.MininumCapacity = valueParsed
+					s.MininumCapacity = int(value.(float64))
 				case "maximum_capacity":
-					s.MaximumCapacity = valueParsed
+					s.MaximumCapacity = int(value.(float64))
 				case "warehouse_id":
-					s.WarehouseId = valueParsed
+					s.WarehouseId = int(value.(float64))
 				case "product_type_id":
-					s.ProductTypeId = valueParsed
+					s.ProductTypeId = int(value.(float64))
 				}
 			}
 			return *s, nil
