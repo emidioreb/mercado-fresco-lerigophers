@@ -63,6 +63,11 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
+	if responseCode.Err != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
+	}
+
 	allSellers, _ := s.GetAll()
 	currentCid := int(requestData["cid"].(float64))
 
@@ -72,11 +77,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 		}
 	}
 
-	seller, err := s.repository.Update(id, requestData)
-
-	if err != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
-	}
+	seller, _ := s.repository.Update(id, requestData)
 
 	return seller, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }
