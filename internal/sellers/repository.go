@@ -10,8 +10,7 @@ type Repository interface {
 	GetOne(id int) (Seller, error)
 	GetAll() ([]Seller, error)
 	Delete(id int) error
-	Update(id, cid int, companyName, address, telephone string) (Seller, error)
-	UpdateAddress(id int, address string) (Seller, error)
+	Update(id int, requestData map[string]interface{}) (Seller, error)
 }
 
 type repository struct {
@@ -35,7 +34,6 @@ func (repository) Create(cid int, companyName, address, telephone string) (Selle
 
 	return newSeller, nil
 }
-
 func (repository) GetOne(id int) (Seller, error) {
 	for _, seller := range sellers {
 		if seller.Id == id {
@@ -57,23 +55,29 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("can't find seller with id %d", id)
 }
-func (repository) Update(id, cid int, companyName, address, telephone string) (Seller, error) {
-	updatedSeller := Seller{id, cid, companyName, address, telephone}
-	for i, seller := range sellers {
-		if seller.Id == id {
-			sellers[i] = updatedSeller
-			return sellers[i], nil
-		}
-	}
-	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
-}
-func (repository) UpdateAddress(id int, address string) (Seller, error) {
-	for i, seller := range sellers {
-		if seller.Id == id {
-			sellers[i].Address = address
-			return sellers[i], nil
-		}
-	}
+func (repository) Update(id int, requestData map[string]interface{}) (Seller, error) {
+	var s *Seller
 
+	for i, seller := range sellers {
+		if seller.Id == id {
+			s = &sellers[i]
+
+			for key, _ := range requestData {
+				valueString, _ := requestData[key].(string)
+				switch key {
+				case "company_name":
+					s.CompanyName = valueString
+				case "address":
+					s.Address = valueString
+
+				case "telephone":
+					s.Telephone = valueString
+				case "cid":
+					s.Cid = int(requestData[key].(float64))
+				}
+			}
+			return *s, nil
+		}
+	}
 	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
 }

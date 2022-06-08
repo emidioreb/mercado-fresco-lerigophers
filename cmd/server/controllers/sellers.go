@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-gonic/gin/binding"
+
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
@@ -137,10 +139,10 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 
 func (s *SellerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSellers
+		var requestValidatorType reqSellers
+		var requestData map[string]interface{}
 
 		id := c.Param("id")
-
 		if id == "" {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
 			return
@@ -152,19 +154,22 @@ func (s *SellerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		err = c.ShouldBindJSON(&requestData)
-		if err != nil {
+		if err := c.ShouldBindBodyWith(&requestData, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
 			return
 		}
 
-		seller, resp := s.service.Update(
-			parsedId,
-			requestData.Cid,
-			requestData.CompanyName,
-			requestData.Address,
-			requestData.Telephone,
-		)
+		if len(requestData) == 0 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
+			return
+		}
+
+		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
+			return
+		}
+
+		seller, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
@@ -173,31 +178,5 @@ func (s *SellerController) Update() gin.HandlerFunc {
 
 		c.JSON(resp.Code, web.NewResponse(seller))
 		return
-	}
-}
-
-func (s *SellerController) UpdateAddress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("invalid id"))
-			return
-		}
-
-		var requestData reqSellers
-		err = c.ShouldBindJSON(&requestData)
-
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
-			return
-		}
-
-		seller, resp := s.service.UpdateAddress(id, requestData.Address)
-
-		if resp.Err != nil {
-			c.JSON(resp.Code, resp.Err.Error())
-		}
-
-		c.JSON(resp.Code, web.NewResponse(seller))
 	}
 }

@@ -2,8 +2,9 @@ package sellers
 
 import (
 	"errors"
-	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"net/http"
+
+	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
@@ -11,8 +12,7 @@ type Service interface {
 	GetOne(id int) (Seller, web.ResponseCode)
 	GetAll() ([]Seller, web.ResponseCode)
 	Delete(id int) web.ResponseCode
-	Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
-	UpdateAddress(id int, address string) (Seller, web.ResponseCode)
+	Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode)
 }
 
 type service struct {
@@ -62,31 +62,24 @@ func (s service) Delete(id int) web.ResponseCode {
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
-func (s service) Update(id, cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
+func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
+	_, responseCode := s.GetOne(id)
+	if responseCode.Err != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
+	}
+
 	allSellers, _ := s.GetAll()
+	currentCid := requestData["cid"]
 
-	for _, seller := range allSellers {
-
-		if seller.Cid == cid && seller.Id != id {
-			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
+	if currentCid != nil {
+		for _, seller := range allSellers {
+			if float64(seller.Cid) == currentCid && seller.Id != id {
+				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
+			}
 		}
 	}
 
-	seller, err := s.repository.Update(id, cid, companyName, address, telephone)
-
-	if err != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
-	}
-
-	return seller, web.ResponseCode{Code: http.StatusOK, Err: nil}
-}
-
-func (s service) UpdateAddress(id int, address string) (Seller, web.ResponseCode) {
-	seller, err := s.repository.UpdateAddress(id, address)
-
-	if err != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
-	}
+	seller, _ := s.repository.Update(id, requestData)
 
 	return seller, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }
