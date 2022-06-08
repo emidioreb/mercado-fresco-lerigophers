@@ -170,6 +170,5 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(buyer))
-		return
 	}
 }
