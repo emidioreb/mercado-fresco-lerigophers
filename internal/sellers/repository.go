@@ -41,7 +41,7 @@ func (repository) GetOne(id int) (Seller, error) {
 		}
 	}
 
-	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
+	return Seller{}, fmt.Errorf("seller with id %d not found", id)
 }
 func (repository) GetAll() ([]Seller, error) {
 	return sellers, nil
@@ -53,7 +53,7 @@ func (repository) Delete(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find seller with id %d", id)
+	return fmt.Errorf("seller with id %d not found", id)
 }
 func (repository) Update(id int, requestData map[string]interface{}) (Seller, error) {
 	var s *Seller
@@ -79,5 +79,5 @@ func (repository) Update(id int, requestData map[string]interface{}) (Seller, er
 			return *s, nil
 		}
 	}
-	return Seller{}, fmt.Errorf("can't find seller with id %d", id)
+	return Seller{}, fmt.Errorf("seller with id %d not found", id)
 }

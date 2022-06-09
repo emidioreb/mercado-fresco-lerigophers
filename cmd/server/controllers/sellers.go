@@ -37,6 +37,11 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if requestData.Cid < 1 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("cid must be informed and greather than 0"))
+			return
+		}
+
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,
@@ -54,7 +59,6 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			resp.Code,
 			web.NewResponse(seller),
 		)
-		return
 	}
 }
 
@@ -87,7 +91,6 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(seller),
 		)
-		return
 	}
 }
 
@@ -107,7 +110,6 @@ func (s *SellerController) GetAll() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(sellersList),
 		)
-		return
 	}
 }
 
@@ -169,6 +171,16 @@ func (s *SellerController) Update() gin.HandlerFunc {
 			return
 		}
 
+		if value, ok := requestData["cid"].(float64); ok {
+			if value < 1 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("cid must be greather than 0"),
+				)
+				return
+			}
+		}
+
 		seller, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
@@ -177,6 +189,5 @@ func (s *SellerController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(seller))
-		return
 	}
 }
