@@ -59,7 +59,6 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			resp.Code,
 			web.NewResponse(seller),
 		)
-		return
 	}
 }
 
@@ -92,7 +91,6 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(seller),
 		)
-		return
 	}
 }
 
@@ -112,7 +110,6 @@ func (s *SellerController) GetAll() gin.HandlerFunc {
 			http.StatusOK,
 			web.NewResponse(sellersList),
 		)
-		return
 	}
 }
 
@@ -192,6 +189,5 @@ func (s *SellerController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(seller))
-		return
 	}
 }
