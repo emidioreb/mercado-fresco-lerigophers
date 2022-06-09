@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -40,6 +41,11 @@ func (s *ProductController) Create() gin.HandlerFunc {
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
+			return
+		}
+
+		if strings.ReplaceAll(requestData.ProductCode, " ", "") == "" {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty product_code not allowed"))
 			return
 		}
 
@@ -170,6 +176,13 @@ func (s *ProductController) Update() gin.HandlerFunc {
 			return
 		}
 
+		if requestData["product_code"] != nil {
+			if strings.ReplaceAll(requestData["product_code"].(string), " ", "") == "" {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty product_code not allowed"))
+				return
+			}
+		}
+
 		product, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
@@ -178,6 +191,5 @@ func (s *ProductController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(product))
-		return
 	}
 }
