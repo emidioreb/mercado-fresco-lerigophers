@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -32,6 +33,11 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
+			return
+		}
+
+		if strings.ReplaceAll(requestData.CardNumberId, " ", "") == "" {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
 			return
 		}
 
@@ -163,6 +169,13 @@ func (s *EmployeeController) Update() gin.HandlerFunc {
 		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
 			return
+		}
+
+		if requestData["card_number_id"] != nil {
+			if strings.ReplaceAll(requestData["card_number_id"].(string), " ", "") == "" {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+				return
+			}
 		}
 
 		employee, resp := s.service.Update(parsedId, requestData)

@@ -42,7 +42,7 @@ func (repository) GetOne(id int) (Employee, error) {
 		}
 	}
 
-	return Employee{}, fmt.Errorf("can't find Employee with id %d", id)
+	return Employee{}, fmt.Errorf("employee with id %d not found", id)
 }
 func (repository) GetAll() ([]Employee, error) {
 	return Employees, nil
@@ -54,7 +54,7 @@ func (repository) Delete(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find Employee with id %d", id)
+	return fmt.Errorf("employee with id %d not found", id)
 }
 func (repository) Update(id int, requestData map[string]interface{}) (Employee, error) {
 	var e *Employee
@@ -80,5 +80,5 @@ func (repository) Update(id int, requestData map[string]interface{}) (Employee, 
 		}
 
 	}
-	return Employee{}, fmt.Errorf("can't find Employee with id %d", id)
+	return Employee{}, fmt.Errorf("employee with id %d not found", id)
 }
