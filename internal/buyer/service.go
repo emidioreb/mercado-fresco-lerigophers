@@ -2,7 +2,6 @@ package buyers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -34,7 +33,6 @@ func (s service) Create(cardNumberId string, firstName string, lastName string) 
 			return Buyer{}, web.NewCodeResponse(http.StatusConflict, errors.New("CardNumberId already exists"))
 		}
 	}
-	fmt.Printf("%T, %s, cardNumberId",cardNumberId, cardNumberId)
 
 	Buyer, _ := s.repository.Create(cardNumberId , firstName, lastName )
 

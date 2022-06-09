@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+	"strings"
+	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -15,7 +15,7 @@ type BuyerController struct {
 }
 
 type reqBuyers struct {
-	Id           int `json:"id"`
+	Id           int    `json:"id"`
 	CardNumberId string `json:"card_number_id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
@@ -36,6 +36,11 @@ func (s *BuyerController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if strings.ReplaceAll(requestData.CardNumberId, " ", "") == "" {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+			return
+		}
+
 		buyer, resp := s.service.Create(requestData.CardNumberId, requestData.FirstName, requestData.LastName)
 
 		if resp.Err != nil {
@@ -45,8 +50,8 @@ func (s *BuyerController) Create() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(
-			resp.Code,
+
+		c.JSON( resp.Code,
 			web.NewResponse(buyer),
 		)
 	}
@@ -162,7 +167,14 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		buyer, resp := s.service.Update(parsedId,requestData)
+		if requestData["card_number_id"] != nil {
+			if strings.ReplaceAll(requestData["card_number_id"].(string), " ", "") == "" {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty card_number_id not allowed"))
+				return
+			}
+		}
+
+		buyer, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
