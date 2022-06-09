@@ -37,6 +37,11 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if requestData.Cid < 1 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("cid must be informed and greather than 0"))
+			return
+		}
+
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,
@@ -167,6 +172,16 @@ func (s *SellerController) Update() gin.HandlerFunc {
 		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
 			return
+		}
+
+		if value, ok := requestData["cid"].(float64); ok {
+			if value < 1 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("cid must be greather than 0"),
+				)
+				return
+			}
 		}
 
 		seller, resp := s.service.Update(parsedId, requestData)
