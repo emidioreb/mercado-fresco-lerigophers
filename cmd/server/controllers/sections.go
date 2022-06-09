@@ -40,6 +40,11 @@ func (s *SectionController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if requestData.SectionNumber < 1 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("section number must be informed and greather than 0"))
+			return
+		}
+
 		section, resp := s.service.Create(
 			requestData.SectionNumber,
 			requestData.CurrentTemperature,
@@ -172,6 +177,16 @@ func (s *SectionController) Update() gin.HandlerFunc {
 		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
 			return
+		}
+
+		if value, ok := requestData["section_number"].(float64); ok {
+			if value < 1 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("section number must be greather than 0"),
+				)
+				return
+			}
 		}
 
 		section, resp := s.service.Update(parsedId, requestData)

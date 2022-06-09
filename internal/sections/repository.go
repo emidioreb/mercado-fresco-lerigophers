@@ -46,7 +46,7 @@ func (repository) GetOne(id int) (Section, error) {
 		}
 	}
 
-	return Section{}, fmt.Errorf("can't find section with id %d", id)
+	return Section{}, fmt.Errorf("section with id %d not found", id)
 }
 func (repository) GetAll() ([]Section, error) {
 	return sections, nil
@@ -58,7 +58,7 @@ func (repository) Delete(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find section with id %d", id)
+	return fmt.Errorf("section with id %d not found", id)
 }
 func (repository) Update(id int, requestData map[string]interface{}) (Section, error) {
 	var s *Section
@@ -92,5 +92,5 @@ func (repository) Update(id int, requestData map[string]interface{}) (Section, e
 
 	}
 
-	return Section{}, fmt.Errorf("can't find section with id %d", id)
+	return Section{}, fmt.Errorf("section with id %d not found", id)
 }
