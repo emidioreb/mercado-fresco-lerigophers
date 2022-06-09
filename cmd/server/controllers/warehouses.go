@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -36,8 +37,8 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
-		if requestData.WarehouseCode == "" {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("warehouse code can't be empty"))
+		if strings.ReplaceAll(requestData.WarehouseCode, " ", "") == "" {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty warehouse_code not allowed"))
 			return
 		}
 
@@ -150,11 +151,6 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 			return
 		}
 
-		if requestData["warehouse_code"] == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("warehouse code can't be empty"))
-			return
-		}
-
 		if len(requestData) == 0 {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
 			return
@@ -163,6 +159,13 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
 			return
+		}
+
+		if requestData["warehouse_code"] != nil {
+			if strings.ReplaceAll(requestData["warehouse_code"].(string), " ", "") == "" {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty warehouse_code not allowed"))
+				return
+			}
 		}
 
 		warehouse, resp := s.service.Update(parsedId, requestData)
