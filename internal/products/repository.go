@@ -50,7 +50,7 @@ func (repository) GetOne(id int) (Product, error) {
 		}
 	}
 
-	return Product{}, fmt.Errorf("can't find Product with id %d", id)
+	return Product{}, fmt.Errorf("product with id %d not found", id)
 }
 func (repository) GetAll() ([]Product, error) {
 	return Products, nil
@@ -62,7 +62,7 @@ func (repository) Delete(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find Product with id %d", id)
+	return fmt.Errorf("product with id %d not found", id)
 }
 func (repository) Update(id int, requestData map[string]interface{}) (Product, error) {
 	var p *Product
@@ -100,6 +100,6 @@ func (repository) Update(id int, requestData map[string]interface{}) (Product, e
 		}
 	}
 
-	return Product{}, fmt.Errorf("can't find product with id %d", id)
+	return Product{}, fmt.Errorf("product with id %d not found", id)
 
 }
