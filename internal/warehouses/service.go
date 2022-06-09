@@ -73,7 +73,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, 
 
 	for _, warehouse := range allWarehouses {
 		if warehouse.WarehouseCode == warehouseCodeReqData && warehouse.Id != id {
-			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse code already exists"))
+			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
 		}
 	}
 

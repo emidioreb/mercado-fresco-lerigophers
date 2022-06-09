@@ -43,7 +43,7 @@ func (repository) GetOne(id int) (Warehouse, error) {
 		}
 	}
 
-	return Warehouse{}, fmt.Errorf("can't find warehouse with id %d", id)
+	return Warehouse{}, fmt.Errorf("warehouse with id %d not found", id)
 }
 func (repository) GetAll() ([]Warehouse, error) {
 	return warehouses, nil
@@ -55,7 +55,7 @@ func (repository) Delete(id int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find warehouse with id %d", id)
+	return fmt.Errorf("warehouse with id %d not found", id)
 }
 
 func (repository) Update(id int, requestData map[string]interface{}) (Warehouse, error) {
@@ -83,5 +83,5 @@ func (repository) Update(id int, requestData map[string]interface{}) (Warehouse,
 		}
 
 	}
-	return Warehouse{}, fmt.Errorf("can't find warehouse with id %d", id)
+	return Warehouse{}, fmt.Errorf("warehouse with id %d not found", id)
 }
