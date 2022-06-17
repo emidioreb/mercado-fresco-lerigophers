@@ -26,26 +26,20 @@ func NewService(r Repository) Service {
 }
 
 func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode) {
-	allWarehouses, _ := s.GetAll()
-
-	for _, warehouse := range allWarehouses {
-		if warehouse.WarehouseCode == warehouseCode {
-			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
-		}
+	warehouse, err := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
+	if err != nil {
+		return Warehouse{}, web.NewCodeResponse(http.StatusConflict, err)
 	}
-
-	warehouse, _ := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
 
 	return warehouse, web.NewCodeResponse(http.StatusCreated, nil)
 }
 
 func (s service) GetOne(id int) (Warehouse, web.ResponseCode) {
 	warehouse, err := s.repository.GetOne(id)
-
 	if err != nil {
 		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return warehouse, web.NewCodeResponse(http.StatusNotFound, nil)
+	return warehouse, web.NewCodeResponse(http.StatusOK, nil)
 }
 
 func (s service) GetAll() ([]Warehouse, web.ResponseCode) {

@@ -1,6 +1,9 @@
 package warehouses
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 var warehouses = []Warehouse{}
 var globalID = 1
@@ -21,6 +24,12 @@ func NewRepository() Repository {
 }
 
 func (repository) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error) {
+	for _, warehouse := range warehouses {
+		if warehouse.WarehouseCode == warehouseCode {
+			return Warehouse{}, errors.New("warehouse_code already exists")
+		}
+	}
+
 	newWarehouse := Warehouse{
 		Id:                 globalID,
 		WarehouseCode:      warehouseCode,
