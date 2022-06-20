@@ -163,3 +163,57 @@ func Test_Get_One_Seller(t *testing.T) {
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
+
+func Test_Delete_One_Seller(t *testing.T) {
+	t.Run("OK Case if exists - 204", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
+			Code: http.StatusNoContent,
+		})
+
+		router := gin.Default()
+		router.DELETE("/api/v1/sellers/:id", sellerController.Delete())
+
+		req, err := http.NewRequest(http.MethodDelete, "/api/v1/sellers/1", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusNoContent, w.Code)
+		assert.True(t, "" == string(w.Body.String()))
+	})
+
+	t.Run("Error case if not exists - 404", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+
+		sellerController := controllers.NewSeller(mockedService)
+
+		expectedError := errors.New("seller with id 1 not found")
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
+			Code: http.StatusNotFound,
+			Err:  expectedError,
+		})
+
+		router := gin.Default()
+		router.GET("/api/v1/sellers/:id", sellerController.Delete())
+
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/1", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+}
