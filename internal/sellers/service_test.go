@@ -1,4 +1,4 @@
-package service_test
+package sellers_test
 
 import (
 	"errors"
