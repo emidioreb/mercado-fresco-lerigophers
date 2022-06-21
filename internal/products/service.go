@@ -28,7 +28,7 @@ func NewService(r Repository) Service {
 
 func (s service) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
 	freezingRate float64, productTypeId int) (Product, web.ResponseCode) {
-	allProducts, _ := s.GetAll()
+	allProducts, _ := s.repository.GetAll()
 
 	for _, product := range allProducts {
 		if product.ProductCode == productCode {
@@ -36,10 +36,10 @@ func (s service) Create(productCode, description string, width, height, length, 
 		}
 	}
 
-	Product, _ := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
+	product, _ := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
 		freezingRate, productTypeId)
 
-	return Product, web.NewCodeResponse(http.StatusCreated, nil)
+	return product, web.NewCodeResponse(http.StatusCreated, nil)
 }
 
 func (s service) GetOne(id int) (Product, web.ResponseCode) {
@@ -66,11 +66,15 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode) {
-	_, responseCode := s.GetOne(id)
-	allProducts, _ := s.GetAll()
+	_, err := s.repository.GetOne(id)
+	if err != nil {
+		return Product{}, web.NewCodeResponse(http.StatusNotFound, err)
+	}
+
+	allProducts, _ := s.repository.GetAll()
 	productCodeReqData := requestData["product_code"]
 
-	if responseCode.Err != nil {
+	if productCodeReqData != nil {
 		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("product not found"))
 	}
 
