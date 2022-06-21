@@ -361,7 +361,45 @@ func TestServiceUpdate(t *testing.T) {
 
 	})
 
-	t.Run("Return error when section number already exists", func(t *testing.T) {
-
+	t.Run("Return error when section_number already exists and id doesn't match", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		requestData := map[string]interface{}{
+			"section_number": 1.0,
+		}
+		expectedError := errors.New("section number already exists")
+		input := []sections.Section{
+			{
+				Id:                 1,
+				SectionNumber:      1,
+				CurrentTemperature: 25,
+				MinimumTemperature: 0,
+				CurrentCapacity:    130,
+				MininumCapacity:    50,
+				MaximumCapacity:    999,
+				WarehouseId:        55,
+				ProductTypeId:      70,
+			},
+			{
+				Id:                 2,
+				SectionNumber:      2,
+				CurrentTemperature: 26,
+				MinimumTemperature: 1,
+				CurrentCapacity:    131,
+				MininumCapacity:    51,
+				MaximumCapacity:    1001,
+				WarehouseId:        56,
+				ProductTypeId:      71,
+			},
+		}
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
+			Return(input[1], nil).Once()
+		mockedRepository.On("GetAll").
+			Return(input, nil).Once()
+		mockedRepository.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(sections.Section{}, nil).Once()
+		service := sections.NewService(mockedRepository)
+		_, err := service.Update(2, requestData)
+		assert.NotNil(t, err.Err)
+		assert.Equal(t, expectedError.Error(), err.Err.Error())
+		assert.Equal(t, http.StatusConflict, err.Code)
 	})
 }
