@@ -43,17 +43,23 @@ func TestServiceCreate(t *testing.T) {
 	t.Run("Test error case if seller CID already exists", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
-		input := sellers.Seller{
+		input := []sellers.Seller{{
 			Id:          1,
 			Cid:         1,
 			CompanyName: "Gouveia empreendimentos",
 			Address:     "Av. Nações Unidas",
 			Telephone:   "3003",
-		}
+		}, {
+			Id:          2,
+			Cid:         2,
+			CompanyName: "Gouveia empreendimentos",
+			Address:     "Av. Nações Unidas",
+			Telephone:   "3003",
+		}}
 
 		expectedError := errors.New("cid already exists")
 
-		mockedRepository.On("GetAll").Return([]sellers.Seller{}, nil)
+		mockedRepository.On("GetAll").Return(input, nil)
 		mockedRepository.On("Create",
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("string"),
@@ -63,12 +69,11 @@ func TestServiceCreate(t *testing.T) {
 
 		service := sellers.NewService(mockedRepository)
 
-		_, err := service.Create(input.Cid, input.CompanyName, input.Address, input.Telephone)
+		_, err := service.Create(input[0].Cid, input[0].CompanyName, input[0].Address, input[0].Telephone)
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
 		assert.Equal(t, err.Code, http.StatusConflict)
-		mockedRepository.AssertExpectations(t)
 	})
 }
 
@@ -249,5 +254,47 @@ func TestServiceUpdate(t *testing.T) {
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, http.StatusNotFound, err.Code)
 		assert.Equal(t, err.Err, expectedError)
+	})
+
+	t.Run("Test error case if seller CID already exists", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		requestData := map[string]interface{}{
+			"cid": 2.0,
+		}
+
+		input := []sellers.Seller{
+			{
+				Id:          1,
+				Cid:         1,
+				CompanyName: "Gouveia empreendimentos",
+				Address:     "Av. Nações Unidas",
+				Telephone:   "3003",
+			}, {
+				Id:          2,
+				Cid:         2,
+				CompanyName: "Gouveia empreendimentos",
+				Address:     "Av. Nações Unidas",
+				Telephone:   "3003",
+			},
+		}
+
+		expectedError := errors.New("cid already exists")
+
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil).Once()
+		mockedRepository.On("GetAll").Return(input, nil).Once()
+		mockedRepository.On("Update",
+			mock.AnythingOfType("int"),
+			mock.Anything,
+		).Return(sellers.Seller{}, expectedError).Once()
+
+		service := sellers.NewService(mockedRepository)
+
+		_, err := service.Update(input[0].Id, requestData)
+		t.Log(err)
+		assert.NotNil(t, err.Err)
+
+		assert.Equal(t, err.Err.Error(), expectedError.Error())
+		assert.Equal(t, err.Code, http.StatusConflict)
 	})
 }

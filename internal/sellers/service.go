@@ -2,6 +2,7 @@ package sellers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -34,11 +35,7 @@ func (s service) Create(cid int, companyName, address, telephone string) (Seller
 		}
 	}
 
-	seller, err := s.repository.Create(cid, companyName, address, telephone)
-
-	if err != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
-	}
+	seller, _ := s.repository.Create(cid, companyName, address, telephone)
 
 	return seller, web.NewCodeResponse(http.StatusCreated, nil)
 }
@@ -72,11 +69,13 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
-	allSellers, _ := s.repository.GetAll()
+	allSellers, _ := s.GetAll()
 	currentCid := requestData["cid"]
 
 	if currentCid != nil {
 		for _, seller := range allSellers {
+			boolean := float64(seller.Cid) == currentCid && seller.Id != id
+			fmt.Println(boolean)
 			if float64(seller.Cid) == currentCid && seller.Id != id {
 				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 			}
