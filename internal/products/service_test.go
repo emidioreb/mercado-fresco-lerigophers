@@ -40,7 +40,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
-			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
 		).Return(input, nil)
 
 		service := products.NewService(mockedRepository)
@@ -72,9 +72,12 @@ func TestServiceCreate(t *testing.T) {
 			ProductTypeId:                  7,
 		}
 
-		expectedError := errors.New("product_code already exists")
+		expectedError := errors.New("Product_code already exists")
 
-		mockedRepository.On("GetAll").Return([]products.Product{}, nil)
+		listProducts := []products.Product{}
+		listProducts = append(listProducts, input)
+
+		mockedRepository.On("GetAll").Return(listProducts, nil)
 		mockedRepository.On("Create",
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
@@ -85,7 +88,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
-			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
 		).Return(products.Product{}, expectedError)
 
 		service := products.NewService(mockedRepository)
@@ -98,7 +101,6 @@ func TestServiceCreate(t *testing.T) {
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
 		assert.Equal(t, err.Code, http.StatusConflict)
-		mockedRepository.AssertExpectations(t)
 	})
 }
 
@@ -152,7 +154,7 @@ func TestServiceGetAll(t *testing.T) {
 				ProductTypeId:                  7,
 			}, {
 				Id:                             2,
-				ProductCode:                    "FK0003",
+				ProductCode:                    "FK0004",
 				Description:                    "Fake Product",
 				Width:                          23,
 				Height:                         62,
@@ -164,7 +166,7 @@ func TestServiceGetAll(t *testing.T) {
 				ProductTypeId:                  7,
 			}, {
 				Id:                             3,
-				ProductCode:                    "FK0003",
+				ProductCode:                    "FK0005",
 				Description:                    "Fake Product",
 				Width:                          23,
 				Height:                         62,
