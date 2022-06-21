@@ -168,6 +168,30 @@ func Test_Get_One_Seller(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+		expectedError := errors.New("id must be a number")
+
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.GET("/api/v1/sellers/:id", sellerController.GetOne())
+
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/string", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
 }
 
 func Test_Delete_One_Seller(t *testing.T) {
@@ -220,6 +244,30 @@ func Test_Delete_One_Seller(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+		expectedError := errors.New("id must be a number")
+
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.DELETE("/api/v1/sellers/:id", sellerController.Delete())
+
+		req, err := http.NewRequest(http.MethodDelete, "/api/v1/sellers/string", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
