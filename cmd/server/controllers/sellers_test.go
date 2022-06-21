@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -17,8 +18,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type ObjectResponse struct {
+type ObjectResponseArr struct {
 	Data []sellers.Seller
+}
+
+type ObjectResponse struct {
+	Data sellers.Seller
 }
 
 type ObjectErrorResponse struct {
@@ -56,7 +61,7 @@ func Test_Get_Seller_OK(t *testing.T) {
 
 		responseData, _ := ioutil.ReadAll(rec.Body)
 
-		var currentResponse ObjectResponse
+		var currentResponse ObjectResponseArr
 
 		err = json.Unmarshal(responseData, &currentResponse)
 
@@ -215,5 +220,239 @@ func Test_Delete_One_Seller(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+}
+
+func Test_Update_One_Seller(t *testing.T) {
+	t.Run("OK Case if update sucessfully", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+
+		fakeSeller := sellers.Seller{
+			Id:          1,
+			Cid:         1,
+			CompanyName: "Fake Business",
+			Address:     "Fake Address",
+			Telephone:   "Fake Number",
+		}
+
+		parsedFakeSeller, err := json.Marshal(fakeSeller)
+		assert.Nil(t, err)
+
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(fakeSeller, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var bodyResponse ObjectResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, fakeSeller, bodyResponse.Data)
+	})
+
+	t.Run("Not found case", func(t *testing.T) {
+		fakeSeller := sellers.Seller{
+			Id:          1,
+			Cid:         1,
+			CompanyName: "Fake Business",
+			Address:     "Fake Address",
+			Telephone:   "Fake Number",
+		}
+
+		expectedError := errors.New("seller with id 1 not found")
+
+		parsedFakeSeller, err := json.Marshal(fakeSeller)
+		assert.Nil(t, err)
+		mockedService := new(mocks.Service)
+
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{
+				Code: http.StatusNotFound,
+				Err:  expectedError,
+			})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+	})
+
+	t.Run("Id must be a number", func(t *testing.T) {
+		fakeSeller := sellers.Seller{
+			Id:          1,
+			Cid:         1,
+			CompanyName: "Fake Business",
+			Address:     "Fake Address",
+			Telephone:   "Fake Number",
+		}
+
+		expectedError := errors.New("id must be a number")
+
+		parsedFakeSeller, err := json.Marshal(fakeSeller)
+		assert.Nil(t, err)
+
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/aaaa", bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+	})
+
+	t.Run("Invalid request data", func(t *testing.T) {
+		expectedError := errors.New("invalid request data")
+
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte{}))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+	})
+
+	t.Run("Body needed", func(t *testing.T) {
+		expectedError := errors.New("invalid request data - body needed")
+
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte("{}")))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("CID greather than 0", func(t *testing.T) {
+		expectedError := errors.New("cid must be greather than 0")
+
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte(`{"cid": 0 }`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Syntax error on body", func(t *testing.T) {
+		expectedError := errors.New("invalid type of data")
+
+		mockedService := new(mocks.Service)
+		sellerController := controllers.NewSeller(mockedService)
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(sellers.Seller{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte(`{"address": 0}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
 	})
 }
