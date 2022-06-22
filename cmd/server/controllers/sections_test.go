@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,75 +29,86 @@ type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func Test_Get_Section_OK(t *testing.T) {
-	t.Run("OK Case - 200", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		mockSectionList := make([]sections.Section, 0)
+func routerSections() *gin.Engine {
+	router := gin.Default()
+	return router
+}
 
-		sectionController := controllers.NewSection(mockedService)
+func newSectionController() (*mocks.Service, *controllers.SectionController) {
+	mockedService := new(mocks.Service)
+	sectionController := controllers.NewSection(mockedService)
+	return mockedService, sectionController
+}
 
-		fakeSection := sections.Section{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
+var fakeSections = []sections.Section{
+	{
+		Id:                 1,
+		SectionNumber:      10,
+		CurrentTemperature: 25,
+		MinimumTemperature: 0,
+		CurrentCapacity:    130,
+		MininumCapacity:    50,
+		MaximumCapacity:    999,
+		WarehouseId:        55,
+		ProductTypeId:      70},
+	{},
+	{},
+}
 
-		mockSectionList = append(mockSectionList, fakeSection)
+const (
+	defaultURL = "/api/v1/sections/"
+	idString   = "/api/v1/sections/string"
+	idNumber1  = "/api/v1/sections/1"
+	idRequest  = "/api/v1/sections/:id"
+)
 
-		mockedService.On("GetAll").Return(mockSectionList, web.ResponseCode{})
+var (
+	errServer = errors.New("internal server error")
+)
 
-		router := gin.Default()
+func TestGetSection(t *testing.T) {
+	t.Run("Get all sections", func(t *testing.T) {
+		mockedService, sectionController := newSectionController()
+		mockedService.On("GetAll").Return(fakeSections, web.ResponseCode{})
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sections/", nil)
+		r := routerSections()
+		r.GET(defaultURL, sectionController.GetAll())
+
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-
-		router.GET("/api/v1/sections/", sectionController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, _ := ioutil.ReadAll(rec.Body)
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectResponseArr
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, fakeSection, currentResponse.Data[0])
+
+		assert.Equal(t, fakeSections[0], currentResponse.Data[0])
 		assert.True(t, len(currentResponse.Data) > 0)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	t.Run("Error case - 500", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		sectionController := controllers.NewSection(mockedService)
-
+	t.Run("Error case", func(t *testing.T) {
+		mockedService, sectionController := newSectionController()
 		mockedService.On("GetAll").Return(nil, web.ResponseCode{
 			Code: http.StatusInternalServerError,
-			Err:  errors.New("internal server error"),
+			Err:  errServer,
 		})
 
-		router := gin.Default()
+		r := routerSections()
+		r.GET(defaultURL, sectionController.GetAll())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sections/", nil)
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-
-		router.Handle(http.MethodGet, "/api/v1/sections/", sectionController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, err := ioutil.ReadAll(rec.Body)
-		assert.Nil(t, err)
+		r.ServeHTTP(rec, req)
 
 		var currentResponse web.ResponseCode
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
+
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
@@ -110,11 +120,15 @@ func Test_Get_One_Section(t *testing.T) {
 		sectionController := controllers.NewSection(mockedService)
 
 		fakeSection := sections.Section{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
 		}
 
 		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(fakeSection, web.ResponseCode{})
@@ -123,8 +137,9 @@ func Test_Get_One_Section(t *testing.T) {
 		router.GET("/api/v1/sections/:id", sectionController.GetOne())
 
 		req, err := http.NewRequest(http.MethodGet, "/api/v1/sections/1", nil)
-		w := httptest.NewRecorder()
 		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
 
 		router.ServeHTTP(w, req)
 
@@ -165,6 +180,30 @@ func Test_Get_One_Section(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sectionController := controllers.NewSection(mockedService)
+		expectedError := errors.New("id must be a number")
+
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(sections.Section{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.GET("/api/v1/sections/:id", sectionController.GetOne())
+
+		req, err := http.NewRequest(http.MethodGet, "/api/v1/sections/string", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
@@ -221,6 +260,30 @@ func Test_Delete_One_Section(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, w.Code)
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sectionController := controllers.NewSection(mockedService)
+		expectedError := errors.New("id must be a number")
+
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(sections.Section{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.DELETE("/api/v1/sections/:id", sectionController.Delete())
+
+		req, err := http.NewRequest(http.MethodDelete, "/api/v1/sections/string", nil)
+		w := httptest.NewRecorder()
+		assert.Nil(t, err)
+
+		router.ServeHTTP(w, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
 }
 
 func Test_Update_One_Section(t *testing.T) {
@@ -228,11 +291,15 @@ func Test_Update_One_Section(t *testing.T) {
 		mockedService := new(mocks.Service)
 
 		fakeSection := sections.Section{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
 		}
 
 		parsedFakeSection, err := json.Marshal(fakeSection)
@@ -265,11 +332,15 @@ func Test_Update_One_Section(t *testing.T) {
 
 	t.Run("Not found case", func(t *testing.T) {
 		fakeSection := sections.Section{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
 		}
 
 		expectedError := errors.New("section with id 1 not found")
@@ -307,11 +378,15 @@ func Test_Update_One_Section(t *testing.T) {
 
 	t.Run("Id must be a number", func(t *testing.T) {
 		fakeSection := sections.Section{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
 		}
 
 		expectedError := errors.New("id must be a number")
@@ -400,8 +475,8 @@ func Test_Update_One_Section(t *testing.T) {
 		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
 	})
 
-	t.Run("CID greather than 0", func(t *testing.T) {
-		expectedError := errors.New("cid must be greather than 0")
+	t.Run("SectionNumber greather than 0", func(t *testing.T) {
+		expectedError := errors.New("section number must be greather than 0")
 
 		mockedService := new(mocks.Service)
 		sectionController := controllers.NewSection(mockedService)
@@ -412,7 +487,7 @@ func Test_Update_One_Section(t *testing.T) {
 		router := gin.Default()
 		router.PATCH("/api/v1/sections/:id", sectionController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sections/1", bytes.NewBuffer([]byte(`{"cid": 0 }`)))
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sections/1", bytes.NewBuffer([]byte(`{"section_number": 0 }`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -440,7 +515,7 @@ func Test_Update_One_Section(t *testing.T) {
 		router := gin.Default()
 		router.PATCH("/api/v1/sections/:id", sectionController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sections/1", bytes.NewBuffer([]byte(`{"address": 0}`)))
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sections/1", bytes.NewBuffer([]byte(`{"minimum_capacity": "test"}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -449,6 +524,194 @@ func Test_Update_One_Section(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+}
+
+func Test_Create_Section(t *testing.T) {
+	t.Run("Successfully on Create", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+
+		fakeSection := sections.Section{
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
+		}
+
+		parsedFakeSection, err := json.Marshal(fakeSection)
+		assert.Nil(t, err)
+
+		sectionController := controllers.NewSection(mockedService)
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+		).
+			Return(fakeSection, web.ResponseCode{
+				Code: http.StatusCreated,
+			})
+
+		router := gin.Default()
+		router.POST("/api/v1/sections", sectionController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/sections", bytes.NewBuffer(parsedFakeSection))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+
+		var bodyResponse ObjectResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, fakeSection, bodyResponse.Data)
+	})
+
+	t.Run("invalid request input", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sectionController := controllers.NewSection(mockedService)
+
+		expectedError := errors.New("invalid request input")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).
+			Return(sections.Section{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.POST("/api/v1/sections", sectionController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/sections", bytes.NewBuffer([]byte(`{"section_number": "test"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Section number must be greather than 0", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sectionController := controllers.NewSection(mockedService)
+
+		expectedError := errors.New("section number must be informed and greather than 0")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).
+			Return(sections.Section{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.POST("/api/v1/sections", sectionController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/sections", bytes.NewBuffer([]byte(`{"section_number": 0}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Conflict SectionNumber", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		sectionController := controllers.NewSection(mockedService)
+
+		fakeSection := []sections.Section{{
+			Id:                 1,
+			SectionNumber:      10,
+			CurrentTemperature: 25,
+			MinimumTemperature: 0,
+			CurrentCapacity:    130,
+			MininumCapacity:    50,
+			MaximumCapacity:    999,
+			WarehouseId:        55,
+			ProductTypeId:      70,
+		}, {
+			Id:                 2,
+			SectionNumber:      11,
+			CurrentTemperature: 26,
+			MinimumTemperature: 1,
+			CurrentCapacity:    131,
+			MininumCapacity:    51,
+			MaximumCapacity:    1000,
+			WarehouseId:        56,
+			ProductTypeId:      71},
+		}
+
+		expectedError := errors.New("section number already exists")
+
+		mockedService.On("GetAll").Return(fakeSection, nil)
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+		).
+			Return(sections.Section{}, web.ResponseCode{
+				Code: http.StatusConflict,
+				Err:  expectedError,
+			})
+
+		router := gin.Default()
+		router.POST("/api/v1/sections", sectionController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/sections", bytes.NewBuffer([]byte(`{"section_number": 1}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
 		var bodyResponse ObjectErrorResponse
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
