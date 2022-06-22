@@ -59,7 +59,9 @@ const (
 )
 
 var (
-	errServer = errors.New("internal server error")
+	errServer         = errors.New("internal server error")
+	errSellerNotFound = errors.New("seller with id 1 not found")
+	errIdNotNumber    = errors.New("id must be a number")
 )
 
 func TestGetSeller(t *testing.T) {
@@ -109,94 +111,71 @@ func TestGetSeller(t *testing.T) {
 	})
 }
 
-func Test_Get_One_Seller(t *testing.T) {
-	t.Run("OK Case if exists - 200", func(t *testing.T) {
-		mockedService := new(mocks.Service)
+func TestGetOne(t *testing.T) {
+	t.Run("Success case", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(fakeSellers[0], web.ResponseCode{})
 
-		sellerController := controllers.NewSeller(mockedService)
+		r := routerSellers()
+		r.GET(idRequest, sellerController.GetOne())
 
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
-
-		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(fakeSeller, web.ResponseCode{})
-
-		router := gin.Default()
-		router.GET("/api/v1/sellers/:id", sellerController.GetOne())
-
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/1", nil)
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
 		assert.Nil(t, err)
 
-		w := httptest.NewRecorder()
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-		router.ServeHTTP(w, req)
-
-		type objResponse struct {
-			Data sellers.Seller
-		}
-
-		var currentResponse objResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		var currentResponse ObjectResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, fakeSeller, currentResponse.Data)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, fakeSellers[0], currentResponse.Data)
 	})
 
-	t.Run("Error case if not exists - 404", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		sellerController := controllers.NewSeller(mockedService)
-
-		expectedError := errors.New("seller with id 1 not found")
+	t.Run("Not exist case", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
 		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, web.ResponseCode{
 			Code: http.StatusNotFound,
-			Err:  expectedError,
+			Err:  errSellerNotFound,
 		})
 
-		router := gin.Default()
-		router.GET("/api/v1/sellers/:id", sellerController.GetOne())
+		r := routerSellers()
+		r.GET(idRequest, sellerController.GetOne())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/1", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, errSellerNotFound.Error(), currentResponse.Error)
 	})
 
 	t.Run("Fail when ID is not a number", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-		expectedError := errors.New("id must be a number")
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.GET("/api/v1/sellers/:id", sellerController.GetOne())
+		r := routerSellers()
+		r.GET(idRequest, sellerController.GetOne())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/string", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, idString, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, errIdNotNumber.Error(), currentResponse.Error)
 	})
 }
 
