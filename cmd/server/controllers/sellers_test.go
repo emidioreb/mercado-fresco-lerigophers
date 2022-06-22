@@ -40,15 +40,18 @@ func newSellerController() (*mocks.Service, *controllers.SellerController) {
 	return mockedService, sellerController
 }
 
-var fakeSellers = []sellers.Seller{
-	{
-		Id:          1,
-		Cid:         1,
-		CompanyName: "Fake Business",
-		Address:     "Fake Address",
-		Telephone:   "Fake Number"},
-	{},
-	{},
+var fakeSellers = []sellers.Seller{{
+	Id:          1,
+	Cid:         1,
+	CompanyName: "Fake Business",
+	Address:     "Fake Address",
+	Telephone:   "Fake Number",
+}, {
+	Id:          2,
+	Cid:         2,
+	CompanyName: "Fake Business",
+	Address:     "Fake Address",
+	Telephone:   "Fake Number"},
 }
 
 const (
@@ -62,6 +65,13 @@ var (
 	errServer         = errors.New("internal server error")
 	errSellerNotFound = errors.New("seller with id 1 not found")
 	errIdNotNumber    = errors.New("id must be a number")
+	errInvalidRequest = errors.New("invalid request data")
+	errNeedBody       = errors.New("invalid request data - body needed")
+	errCidZero        = errors.New("cid must be greather than 0")
+	errCidNeeded      = errors.New("cid must be informed and greather than 0")
+	errTypeData       = errors.New("invalid type of data")
+	errInvalidInput   = errors.New("invalid request input")
+	errCidExists      = errors.New("cid already exists")
 )
 
 func TestGetSeller(t *testing.T) {
@@ -179,223 +189,168 @@ func TestGetOne(t *testing.T) {
 	})
 }
 
-func Test_Delete_One_Seller(t *testing.T) {
-	t.Run("OK Case if exists - 204", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		sellerController := controllers.NewSeller(mockedService)
-
+func TestDeleteSeller(t *testing.T) {
+	t.Run("Success case if exists", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
 			Code: http.StatusNoContent,
 		})
 
-		router := gin.Default()
-		router.DELETE("/api/v1/sellers/:id", sellerController.Delete())
+		r := routerSellers()
+		r.DELETE(idRequest, sellerController.Delete())
 
-		req, err := http.NewRequest(http.MethodDelete, "/api/v1/sellers/1", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodDelete, idNumber1, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-		assert.Nil(t, err)
-
-		assert.Equal(t, http.StatusNoContent, w.Code)
-		assert.True(t, "" == string(w.Body.String()))
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.True(t, "" == rec.Body.String())
 	})
 
-	t.Run("Error case if not exists - 404", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		sellerController := controllers.NewSeller(mockedService)
-
-		expectedError := errors.New("seller with id 1 not found")
+	t.Run("Error case if not exists", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
 			Code: http.StatusNotFound,
-			Err:  expectedError,
+			Err:  errSellerNotFound,
 		})
 
-		router := gin.Default()
-		router.GET("/api/v1/sellers/:id", sellerController.Delete())
+		r := routerSellers()
+		r.GET(idRequest, sellerController.Delete())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/1", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, errSellerNotFound.Error(), currentResponse.Error)
 	})
 
 	t.Run("Fail when ID is not a number", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-		expectedError := errors.New("id must be a number")
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Delete", mock.AnythingOfType("int")).Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.DELETE("/api/v1/sellers/:id", sellerController.Delete())
+		r := routerSellers()
+		r.DELETE(idRequest, sellerController.Delete())
 
-		req, err := http.NewRequest(http.MethodDelete, "/api/v1/sellers/string", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodDelete, idString, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, errIdNotNumber.Error(), currentResponse.Error)
 	})
 }
 
-func Test_Update_One_Seller(t *testing.T) {
-	t.Run("OK Case if update sucessfully", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
-
-		parsedFakeSeller, err := json.Marshal(fakeSeller)
-		assert.Nil(t, err)
-
-		sellerController := controllers.NewSeller(mockedService)
-
+func TestUpdateSeller(t *testing.T) {
+	t.Run("Sucessfully case", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
-			Return(fakeSeller, web.ResponseCode{})
+			Return(fakeSellers[0], web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
-
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer(parsedFakeSeller))
+		parsedFakeSeller, err := json.Marshal(fakeSellers[0])
 		assert.Nil(t, err)
 
-		w := httptest.NewRecorder()
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
 
-		router.ServeHTTP(w, req)
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var bodyResponse ObjectResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, fakeSeller, bodyResponse.Data)
+		assert.Equal(t, fakeSellers[0], bodyResponse.Data)
 	})
 
 	t.Run("Not found case", func(t *testing.T) {
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
-
-		expectedError := errors.New("seller with id 1 not found")
-
-		parsedFakeSeller, err := json.Marshal(fakeSeller)
-		assert.Nil(t, err)
-		mockedService := new(mocks.Service)
-
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{
 				Code: http.StatusNotFound,
-				Err:  expectedError,
+				Err:  errSellerNotFound,
 			})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer(parsedFakeSeller))
+		parsedFakeSeller, err := json.Marshal(fakeSellers[0])
 		assert.Nil(t, err)
 
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
 
 		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+		assert.Equal(t, errSellerNotFound.Error(), bodyResponse.Error)
 	})
 
 	t.Run("Id must be a number", func(t *testing.T) {
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
-
-		expectedError := errors.New("id must be a number")
-
-		parsedFakeSeller, err := json.Marshal(fakeSeller)
-		assert.Nil(t, err)
-
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
-
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/aaaa", bytes.NewBuffer(parsedFakeSeller))
+		parsedFakeSeller, err := json.Marshal(fakeSellers[0])
 		assert.Nil(t, err)
 
-		w := httptest.NewRecorder()
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
 
-		router.ServeHTTP(w, req)
+		req, err := http.NewRequest(http.MethodPatch, idString, bytes.NewBuffer(parsedFakeSeller))
+		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+		assert.Equal(t, errIdNotNumber.Error(), bodyResponse.Error)
 	})
 
 	t.Run("Invalid request data", func(t *testing.T) {
-		expectedError := errors.New("invalid request data")
-
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte{}))
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte{}))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
-		router.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
@@ -403,26 +358,21 @@ func Test_Update_One_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, bodyResponse.Error, expectedError.Error())
+		assert.Equal(t, errInvalidRequest.Error(), bodyResponse.Error)
 	})
 
 	t.Run("Body needed", func(t *testing.T) {
-		expectedError := errors.New("invalid request data - body needed")
-
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+		router := routerSellers()
+		router.PATCH(idRequest, sellerController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte("{}")))
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte("{}")))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -431,26 +381,21 @@ func Test_Update_One_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errNeedBody.Error(), bodyResponse.Error)
 	})
 
 	t.Run("CID greather than 0", func(t *testing.T) {
-		expectedError := errors.New("cid must be greather than 0")
-
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+		router := routerSellers()
+		router.PATCH(idRequest, sellerController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte(`{"cid": 0 }`)))
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"cid": 0 }`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
@@ -459,26 +404,21 @@ func Test_Update_One_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errCidZero.Error(), bodyResponse.Error)
 	})
 
 	t.Run("Syntax error on body", func(t *testing.T) {
-		expectedError := errors.New("invalid type of data")
-
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.PATCH("/api/v1/sellers/:id", sellerController.Update())
+		router := routerSellers()
+		router.PATCH(idRequest, sellerController.Update())
 
-		req, err := http.NewRequest(http.MethodPatch, "/api/v1/sellers/1", bytes.NewBuffer([]byte(`{"address": 0}`)))
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"address": 0}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
@@ -487,27 +427,13 @@ func Test_Update_One_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errTypeData.Error(), bodyResponse.Error)
 	})
 }
 
-func Test_Create_Seller(t *testing.T) {
+func TestCreateSeller(t *testing.T) {
 	t.Run("Successfully on Create", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
-
-		parsedFakeSeller, err := json.Marshal(fakeSeller)
-		assert.Nil(t, err)
-
-		sellerController := controllers.NewSeller(mockedService)
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
@@ -515,19 +441,21 @@ func Test_Create_Seller(t *testing.T) {
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 		).
-			Return(fakeSeller, web.ResponseCode{
+			Return(fakeSellers[0], web.ResponseCode{
 				Code: http.StatusCreated,
 			})
 
-		router := gin.Default()
-		router.POST("/api/v1/sellers", sellerController.Create())
+		parsedFakeSeller, err := json.Marshal(fakeSellers[0])
+		assert.Nil(t, err)
 
-		req, err := http.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewBuffer(parsedFakeSeller))
+		r := gin.Default()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer(parsedFakeSeller))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
-		router.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusCreated, w.Code)
 
@@ -535,15 +463,11 @@ func Test_Create_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, fakeSeller, bodyResponse.Data)
+		assert.Equal(t, fakeSellers[0], bodyResponse.Data)
 	})
 
 	t.Run("invalid request input", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
-		expectedError := errors.New("invalid request input")
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
@@ -553,15 +477,14 @@ func Test_Create_Seller(t *testing.T) {
 		).
 			Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.POST("/api/v1/sellers", sellerController.Create())
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewBuffer([]byte(`{"cid": "vinicius"}`)))
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": "vinicius"}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
-		router.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
@@ -569,32 +492,26 @@ func Test_Create_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
 	})
 
 	t.Run("CID must be greather than 0", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
-		expectedError := errors.New("cid must be informed and greather than 0")
-
+		mockedService, sellerController := newSellerController()
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).
-			Return(sellers.Seller{}, web.ResponseCode{})
+		).Return(sellers.Seller{}, web.ResponseCode{})
 
-		router := gin.Default()
-		router.POST("/api/v1/sellers", sellerController.Create())
+		router := routerSellers()
+		router.POST(defaultURL, sellerController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewBuffer([]byte(`{"cid": 0}`)))
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 0}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
@@ -603,58 +520,37 @@ func Test_Create_Seller(t *testing.T) {
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errCidNeeded.Error(), bodyResponse.Error)
 	})
 
 	t.Run("Conflict CID", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		sellerController := controllers.NewSeller(mockedService)
-
-		fakeSeller := []sellers.Seller{{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}, {
-			Id:          2,
-			Cid:         2,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number"},
-		}
-
-		expectedError := errors.New("cid already exists")
-
-		mockedService.On("GetAll").Return(fakeSeller, nil)
-
+		mockedService, sellerController := newSellerController()
+		mockedService.On("GetAll").Return(fakeSellers, nil)
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).
-			Return(sellers.Seller{}, web.ResponseCode{
-				Code: http.StatusConflict,
-				Err:  expectedError,
-			})
+		).Return(sellers.Seller{}, web.ResponseCode{
+			Code: http.StatusConflict,
+			Err:  errCidExists,
+		})
 
-		router := gin.Default()
-		router.POST("/api/v1/sellers", sellerController.Create())
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, "/api/v1/sellers", bytes.NewBuffer([]byte(`{"cid": 2}`)))
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 2}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-
-		router.ServeHTTP(w, req)
+		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusConflict, w.Code)
 		var bodyResponse ObjectErrorResponse
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+		assert.Equal(t, errCidExists.Error(), bodyResponse.Error)
 	})
 }
