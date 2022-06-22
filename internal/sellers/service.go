@@ -2,7 +2,6 @@ package sellers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -74,8 +73,6 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 
 	if currentCid != nil {
 		for _, seller := range allSellers {
-			boolean := float64(seller.Cid) == currentCid && seller.Id != id
-			fmt.Println(boolean)
 			if float64(seller.Cid) == currentCid && seller.Id != id {
 				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 			}

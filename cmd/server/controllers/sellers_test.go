@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,75 +29,82 @@ type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func Test_Get_Seller_OK(t *testing.T) {
-	t.Run("OK Case - 200", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		mockSellerList := make([]sellers.Seller, 0)
+func routerSellers() *gin.Engine {
+	router := gin.Default()
+	return router
+}
 
-		sellerController := controllers.NewSeller(mockedService)
+func newSellerController() (*mocks.Service, *controllers.SellerController) {
+	mockedService := new(mocks.Service)
+	sellerController := controllers.NewSeller(mockedService)
+	return mockedService, sellerController
+}
 
-		fakeSeller := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Fake Business",
-			Address:     "Fake Address",
-			Telephone:   "Fake Number",
-		}
+var fakeSellers = []sellers.Seller{
+	{
+		Id:          1,
+		Cid:         1,
+		CompanyName: "Fake Business",
+		Address:     "Fake Address",
+		Telephone:   "Fake Number"},
+	{},
+	{},
+}
 
-		mockSellerList = append(mockSellerList, fakeSeller)
+const (
+	defaultURL = "/api/v1/sellers/"
+	idString   = "/api/v1/sellers/string"
+	idNumber1  = "/api/v1/sellers/1"
+	idRequest  = "/api/v1/sellers/:id"
+)
 
-		mockedService.On("GetAll").Return(mockSellerList, web.ResponseCode{})
+var (
+	errServer = errors.New("internal server error")
+)
 
-		router := gin.Default()
+func TestGetSeller(t *testing.T) {
+	t.Run("Get all sellers", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
+		mockedService.On("GetAll").Return(fakeSellers, web.ResponseCode{})
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/", nil)
+		r := routerSellers()
+		r.GET(defaultURL, sellerController.GetAll())
+
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-
-		router.GET("/api/v1/sellers/", sellerController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, _ := ioutil.ReadAll(rec.Body)
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectResponseArr
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, fakeSeller, currentResponse.Data[0])
+
+		assert.Equal(t, fakeSellers[0], currentResponse.Data[0])
 		assert.True(t, len(currentResponse.Data) > 0)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	t.Run("Error case - 500", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		sellerController := controllers.NewSeller(mockedService)
-
+	t.Run("Error case", func(t *testing.T) {
+		mockedService, sellerController := newSellerController()
 		mockedService.On("GetAll").Return(nil, web.ResponseCode{
 			Code: http.StatusInternalServerError,
-			Err:  errors.New("internal server error"),
+			Err:  errServer,
 		})
 
-		router := gin.Default()
+		r := routerSellers()
+		r.GET(defaultURL, sellerController.GetAll())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/sellers/", nil)
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-
-		router.Handle(http.MethodGet, "/api/v1/sellers/", sellerController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, err := ioutil.ReadAll(rec.Body)
-		assert.Nil(t, err)
+		r.ServeHTTP(rec, req)
 
 		var currentResponse web.ResponseCode
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
+
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
