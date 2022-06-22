@@ -51,8 +51,7 @@ var fakeSellers = []sellers.Seller{{
 	Cid:         2,
 	CompanyName: "Fake Business",
 	Address:     "Fake Address",
-	Telephone:   "Fake Number"},
-}
+	Telephone:   "Fake Number"}}
 
 const (
 	defaultURL = "/api/v1/sellers/"

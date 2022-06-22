@@ -11,17 +11,23 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var fakeSellers = []sellers.Seller{{
+	Id:          1,
+	Cid:         1,
+	CompanyName: "Gouveia empreendimentos",
+	Address:     "Av. Nações Unidas",
+	Telephone:   "3003",
+}, {
+	Id:          2,
+	Cid:         2,
+	CompanyName: "Gouveia empreendimentos",
+	Address:     "Av. Nações Unidas",
+	Telephone:   "3003",
+}}
+
 func TestServiceCreate(t *testing.T) {
 	t.Run("Test if create successfully", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
-
-		input := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Gouveia empreendimentos",
-			Address:     "Av. Nações Unidas",
-			Telephone:   "3003",
-		}
 
 		mockedRepository.On("GetAll").Return([]sellers.Seller{}, nil)
 		mockedRepository.On("Create",
@@ -29,37 +35,22 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
-		).Return(input, nil)
+		).Return(fakeSellers[0], nil)
 
 		service := sellers.NewService(mockedRepository)
 
-		result, err := service.Create(input.Cid, input.CompanyName, input.Address, input.Telephone)
+		result, err := service.Create(fakeSellers[0].Cid, fakeSellers[0].CompanyName, fakeSellers[0].Address, fakeSellers[0].Telephone)
 		assert.Nil(t, err.Err)
 
-		assert.Equal(t, input, result)
+		assert.Equal(t, fakeSellers[0], result)
 		mockedRepository.AssertExpectations(t)
 	})
 
 	t.Run("Test error case if seller CID already exists", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
-
-		input := []sellers.Seller{{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Gouveia empreendimentos",
-			Address:     "Av. Nações Unidas",
-			Telephone:   "3003",
-		}, {
-			Id:          2,
-			Cid:         2,
-			CompanyName: "Gouveia empreendimentos",
-			Address:     "Av. Nações Unidas",
-			Telephone:   "3003",
-		}}
-
 		expectedError := errors.New("cid already exists")
 
-		mockedRepository.On("GetAll").Return(input, nil)
+		mockedRepository.On("GetAll").Return(fakeSellers, nil)
 		mockedRepository.On("Create",
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("string"),
@@ -69,7 +60,7 @@ func TestServiceCreate(t *testing.T) {
 
 		service := sellers.NewService(mockedRepository)
 
-		_, err := service.Create(input[0].Cid, input[0].CompanyName, input[0].Address, input[0].Telephone)
+		_, err := service.Create(fakeSellers[0].Cid, fakeSellers[0].CompanyName, fakeSellers[0].Address, fakeSellers[0].Telephone)
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
@@ -80,7 +71,6 @@ func TestServiceCreate(t *testing.T) {
 func TestServiceDelete(t *testing.T) {
 	t.Run("Verify the successfully case if the seller is deleted", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
-
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(nil)
 
 		service := sellers.NewService(mockedRepository)
@@ -111,37 +101,15 @@ func TestServiceGetAll(t *testing.T) {
 	t.Run("Test if an array of sellers is returned when GetAll", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
-		input := []sellers.Seller{
-			{
-				Id:          1,
-				Cid:         1,
-				CompanyName: "Gouveia empreendimentos",
-				Address:     "Av. Nações Unidas",
-				Telephone:   "3003",
-			}, {
-				Id:          2,
-				Cid:         2,
-				CompanyName: "Gouveia empreendimentos 2",
-				Address:     "Av. Nações Unidas",
-				Telephone:   "3004",
-			}, {
-				Id:          3,
-				Cid:         3,
-				CompanyName: "Gouveia empreendimentos",
-				Address:     "Av. Nações Unidas",
-				Telephone:   "3003",
-			},
-		}
-
-		mockedRepository.On("GetAll").Return(input, nil)
+		mockedRepository.On("GetAll").Return(fakeSellers, nil)
 
 		service := sellers.NewService(mockedRepository)
 
 		result, err := service.GetAll()
 		assert.Nil(t, err.Err)
 
-		assert.Len(t, result, 3)
-		assert.Equal(t, input[1].Cid, result[1].Cid)
+		assert.Len(t, result, 2)
+		assert.Equal(t, fakeSellers[1].Cid, result[1].Cid)
 		mockedRepository.AssertExpectations(t)
 	})
 }
@@ -150,22 +118,14 @@ func TestServiceGetOne(t *testing.T) {
 	t.Run("Test if seller is returned based on valid id", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
-		input := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Gouveia empreendimentos",
-			Address:     "Av. Nações Unidas",
-			Telephone:   "3003",
-		}
-
-		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input, nil)
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(fakeSellers[0], nil)
 
 		service := sellers.NewService(mockedRepository)
 
 		result, err := service.GetOne(1)
 		assert.Nil(t, err.Err)
 
-		assert.Equal(t, input, result)
+		assert.Equal(t, fakeSellers[0], result)
 		mockedRepository.AssertExpectations(t)
 	})
 
@@ -205,20 +165,8 @@ func TestServiceUpdate(t *testing.T) {
 			Telephone:   "12345",
 		}
 
-		input := sellers.Seller{
-			Id:          1,
-			Cid:         1,
-			CompanyName: "Mercado Livre",
-			Address:     "Av. Nações Unidas",
-			Telephone:   "3003",
-		}
-
-		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
-			Return(input, nil)
-
-		mockedRepository.On("GetAll").
-			Return([]sellers.Seller{}, nil)
-
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(fakeSellers[0], nil)
+		mockedRepository.On("GetAll").Return([]sellers.Seller{}, nil)
 		mockedRepository.On("Update",
 			mock.AnythingOfType("int"),
 			mock.Anything,
@@ -263,26 +211,10 @@ func TestServiceUpdate(t *testing.T) {
 			"cid": 2.0,
 		}
 
-		input := []sellers.Seller{
-			{
-				Id:          1,
-				Cid:         1,
-				CompanyName: "Gouveia empreendimentos",
-				Address:     "Av. Nações Unidas",
-				Telephone:   "3003",
-			}, {
-				Id:          2,
-				Cid:         2,
-				CompanyName: "Gouveia empreendimentos",
-				Address:     "Av. Nações Unidas",
-				Telephone:   "3003",
-			},
-		}
-
 		expectedError := errors.New("cid already exists")
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil).Once()
-		mockedRepository.On("GetAll").Return(input, nil).Once()
+		mockedRepository.On("GetAll").Return(fakeSellers, nil).Once()
 		mockedRepository.On("Update",
 			mock.AnythingOfType("int"),
 			mock.Anything,
@@ -290,8 +222,7 @@ func TestServiceUpdate(t *testing.T) {
 
 		service := sellers.NewService(mockedRepository)
 
-		_, err := service.Update(input[0].Id, requestData)
-		t.Log(err)
+		_, err := service.Update(fakeSellers[0].Id, requestData)
 		assert.NotNil(t, err.Err)
 
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
