@@ -74,13 +74,9 @@ func (s service) Update(id int, requestData map[string]interface{}) (Product, we
 	allProducts, _ := s.GetAll()
 	productCodeReqData := requestData["product_code"]
 
-	if productCodeReqData != nil {
-		return Product{}, web.NewCodeResponse(http.StatusNotFound, errors.New("product not found"))
-	}
-
 	for _, product := range allProducts {
 		if product.ProductCode == productCodeReqData && product.Id != id {
-			return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("Product_code already exists"))
+			return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("product_code already exists"))
 		}
 	}
 

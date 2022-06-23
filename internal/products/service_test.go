@@ -339,7 +339,7 @@ func TestServiceUpdate(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		requestData := map[string]interface{}{
-			"product_code": 2.0,
+			"product_code": "FK0003",
 		}
 
 		input := []products.Product{{
@@ -381,11 +381,10 @@ func TestServiceUpdate(t *testing.T) {
 
 		service := products.NewService(mockedRepository)
 
-		_, err := service.Update(input[0].Id, requestData)
-		t.Log(err)
+		_, err := service.Update(input[1].Id, requestData)
 		assert.NotNil(t, err.Err)
 
-		assert.Equal(t, err.Err.Error(), expectedError.Error())
-		assert.Equal(t, err.Code, http.StatusConflict)
+		assert.Equal(t, expectedError.Error(), err.Err.Error())
+		assert.Equal(t, http.StatusConflict, err.Code)
 	})
 }
