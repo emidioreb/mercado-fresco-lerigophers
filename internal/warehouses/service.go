@@ -26,20 +26,26 @@ func NewService(r Repository) Service {
 }
 
 func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode) {
-	warehouse, err := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
-	if err != nil {
-		return Warehouse{}, web.NewCodeResponse(http.StatusConflict, err)
+	allWarehouses, _ := s.repository.GetAll()
+
+	for _, warehouse := range allWarehouses {
+		if warehouse.WarehouseCode == warehouseCode {
+			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
+		}
 	}
+
+	warehouse, _ := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
 
 	return warehouse, web.NewCodeResponse(http.StatusCreated, nil)
 }
 
 func (s service) GetOne(id int) (Warehouse, web.ResponseCode) {
 	warehouse, err := s.repository.GetOne(id)
+
 	if err != nil {
 		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return warehouse, web.NewCodeResponse(http.StatusOK, nil)
+	return warehouse, web.NewCodeResponse(http.StatusNotFound, nil)
 }
 
 func (s service) GetAll() ([]Warehouse, web.ResponseCode) {
@@ -57,11 +63,11 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, web.ResponseCode) {
-	_, responseCode := s.GetOne(id)
-	allWarehouses, _ := s.GetAll()
+	_, err := s.repository.GetOne(id)
+	allWarehouses, _ := s.repository.GetAll()
 	warehouseCodeReqData := requestData["warehouse_code"]
 
-	if responseCode.Err != nil {
+	if err != nil {
 		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found"))
 	}
 
