@@ -58,7 +58,7 @@ func TestServiceCreate(t *testing.T) {
 	t.Run("Test error case if product_code already exists", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
-		input := products.Product{
+		input := []products.Product{{
 			Id:                             1,
 			ProductCode:                    "FK0003",
 			Description:                    "Fake Product",
@@ -70,14 +70,23 @@ func TestServiceCreate(t *testing.T) {
 			RecommendedFreezingTemperature: 17,
 			FreezingRate:                   23,
 			ProductTypeId:                  7,
-		}
+		}, {
+			Id:                             2,
+			ProductCode:                    "FK0004",
+			Description:                    "Fake Product",
+			Width:                          23,
+			Height:                         62,
+			Length:                         101,
+			NetWeight:                      27,
+			ExpirationRate:                 88,
+			RecommendedFreezingTemperature: 17,
+			FreezingRate:                   23,
+			ProductTypeId:                  7,
+		}}
 
 		expectedError := errors.New("Product_code already exists")
 
-		listProducts := []products.Product{}
-		listProducts = append(listProducts, input)
-
-		mockedRepository.On("GetAll").Return(listProducts, nil)
+		mockedRepository.On("GetAll").Return(input, nil)
 		mockedRepository.On("Create",
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
@@ -93,10 +102,10 @@ func TestServiceCreate(t *testing.T) {
 
 		service := products.NewService(mockedRepository)
 
-		_, err := service.Create(input.ProductCode, input.Description,
-			input.Width, input.Height, input.Length, input.NetWeight,
-			input.ExpirationRate, input.RecommendedFreezingTemperature,
-			input.FreezingRate, input.ProductTypeId)
+		_, err := service.Create(input[0].ProductCode, input[0].Description,
+			input[0].Width, input[0].Height, input[0].Length, input[0].NetWeight,
+			input[0].ExpirationRate, input[0].RecommendedFreezingTemperature,
+			input[0].FreezingRate, input[0].ProductTypeId)
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
@@ -271,7 +280,7 @@ func TestServiceUpdate(t *testing.T) {
 		}
 
 		input := products.Product{
-			Id:                             3,
+			Id:                             2,
 			ProductCode:                    "FK0003",
 			Description:                    "Fake Product",
 			Width:                          23,
@@ -324,5 +333,59 @@ func TestServiceUpdate(t *testing.T) {
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, http.StatusNotFound, err.Code)
 		assert.Equal(t, err.Err, expectedError)
+	})
+
+	t.Run("Test error case product_code already exists", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		requestData := map[string]interface{}{
+			"product_code": 2.0,
+		}
+
+		input := []products.Product{{
+			Id:                             1,
+			ProductCode:                    "FK0003",
+			Description:                    "Fake Product",
+			Width:                          23,
+			Height:                         62,
+			Length:                         101,
+			NetWeight:                      27,
+			ExpirationRate:                 88,
+			RecommendedFreezingTemperature: 17,
+			FreezingRate:                   23,
+			ProductTypeId:                  7,
+		}, {
+			Id:                             2,
+			ProductCode:                    "FK0004",
+			Description:                    "Fake Product",
+			Width:                          23,
+			Height:                         62,
+			Length:                         101,
+			NetWeight:                      27,
+			ExpirationRate:                 88,
+			RecommendedFreezingTemperature: 17,
+			FreezingRate:                   23,
+			ProductTypeId:                  7,
+		},
+		}
+
+		expectedError := errors.New("product_code already exists")
+
+		mockedRepository.On("GetOne",
+			mock.AnythingOfType("int")).Return(products.Product{}, nil).Once()
+		mockedRepository.On("GetAll").Return(input, nil).Once()
+		mockedRepository.On("Update",
+			mock.AnythingOfType("int"),
+			mock.Anything,
+		).Return(products.Product{}, expectedError).Once()
+
+		service := products.NewService(mockedRepository)
+
+		_, err := service.Update(input[0].Id, requestData)
+		t.Log(err)
+		assert.NotNil(t, err.Err)
+
+		assert.Equal(t, err.Err.Error(), expectedError.Error())
+		assert.Equal(t, err.Code, http.StatusConflict)
 	})
 }

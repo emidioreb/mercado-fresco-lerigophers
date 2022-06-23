@@ -71,7 +71,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Product, we
 		return Product{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
-	allProducts, _ := s.repository.GetAll()
+	allProducts, _ := s.GetAll()
 	productCodeReqData := requestData["product_code"]
 
 	if productCodeReqData != nil {

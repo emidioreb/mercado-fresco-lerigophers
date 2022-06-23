@@ -1,9 +1,9 @@
 package controllers_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,164 +17,572 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type ObjectResponse struct {
+type ObjectResponseArr struct {
 	Data []products.Product
+}
+
+type ObjectResponse struct {
+	Data products.Product
 }
 
 type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func Test_Get_Product_OK(t *testing.T) {
-	t.Run("OK Case - 200", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-		mockeProductList := make([]products.Product, 0)
+func routerProducts() *gin.Engine {
+	router := gin.Default()
+	return router
+}
 
-		productController := controllers.NewProduct(mockedService)
+func newProductController() (*mocks.Service, *controllers.ProductController) {
+	mockedService := new(mocks.Service)
+	productController := controllers.NewProduct(mockedService)
+	return mockedService, productController
+}
 
-		fakeProduct := products.Product{
-			Id:                             1,
-			ProductCode:                    "BS0003",
-			Description:                    "Batata",
-			Width:                          23,
-			Height:                         62,
-			Length:                         101,
-			NetWeight:                      27,
-			ExpirationRate:                 88,
-			RecommendedFreezingTemperature: 17,
-			FreezingRate:                   23,
-			ProductTypeId:                  7,
-		}
+var fakeProducts = []products.Product{
+	{
+		Id:                             1,
+		ProductCode:                    "BS0001",
+		Description:                    "Batata",
+		Width:                          23,
+		Height:                         62,
+		Length:                         101,
+		NetWeight:                      27,
+		ExpirationRate:                 88,
+		RecommendedFreezingTemperature: 17,
+		FreezingRate:                   23,
+		ProductTypeId:                  7,
+	},
+	{
+		Id:                             2,
+		ProductCode:                    "BS0002",
+		Description:                    "Batata",
+		Width:                          23,
+		Height:                         62,
+		Length:                         101,
+		NetWeight:                      27,
+		ExpirationRate:                 88,
+		RecommendedFreezingTemperature: 17,
+		FreezingRate:                   23,
+		ProductTypeId:                  7,
+	},
+}
 
-		mockeProductList = append(mockeProductList, fakeProduct)
+const (
+	defaultURL = "/api/v1/products/"
+	idString   = "/api/v1/products/string"
+	idNumber1  = "/api/v1/products/1"
+	idRequest  = "api/v1/products/:id"
+)
 
-		mockedService.On("GetAll").Return(mockeProductList, web.ResponseCode{})
+var (
+	errServer            = errors.New("internal server error")
+	errProductNotFound   = errors.New("product with id 1 not found")
+	errIdNotNumber       = errors.New("id must be a number")
+	errInvalidRequest    = errors.New("invalid request data")
+	errNeedBody          = errors.New("invalid request data - body needed")
+	errProductCodeZero   = errors.New("product code must be greather than 0")
+	errProductCodeNeeded = errors.New("product code must be informed and greather than 0")
+	errTypeData          = errors.New("invalid type of data")
+	errInvalidInput      = errors.New("invalid request input")
+	errProductCodeExists = errors.New("product code already exists")
+)
 
-		router := gin.Default()
+func TestGetProduct(t *testing.T) {
+	t.Run("Get all products", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("GetAll").Return(fakeProducts, web.ResponseCode{})
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/products/", nil)
+		r := routerProducts()
+		r.GET(defaultURL, productController.GetAll())
+
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-		router.GET("/api/v1/products/", productController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, _ := ioutil.ReadAll(rec.Body)
-
-		var currentResponse ObjectResponse
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		var currentResponse ObjectResponseArr
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, fakeProduct, currentResponse.Data[0])
+
+		assert.Equal(t, fakeProducts[0], currentResponse.Data[0])
 		assert.True(t, len(currentResponse.Data) > 0)
 		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	t.Run("Error case - 500", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		productController := controllers.NewProduct(mockedService)
-
+	t.Run("Error case", func(t *testing.T) {
+		mockedService, productController := newProductController()
 		mockedService.On("GetAll").Return(nil, web.ResponseCode{
 			Code: http.StatusInternalServerError,
-			Err:  errors.New("internal server error"),
+			Err:  errServer,
 		})
 
-		router := gin.Default()
+		r := routerProducts()
+		r.GET(defaultURL, productController.GetAll())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/products/", nil)
+		req, err := http.NewRequest(http.MethodGet, defaultURL, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-
-		router.Handle(http.MethodGet, "/api/v1/products/",
-			productController.GetAll())
-		router.ServeHTTP(rec, req)
-
-		responseData, err := ioutil.ReadAll(rec.Body)
-		assert.Nil(t, err)
+		r.ServeHTTP(rec, req)
 
 		var currentResponse web.ResponseCode
-
-		err = json.Unmarshal(responseData, &currentResponse)
-
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
+
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }
 
-func Test_Get_One_Product(t *testing.T) {
-	t.Run("OK Case if exists - 200", func(t *testing.T) {
-		mockedService := new(mocks.Service)
+func TestGetOne(t *testing.T) {
+	t.Run("Success case", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(fakeProducts[0], web.ResponseCode{})
 
-		productController := controllers.NewProduct(mockedService)
+		r := routerProducts()
+		r.GET(idRequest, productController.GetOne())
 
-		fakeProduct := products.Product{
-			Id:                             1,
-			ProductCode:                    "FK0003",
-			Description:                    "Fake Product",
-			Width:                          23,
-			Height:                         62,
-			Length:                         101,
-			NetWeight:                      27,
-			ExpirationRate:                 88,
-			RecommendedFreezingTemperature: 17,
-			FreezingRate:                   23,
-			ProductTypeId:                  7,
-		}
-
-		mockedService.On("GetOne",
-			mock.AnythingOfType("int")).Return(fakeProduct, web.ResponseCode{})
-
-		router := gin.Default()
-		router.GET("/api/v1/products/:id", productController.GetOne())
-
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/products/1", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-		type objResponse struct {
-			Data products.Product
-		}
-
-		var currentResponse objResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		var currentResponse ObjectResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, fakeProduct, currentResponse.Data)
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, fakeProducts[0], currentResponse.Data)
 	})
 
-	t.Run("Error case if not exists - 404", func(t *testing.T) {
-		mockedService := new(mocks.Service)
-
-		productController := controllers.NewProduct(mockedService)
-
-		expectedError := errors.New("product with id 1 not found")
-		mockedService.On("GetOne",
-			mock.AnythingOfType("int")).Return(products.Product{}, web.ResponseCode{
+	t.Run("Not exist case", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(products.Product{}, web.ResponseCode{
 			Code: http.StatusNotFound,
-			Err:  expectedError,
+			Err:  errProductNotFound,
 		})
 
-		router := gin.Default()
-		router.GET("/api/v1/products/:id", productController.GetOne())
+		r := routerProducts()
+		r.GET(idRequest, productController.GetOne())
 
-		req, err := http.NewRequest(http.MethodGet, "/api/v1/products/1", nil)
-		w := httptest.NewRecorder()
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
 		assert.Nil(t, err)
 
-		router.ServeHTTP(w, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
 		var currentResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &currentResponse)
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, errProductNotFound.Error(), currentResponse.Error)
+	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.GET(idRequest, productController.GetOne())
+
+		req, err := http.NewRequest(http.MethodGet, idString, nil)
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, errIdNotNumber.Error(), currentResponse.Error)
+	})
+}
+
+func TestDeleteProduct(t *testing.T) {
+	t.Run("Success case if exists", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
+			Code: http.StatusNoContent,
+		})
+
+		r := routerProducts()
+		r.DELETE(idRequest, productController.Delete())
+
+		req, err := http.NewRequest(http.MethodDelete, idNumber1, nil)
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.True(t, "" == string(rec.Body.String()))
+	})
+
+	t.Run("Error case if not exists", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.ResponseCode{
+			Code: http.StatusNotFound,
+			Err:  errProductNotFound,
+		})
+
+		r := routerProducts()
+		r.GET(idRequest, productController.Delete())
+
+		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, errProductNotFound.Error(), currentResponse.Error)
+	})
+
+	t.Run("Fail when ID is not a number", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.DELETE(idRequest, productController.Delete())
+
+		req, err := http.NewRequest(http.MethodDelete, idString, nil)
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, errIdNotNumber.Error(), currentResponse.Error)
+	})
+}
+
+func TestUpdateProduct(t *testing.T) {
+	t.Run("Sucessfully case", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(fakeProducts[0], web.ResponseCode{})
+
+		parsedFakeProduct, err := json.Marshal(fakeProducts[0])
+		assert.Nil(t, err)
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer(parsedFakeProduct))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var bodyResponse ObjectResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, fakeProducts[0], bodyResponse.Data)
+
+	})
+
+	t.Run("Not found case", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{
+				Code: http.StatusNotFound,
+				Err:  errProductNotFound,
+			})
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		parsedFakeProduct, err := json.Marshal(fakeProducts[0])
+		assert.Nil(t, err)
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer(parsedFakeProduct))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errProductNotFound.Error, bodyResponse.Error)
+	})
+
+	t.Run("Id must be a number", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
+
+		parsedFakeProduct, err := json.Marshal(fakeProducts[0])
+		assert.Nil(t, err)
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idString, bytes.NewBuffer(parsedFakeProduct))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errIdNotNumber.Error, bodyResponse.Error)
+
+	})
+
+	t.Run("Invalid request data", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte{}))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errInvalidRequest.Error, bodyResponse.Error)
+	})
+
+	t.Run("Body needed", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte("{}")))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errNeedBody.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Product Code greather than 0", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"product_code": 0 }`)))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errProductCodeZero.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Sysntax error on body", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"address": 0}`)))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errTypeData.Error(), bodyResponse.Error)
+	})
+}
+
+func TestCreateProduct(t *testing.T) {
+	t.Run("Success on Create", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+		).
+			Return(fakeProducts[0], web.ResponseCode{
+				Code: http.StatusCreated,
+			})
+
+		parsedFakeProduct, err := json.Marshal(fakeProducts[0])
+		assert.Nil(t, err)
+
+		r := gin.Default()
+		r.POST(defaultURL, productController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer(parsedFakeProduct))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, fakeProducts[0], bodyResponse.Error)
+	})
+
+	t.Run("invalid request input", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+		).
+			Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.POST(defaultURL, productController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"product_code":"Sheila"}`)))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Product Code must be greather than 0", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+		).Return(products.Product{}, web.ResponseCode{})
+
+		r := routerProducts()
+		r.POST(defaultURL, productController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"product_code":0}`)))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errProductCodeNeeded.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Conflict CID", func(t *testing.T) {
+		mockedService, sellerController := newProductController()
+		mockedService.On("GetAll").Return(fakeProducts, nil)
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(products.Product{}, web.ResponseCode{
+			Code: http.StatusConflict,
+			Err:  errProductCodeExists,
+		})
+
+		r := routerProducts()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"product_code": 2}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errProductCodeExists.Error(), bodyResponse.Error)
 	})
 }
