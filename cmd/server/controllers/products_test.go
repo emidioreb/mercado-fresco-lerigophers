@@ -77,16 +77,16 @@ const (
 )
 
 var (
-	errServer            = errors.New("internal server error")
-	errProductNotFound   = errors.New("product with id 1 not found")
-	errIdNotNumber       = errors.New("id must be a number")
-	errInvalidRequest    = errors.New("invalid request data")
-	errNeedBody          = errors.New("invalid request data - body needed")
-	errProductCodeZero   = errors.New("product code must be greather than 0")
-	errProductCodeNeeded = errors.New("product code must be informed and greather than 0")
-	errTypeData          = errors.New("invalid type of data")
-	errInvalidInput      = errors.New("invalid request input")
-	errProductCodeExists = errors.New("product code already exists")
+	errServer                 = errors.New("internal server error")
+	errProductNotFound        = errors.New("product with id 1 not found")
+	errIdNotNumber            = errors.New("id must be a number")
+	errInvalidRequest         = errors.New("invalid request data")
+	errNeedBody               = errors.New("invalid request data - body needed")
+	errProductWithBlankSpaces = errors.New("empty product_code not allowed")
+	errProductCodeNeeded      = errors.New("product code must be informed and greather than 0")
+	errTypeData               = errors.New("invalid type of data")
+	errInvalidInput           = errors.New("invalid request input")
+	errProductCodeExists      = errors.New("product code already exists")
 )
 
 func TestGetProduct(t *testing.T) {
@@ -401,30 +401,28 @@ func TestUpdateProduct(t *testing.T) {
 		assert.Equal(t, errNeedBody.Error(), bodyResponse.Error)
 	})
 
-	/*
-		t.Run("Product Code greather than 0", func(t *testing.T) {
-			mockedService, productController := newProductController()
-			mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
-				Return(products.Product{}, web.ResponseCode{})
+	t.Run("Product Code just with blank spaces", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(products.Product{}, web.ResponseCode{})
 
-			r := routerProducts()
-			r.PATCH(idRequest, productController.Update())
+		r := routerProducts()
+		r.PATCH(idRequest, productController.Update())
 
-			req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"product_code": "0" }`)))
-			assert.Nil(t, err)
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"product_code": "   " }`)))
+		assert.Nil(t, err)
 
-			rec := httptest.NewRecorder()
-			r.ServeHTTP(rec, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-			assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 
-			var bodyResponse ObjectErrorResponse
-			err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
-			assert.Nil(t, err)
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
 
-			assert.Equal(t, errProductCodeZero.Error(), bodyResponse.Error)
-		})
-	*/
+		assert.Equal(t, errProductWithBlankSpaces.Error(), bodyResponse.Error)
+	})
 
 	t.Run("Sysntax error on body", func(t *testing.T) {
 		mockedService, productController := newProductController()
@@ -524,40 +522,38 @@ func TestCreateProduct(t *testing.T) {
 		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
 	})
 
-	/*
-		t.Run("Product Code must be greather than 0", func(t *testing.T) {
-			mockedService, productController := newProductController()
-			mockedService.On("Create",
-				mock.AnythingOfType("string"),
-				mock.AnythingOfType("string"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("float64"),
-				mock.AnythingOfType("int"),
-			).Return(products.Product{}, web.ResponseCode{})
+	t.Run("Product Code with only blank spaces", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+		).Return(products.Product{}, web.ResponseCode{})
 
-			r := routerProducts()
-			r.POST(defaultURL, productController.Create())
+		r := routerProducts()
+		r.POST(defaultURL, productController.Create())
 
-			req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"product_code":0}`)))
-			assert.Nil(t, err)
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"product_code":"   "}`)))
+		assert.Nil(t, err)
 
-			rec := httptest.NewRecorder()
-			r.ServeHTTP(rec, req)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 
-			assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 
-			var bodyResponse ObjectErrorResponse
-			err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
-			assert.Nil(t, err)
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
 
-			assert.Equal(t, errProductCodeNeeded.Error(), bodyResponse.Error)
-		})
-	*/
+		assert.Equal(t, errProductWithBlankSpaces.Error(), bodyResponse.Error)
+	})
 
 	t.Run("Conflict Product Code", func(t *testing.T) {
 		mockedService, sellerController := newProductController()
