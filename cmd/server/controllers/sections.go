@@ -74,11 +74,6 @@ func (s *SectionController) GetOne() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -123,13 +118,7 @@ func (s *SectionController) GetAll() gin.HandlerFunc {
 
 func (s *SectionController) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
@@ -152,11 +141,6 @@ func (s *SectionController) Update() gin.HandlerFunc {
 		var requestValidatorType reqSections
 		requestData := make(map[string]interface{})
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {

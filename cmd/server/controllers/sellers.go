@@ -66,11 +66,6 @@ func (s *SellerController) GetOne() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -118,11 +113,6 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 
 		id := c.Param("id")
 
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -145,10 +135,6 @@ func (s *SellerController) Update() gin.HandlerFunc {
 		var requestData map[string]interface{}
 
 		id := c.Param("id")
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
