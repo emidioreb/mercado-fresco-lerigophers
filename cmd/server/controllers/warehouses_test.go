@@ -31,14 +31,14 @@ var fakeWarehouse = []warehouses.Warehouse{{
 	Address:            "Rua do bobo",
 	Telephone:          "11111111111",
 	MinimumCapacity:    0,
-	MaximumTemperature: 20,
+	MinimumTemperature: 20,
 }, {
 	Id:                 2,
 	WarehouseCode:      "2",
 	Address:            "Terra do nunca",
 	Telephone:          "Fake Address",
 	MinimumCapacity:    0,
-	MaximumTemperature: 20,
+	MinimumTemperature: 20,
 }}
 
 func TestControllerWarehouseCreate(t *testing.T) {
@@ -51,7 +51,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 			"address":            "rua do bobo",
 			"telephone":          "0",
 			"minimumCapacity":    0,
-			"maximumTemperature": 30,
+			"minimumTemperature": 30,
 		}
 
 		parsedInput, err := json.Marshal(input)
@@ -92,7 +92,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 			"address":            "rua do bobo",
 			"telephone":          "0",
 			"minimumCapacity":    0,
-			"maximumTemperature": 30,
+			"minimumTemperature": 30,
 		}
 
 		parsedInput, err := json.Marshal(input)
@@ -127,7 +127,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 			"address":            1.02,
 			"telephone":          "0",
 			"minimumCapacity":    0,
-			"maximumTemperature": 30,
+			"minimumTemperature": 30,
 		}
 
 		parsedInput, err := json.Marshal(input)
@@ -162,7 +162,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 			Address:            "rua do bobo",
 			Telephone:          "0",
 			MinimumCapacity:    0,
-			MaximumTemperature: 30,
+			MinimumTemperature: 30,
 		}
 
 		parsedInput, err := json.Marshal(input)
@@ -174,7 +174,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 			Address:            input.Address,
 			Telephone:          input.Telephone,
 			MinimumCapacity:    input.MinimumCapacity,
-			MaximumTemperature: input.MaximumTemperature,
+			MinimumTemperature: input.MinimumTemperature,
 		}
 
 		mockedService.On("Create",
@@ -436,7 +436,7 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("return error when send a bad request", func(t *testing.T) {
+	t.Run("return error when send a empty json in body", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
 
@@ -455,7 +455,7 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("return error when send a bad request", func(t *testing.T) {
+	t.Run("return error when send an invalid tyoe of data in json", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
 
@@ -474,7 +474,7 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("return error when send a bad request", func(t *testing.T) {
+	t.Run("return error when send an empty string in warehouse_code", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
 
@@ -493,7 +493,7 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	t.Run("return error when send a bad request", func(t *testing.T) {
+	t.Run("return error when warehouse not exists", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
 

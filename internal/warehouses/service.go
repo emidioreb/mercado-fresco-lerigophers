@@ -8,7 +8,7 @@ import (
 )
 
 type Service interface {
-	Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode)
+	Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, web.ResponseCode)
 	GetOne(id int) (Warehouse, web.ResponseCode)
 	GetAll() ([]Warehouse, web.ResponseCode)
 	Delete(id int) web.ResponseCode
@@ -25,7 +25,7 @@ func NewService(r Repository) Service {
 	}
 }
 
-func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, web.ResponseCode) {
+func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, web.ResponseCode) {
 	allWarehouses, _ := s.repository.GetAll()
 
 	for _, warehouse := range allWarehouses {
@@ -34,7 +34,7 @@ func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity
 		}
 	}
 
-	warehouse, _ := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, maxmumCapacity)
+	warehouse, _ := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, minimumTemperature)
 
 	return warehouse, web.NewCodeResponse(http.StatusCreated, nil)
 }

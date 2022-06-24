@@ -21,7 +21,7 @@ func TestServiceCreate(t *testing.T) {
 			Address:            "rua do bobo",
 			Telephone:          "0",
 			MinimumCapacity:    10,
-			MaximumTemperature: 30,
+			MinimumTemperature: 30,
 		}
 
 		mockedRepository.On("GetAll").Return([]warehouses.Warehouse{}, nil)
@@ -35,7 +35,7 @@ func TestServiceCreate(t *testing.T) {
 
 		service := warehouses.NewService(mockedRepository)
 
-		result, _ := service.Create(input.WarehouseCode, input.Address, input.Telephone, input.MinimumCapacity, input.MaximumTemperature)
+		result, _ := service.Create(input.WarehouseCode, input.Address, input.Telephone, input.MinimumCapacity, input.MinimumTemperature)
 
 		assert.Equal(t, result, input)
 		mockedRepository.AssertExpectations(t)
@@ -50,7 +50,7 @@ func TestServiceCreate(t *testing.T) {
 			Address:            "rua do bobo",
 			Telephone:          "0",
 			MinimumCapacity:    10,
-			MaximumTemperature: 30,
+			MinimumTemperature: 30,
 		}
 
 		expectedError := errors.New("warehouse_code already exists")
@@ -66,7 +66,7 @@ func TestServiceCreate(t *testing.T) {
 
 		service := warehouses.NewService(mockedRepository)
 
-		_, err := service.Create(input.WarehouseCode, input.Address, input.Telephone, input.MinimumCapacity, input.MaximumTemperature)
+		_, err := service.Create(input.WarehouseCode, input.Address, input.Telephone, input.MinimumCapacity, input.MinimumTemperature)
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
@@ -85,7 +85,7 @@ func TestServiceGetAll(t *testing.T) {
 				Address:            "rua do bobo",
 				Telephone:          "0",
 				MinimumCapacity:    10,
-				MaximumTemperature: 30,
+				MinimumTemperature: 30,
 			},
 			{
 				Id:                 2,
@@ -93,7 +93,7 @@ func TestServiceGetAll(t *testing.T) {
 				Address:            "rua do bobo",
 				Telephone:          "0",
 				MinimumCapacity:    10,
-				MaximumTemperature: 30,
+				MinimumTemperature: 30,
 			},
 		}
 
@@ -120,7 +120,7 @@ func TestServiceGetOne(t *testing.T) {
 			Address:            "rua do bobo",
 			Telephone:          "0",
 			MinimumCapacity:    10,
-			MaximumTemperature: 30,
+			MinimumTemperature: 30,
 		}
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input, nil).Once()
@@ -187,7 +187,7 @@ func TestServiceUpdate(t *testing.T) {
 			"address":             "rua do bobo",
 			"telephone":           "0",
 			"minimum_capacity":    10,
-			"maximum_temperature": 30,
+			"minimum_temperature": 30,
 		}
 
 		expectedWarehouse := warehouses.Warehouse{
@@ -196,7 +196,7 @@ func TestServiceUpdate(t *testing.T) {
 			Address:            "rua do bobo",
 			Telephone:          "0",
 			MinimumCapacity:    10,
-			MaximumTemperature: 30,
+			MinimumTemperature: 30,
 		}
 
 		input := warehouses.Warehouse{
@@ -205,7 +205,7 @@ func TestServiceUpdate(t *testing.T) {
 			Address:            "melicidade",
 			Telephone:          "1111111111",
 			MinimumCapacity:    150,
-			MaximumTemperature: 1000,
+			MinimumTemperature: 1000,
 		}
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
@@ -243,7 +243,7 @@ func TestServiceUpdate(t *testing.T) {
 				Address:            "melicidade",
 				Telephone:          "1111111111",
 				MinimumCapacity:    150,
-				MaximumTemperature: 1000,
+				MinimumTemperature: 1000,
 			},
 			{
 				Id:                 2,
@@ -251,7 +251,7 @@ func TestServiceUpdate(t *testing.T) {
 				Address:            "melicidade",
 				Telephone:          "1111111111",
 				MinimumCapacity:    150,
-				MaximumTemperature: 1000,
+				MinimumTemperature: 1000,
 			},
 		}
 

@@ -20,7 +20,7 @@ type ReqWarehouses struct {
 	Address            string `json:"adress"`
 	Telephone          string `json:"telephone"`
 	MinimumCapacity    int    `json:"minimum_capacity"`
-	MaximumTemperature int    `json:"maximum_temperature"`
+	MinimumTemperature int    `json:"minimum_temperature"`
 }
 
 func NewWarehouse(s warehouses.Service) *WarehouseController {
@@ -42,7 +42,7 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 			return
 		}
 
-		warehouse, resp := s.service.Create(requestData.WarehouseCode, requestData.Address, requestData.Telephone, requestData.MinimumCapacity, requestData.MaximumTemperature)
+		warehouse, resp := s.service.Create(requestData.WarehouseCode, requestData.Address, requestData.Telephone, requestData.MinimumCapacity, requestData.MinimumTemperature)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, gin.H{
