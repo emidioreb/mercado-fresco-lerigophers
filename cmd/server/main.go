@@ -1,9 +1,14 @@
 package main
 
 import (
-	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
+	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
+	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
+	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
+	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
+	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
-	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
@@ -18,8 +23,7 @@ func main() {
 
 	repoBuyer := buyers.NewRepository()
 	serviceBuyer := buyers.NewService(repoBuyer)
-	controllerBuyer := controllers.NewBuyer(serviceBuyer)
-
+	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
 	buyerGroup := server.Group("/api/v1/buyers")
 	{
 		buyerGroup.GET("/:id", controllerBuyer.GetOne())
@@ -29,10 +33,9 @@ func main() {
 		buyerGroup.PATCH("/:id", controllerBuyer.Update())
 	}
 
-	repository := sellers.NewRepository()
-	service := sellers.NewService(repository)
-	controller := controllers.NewSeller(service)
-
+	repoSellers := sellers.NewRepository()
+	service := sellers.NewService(repoSellers)
+	controller := sellersController.NewSeller(service)
 	sellerGroup := server.Group("/api/v1/sellers")
 	{
 		sellerGroup.GET("/:id", controller.GetOne())
@@ -44,7 +47,7 @@ func main() {
 
 	repoWarehouse := warehouses.NewRepository()
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
-	controllerWarehouse := controllers.NewWarehouse(serviceWarehouse)
+	controllerWarehouse := warehousesController.NewWarehouse(serviceWarehouse)
 
 	warehouseGroup := server.Group("/api/v1/warehouses")
 
@@ -58,7 +61,7 @@ func main() {
 
 	repoSection := sections.NewRepository()
 	serviceSection := sections.NewService(repoSection)
-	controllerSection := controllers.NewSection(serviceSection)
+	controllerSection := sectionsController.NewSection(serviceSection)
 
 	sectionGroup := server.Group("/api/v1/sections")
 	{
@@ -71,7 +74,7 @@ func main() {
 
 	repoProduct := products.NewRepository()
 	serviceProduct := products.NewService(repoProduct)
-	controllerProduct := controllers.NewProduct(serviceProduct)
+	controllerProduct := productsController.NewProduct(serviceProduct)
 
 	productGroup := server.Group("/api/v1/products")
 	{
@@ -84,7 +87,7 @@ func main() {
 
 	repoEmployee := employees.NewRepository()
 	serviceEmployee := employees.NewService(repoEmployee)
-	controllerEmployee := controllers.NewEmployee(serviceEmployee)
+	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
 
 	employeeGroup := server.Group("/api/v1/employees")
 	{

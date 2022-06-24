@@ -1,10 +1,11 @@
-package controllers
+package buyers_controller
 
 import (
 	"net/http"
 	"strconv"
 	"strings"
-	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -50,8 +51,7 @@ func (s *BuyerController) Create() gin.HandlerFunc {
 			return
 		}
 
-
-		c.JSON( resp.Code,
+		c.JSON(resp.Code,
 			web.NewResponse(buyer),
 		)
 	}
@@ -129,9 +129,9 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 		var requestValidatorType reqBuyers
 		requestData := make(map[string]interface{})
 
-		 id := c.Param("id")
+		id := c.Param("id")
 
-		 parsedId, err := strconv.Atoi(id)
+		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
 			return

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
+	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products/mocks"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"

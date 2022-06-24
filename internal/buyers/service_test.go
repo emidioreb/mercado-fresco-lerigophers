@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer/mocks"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

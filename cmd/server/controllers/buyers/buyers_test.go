@@ -1,4 +1,4 @@
-package controllers_test
+package buyers_controller_test
 
 import (
 	"bytes"
@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers"
-	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer/mocks"
+	controller "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers/mocks"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -34,9 +34,9 @@ func routerBuyers() *gin.Engine {
 	return router
 }
 
-func newBuyerController() (*mocks.Service, *controllers.BuyerController) {
+func newBuyerController() (*mocks.Service, *controller.BuyerController) {
 	mockedService := new(mocks.Service)
-	buyerController := controllers.NewBuyer(mockedService)
+	buyerController := controller.NewBuyer(mockedService)
 	return mockedService, buyerController
 }
 
@@ -60,15 +60,15 @@ const (
 )
 
 var (
-	errServer            = errors.New("internal server error")
-	errBuyerNotFound     = errors.New("buyer with id 1 not found")
-	errIdNotNumber       = errors.New("id must be a number")
-	errInvalidRequest    = errors.New("invalid request data")
-	errNeedBody          = errors.New("invalid request data - body needed")
-	errCardNumberIdEmpty = errors.New("empty card_number_id not allowed")
-	errTypeData     = errors.New("invalid type of data")
-	errInvalidInput = errors.New("invalid request input")
-	errCardNumberIdExists    = errors.New("CardNumberId already exists")
+	errServer             = errors.New("internal server error")
+	errBuyerNotFound      = errors.New("buyer with id 1 not found")
+	errIdNotNumber        = errors.New("id must be a number")
+	errInvalidRequest     = errors.New("invalid request data")
+	errNeedBody           = errors.New("invalid request data - body needed")
+	errCardNumberIdEmpty  = errors.New("empty card_number_id not allowed")
+	errTypeData           = errors.New("invalid type of data")
+	errInvalidInput       = errors.New("invalid request input")
+	errCardNumberIdExists = errors.New("CardNumberId already exists")
 )
 
 func TestGetBuyer(t *testing.T) {
