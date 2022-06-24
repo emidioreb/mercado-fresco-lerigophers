@@ -2,6 +2,7 @@ package sections
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -66,7 +67,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Section, we
 	_, responseCode := s.GetOne(id)
 
 	if responseCode.Err != nil {
-		return Section{}, web.NewCodeResponse(http.StatusNotFound, errors.New("section not found"))
+		return Section{}, web.NewCodeResponse(http.StatusNotFound, fmt.Errorf("section with id %d not found", id))
 	}
 
 	allSections, _ := s.GetAll()

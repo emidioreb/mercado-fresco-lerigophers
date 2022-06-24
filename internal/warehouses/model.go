@@ -6,5 +6,5 @@ type Warehouse struct {
 	Address            string `json:"adress"`
 	Telephone          string `json:"telephone"`
 	MinimumCapacity    int    `json:"minimum_capacity"`
-	MaximumTemperature int    `json:"maximum_temperature"`
+	MinimumTemperature int    `json:"minimum_temperature"`
 }
