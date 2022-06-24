@@ -15,12 +15,12 @@ type WarehouseController struct {
 	service warehouses.Service
 }
 
-type reqWarehouses struct {
+type ReqWarehouses struct {
 	WarehouseCode      string `json:"warehouse_code"`
 	Address            string `json:"adress"`
 	Telephone          string `json:"telephone"`
 	MinimumCapacity    int    `json:"minimum_capacity"`
-	MaximumTemperature int    `json:"maximum_temperature"`
+	MinimumTemperature int    `json:"minimum_temperature"`
 }
 
 func NewWarehouse(s warehouses.Service) *WarehouseController {
@@ -31,7 +31,7 @@ func NewWarehouse(s warehouses.Service) *WarehouseController {
 
 func (s *WarehouseController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqWarehouses
+		var requestData ReqWarehouses
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
@@ -42,7 +42,7 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 			return
 		}
 
-		warehouse, resp := s.service.Create(requestData.WarehouseCode, requestData.Address, requestData.Telephone, requestData.MinimumCapacity, requestData.MaximumTemperature)
+		warehouse, resp := s.service.Create(requestData.WarehouseCode, requestData.Address, requestData.Telephone, requestData.MinimumCapacity, requestData.MinimumTemperature)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, gin.H{
@@ -58,11 +58,6 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 func (s *WarehouseController) GetOne() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
@@ -108,11 +103,6 @@ func (s *WarehouseController) Delete() gin.HandlerFunc {
 
 		id := c.Param("id")
 
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -131,14 +121,9 @@ func (s *WarehouseController) Delete() gin.HandlerFunc {
 
 func (s *WarehouseController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestValidatorType reqWarehouses
+		var requestValidatorType ReqWarehouses
 		requestData := make(map[string]interface{})
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
