@@ -45,7 +45,7 @@ func (s service) GetOne(id int) (Employee, web.ResponseCode) {
 	if err != nil {
 		return Employee{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return employee, web.NewCodeResponse(http.StatusNotFound, nil)
+	return employee, web.NewCodeResponse(http.StatusOK, nil)
 }
 
 func (s service) GetAll() ([]Employee, web.ResponseCode) {
@@ -69,7 +69,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Employee, w
 	cardNumberReqData := requestData["card_number_id"]
 
 	if responseCode.Err != nil {
-		return Employee{}, web.NewCodeResponse(http.StatusNotFound, errors.New("employee not found"))
+		return Employee{}, web.NewCodeResponse(http.StatusNotFound, responseCode.Err)
 	}
 
 	for _, employee := range allEmployees {
