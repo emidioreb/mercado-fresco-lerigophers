@@ -25,6 +25,10 @@ type ObjectResponseArr struct {
 	Data []warehouses.Warehouse
 }
 
+type ObjectErrorResponse struct {
+	Error string `json:"error"`
+}
+
 var fakeWarehouse = []warehouses.Warehouse{{
 	Id:                 1,
 	WarehouseCode:      "1",
@@ -57,13 +61,15 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		parsedInput, err := json.Marshal(input)
 		assert.Nil(t, err)
 
+		expectedError := errors.New("warehouse_code already exists")
+
 		mockedService.On("Create",
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(warehouses.Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists")))
+		).Return(warehouses.Warehouse{}, web.NewCodeResponse(http.StatusConflict, expectedError))
 
 		router := gin.Default()
 		router.POST("/api/v1/warehouses", warehouseController.Create())
@@ -76,11 +82,10 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusConflict, rec.Code)
 
-		var currentResponse ObjectResponse
-
+		var currentResponse ObjectErrorResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, warehouses.Warehouse{}, currentResponse.Data)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when warehouse_code is empty", func(t *testing.T) {
@@ -98,13 +103,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		parsedInput, err := json.Marshal(input)
 		assert.Nil(t, err)
 
-		mockedService.On("Create",
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("int"),
-		).Return(warehouses.Warehouse{}, web.NewCodeResponse(0, nil))
+		expectedError := errors.New("empty warehouse_code not allowed")
 
 		router := gin.Default()
 		router.POST("/api/v1/warehouses", warehouseController.Create())
@@ -116,6 +115,11 @@ func TestControllerWarehouseCreate(t *testing.T) {
 
 		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when gives invalid input", func(t *testing.T) {
@@ -133,13 +137,7 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		parsedInput, err := json.Marshal(input)
 		assert.Nil(t, err)
 
-		mockedService.On("Create",
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("int"),
-		).Return(warehouses.Warehouse{}, web.NewCodeResponse(0, nil))
+		expectedError := errors.New("invalid request input")
 
 		router := gin.Default()
 		router.POST("/api/v1/warehouses", warehouseController.Create())
@@ -151,6 +149,11 @@ func TestControllerWarehouseCreate(t *testing.T) {
 
 		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("create, success case", func(t *testing.T) {
@@ -197,7 +200,6 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
 		var currentResponse ObjectResponse
-
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedReturnData, currentResponse.Data)
@@ -209,7 +211,7 @@ func TestControllerWarehouseGetAll(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("GetAll").Return([]warehouses.Warehouse{}, web.NewCodeResponse(http.StatusOK, nil))
+		mockedService.On("GetAll").Return(fakeWarehouse, web.NewCodeResponse(http.StatusOK, nil))
 
 		router := gin.Default()
 		router.GET("/api/v1/warehouses", warehouseController.GetAll())
@@ -223,17 +225,18 @@ func TestControllerWarehouseGetAll(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var currentResponse ObjectResponseArr
-
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, []warehouses.Warehouse{}, currentResponse.Data)
+		assert.Equal(t, fakeWarehouse, currentResponse.Data)
 	})
 
 	t.Run("error getAll", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("GetAll").Return([]warehouses.Warehouse{}, web.NewCodeResponse(http.StatusInternalServerError, errors.New("")))
+		expectedError := errors.New("internal server error")
+
+		mockedService.On("GetAll").Return([]warehouses.Warehouse{}, web.NewCodeResponse(http.StatusInternalServerError, expectedError))
 
 		router := gin.Default()
 		router.GET("/api/v1/warehouses", warehouseController.GetAll())
@@ -246,11 +249,10 @@ func TestControllerWarehouseGetAll(t *testing.T) {
 		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
-		var currentResponse web.ResponseCode
-
+		var currentResponse ObjectErrorResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
 
@@ -259,7 +261,7 @@ func TestControllerWarehouseGetOne(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, web.ResponseCode{})
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(fakeWarehouse[0], web.ResponseCode{Code: 200, Err: nil})
 
 		router := gin.Default()
 		router.GET("/api/v1/warehouses/:id", warehouseController.GetOne())
@@ -268,19 +270,23 @@ func TestControllerWarehouseGetOne(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
+
 		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var currentResponse ObjectResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Equal(t, fakeWarehouse[0], currentResponse.Data)
 	})
 
 	t.Run("return error when id not be a number", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, web.ResponseCode{})
+		expectedError := errors.New("id must be a number")
+
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, web.ResponseCode{Code: 400, Err: expectedError})
 
 		router := gin.Default()
 		router.GET("/api/v1/warehouses/:id", warehouseController.GetOne())
@@ -290,18 +296,21 @@ func TestControllerWarehouseGetOne(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
-		var currentResponse ObjectResponse
+		var currentResponse ObjectErrorResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when wharehouse not found", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, web.ResponseCode{Code: http.StatusNotFound, Err: errors.New("warehouse with id 2 not found")})
+		expectedError := errors.New("warehouse with id 2 not found")
+
+		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, web.ResponseCode{Code: http.StatusNotFound, Err: expectedError})
 
 		router := gin.Default()
 		router.GET("/api/v1/warehouses/:id", warehouseController.GetOne())
@@ -310,12 +319,14 @@ func TestControllerWarehouseGetOne(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
-		var currentResponse ObjectResponse
+		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		var currentResponse ObjectErrorResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusNotFound, rec.Code)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
 
@@ -333,16 +344,16 @@ func TestControllerWarehouseDelete(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 	})
 
-	t.Run("error delete", func(t *testing.T) {
+	t.Run("error delete when id is not a number", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.NewCodeResponse(http.StatusNoContent, nil))
+		expectedError := errors.New("id must be a number")
 
 		router := gin.Default()
 		router.DELETE("/api/v1/warehouses/:id", warehouseController.Delete())
@@ -351,16 +362,23 @@ func TestControllerWarehouseDelete(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when warehouse not found", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found")))
+		expectedError := errors.New("warehouse with id 2 was deleted")
+
+		mockedService.On("Delete", mock.AnythingOfType("int")).Return(web.NewCodeResponse(http.StatusNotFound, expectedError))
 
 		router := gin.Default()
 		router.DELETE("/api/v1/warehouses/:id", warehouseController.Delete())
@@ -369,9 +387,14 @@ func TestControllerWarehouseDelete(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
 
@@ -380,7 +403,7 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
 
-		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(fakeWarehouse[0], web.ResponseCode{})
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(fakeWarehouse[0], web.ResponseCode{Code: 200, Err: nil})
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -391,20 +414,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var currentResponse ObjectResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
-
 		assert.Equal(t, fakeWarehouse[0], currentResponse.Data)
 	})
 
 	t.Run("return error when gives an invalid id", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("id must be a number")
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -415,14 +439,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when send a bad request", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("invalid request data")
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -431,14 +462,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when send a empty json in body", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("invalid request data - body needed")
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -450,14 +488,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
-	t.Run("return error when send an invalid tyoe of data in json", func(t *testing.T) {
+	t.Run("return error when send an invalid type of data in json", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("invalid type of data")
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -469,14 +514,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when send an empty string in warehouse_code", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("empty warehouse_code not allowed")
 
 		router := gin.Default()
 		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
@@ -488,14 +540,21 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
 	t.Run("return error when warehouse not exists", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("warehouse not found")
 
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(warehouses.Warehouse{}, web.ResponseCode{Code: http.StatusNotFound, Err: errors.New("warehouse not found")})
 
@@ -509,8 +568,13 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, req)
 
+		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 }
