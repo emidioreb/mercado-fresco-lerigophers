@@ -216,9 +216,9 @@ func TestDeleteSeller(t *testing.T) {
 		})
 
 		r := routerSellers()
-		r.GET(idRequest, sellerController.Delete())
+		r.DELETE(idRequest, sellerController.Delete())
 
-		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
+		req, err := http.NewRequest(http.MethodDelete, idNumber1, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
