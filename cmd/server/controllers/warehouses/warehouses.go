@@ -154,7 +154,6 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 		}
 
 		warehouse, resp := s.service.Update(parsedId, requestData)
-
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
 			return
