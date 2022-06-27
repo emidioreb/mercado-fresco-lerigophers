@@ -424,7 +424,7 @@ func TestUpdateProduct(t *testing.T) {
 		assert.Equal(t, errProductWithBlankSpaces.Error(), bodyResponse.Error)
 	})
 
-	t.Run("Sysntax error on body", func(t *testing.T) {
+	t.Run("Syntax error on body", func(t *testing.T) {
 		mockedService, productController := newProductController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(products.Product{}, web.ResponseCode{})
