@@ -154,11 +154,11 @@ func TestGetOneSection(t *testing.T) {
 
 	t.Run("Error case if not exists - 404", func(t *testing.T) {
 		mockedService, sectionController := newSectionController()
-
 		expectedError := errNotFound
+
 		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(sections.Section{}, web.ResponseCode{
 			Code: http.StatusNotFound,
-			Err:  errNotFound,
+			Err:  expectedError,
 		})
 
 		r := routerSections()
