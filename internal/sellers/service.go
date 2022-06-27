@@ -26,7 +26,7 @@ func NewService(r Repository) Service {
 }
 
 func (s service) Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
-	allSellers, _ := s.GetAll()
+	allSellers, _ := s.repository.GetAll()
 
 	for _, seller := range allSellers {
 		if seller.Cid == cid {
@@ -63,9 +63,9 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
-	_, responseCode := s.GetOne(id)
-	if responseCode.Err != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusNotFound, errors.New("seller not found"))
+	_, err := s.repository.GetOne(id)
+	if err != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
 	allSellers, _ := s.GetAll()

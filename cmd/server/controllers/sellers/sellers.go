@@ -3,45 +3,50 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"strings"
-	buyers "github.com/emidioreb/mercado-fresco-lerigophers/internal/buyer"
+
+	"github.com/gin-gonic/gin/binding"
+
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
-type BuyerController struct {
-	service buyers.Service
+type SellerController struct {
+	service sellers.Service
 }
 
-type reqBuyers struct {
-	Id           int    `json:"id"`
-	CardNumberId string `json:"card_number_id"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
+type reqSellers struct {
+	Cid         int    `json:"cid"`
+	CompanyName string `json:"company_name"`
+	Address     string `json:"address"`
+	Telephone   string `json:"telephone"`
 }
 
-func NewBuyer(s buyers.Service) *BuyerController {
-	return &BuyerController{
+func NewSeller(s sellers.Service) *SellerController {
+	return &SellerController{
 		service: s,
 	}
 }
 
-func (s *BuyerController) Create() gin.HandlerFunc {
+func (s *SellerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqBuyers
+		var requestData reqSellers
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
 
-		if strings.ReplaceAll(requestData.CardNumberId, " ", "") == "" {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+		if requestData.Cid < 1 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("cid must be informed and greather than 0"))
 			return
 		}
 
-		buyer, resp := s.service.Create(requestData.CardNumberId, requestData.FirstName, requestData.LastName)
+		seller, resp := s.service.Create(
+			requestData.Cid,
+			requestData.CompanyName,
+			requestData.Address, requestData.Telephone,
+		)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, gin.H{
@@ -50,21 +55,16 @@ func (s *BuyerController) Create() gin.HandlerFunc {
 			return
 		}
 
-
-		c.JSON( resp.Code,
-			web.NewResponse(buyer),
+		c.JSON(
+			resp.Code,
+			web.NewResponse(seller),
 		)
 	}
 }
 
-func (s *BuyerController) GetOne() gin.HandlerFunc {
+func (s *SellerController) GetOne() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
@@ -72,7 +72,7 @@ func (s *BuyerController) GetOne() gin.HandlerFunc {
 			return
 		}
 
-		buyer, resp := s.service.GetOne(parsedId)
+		seller, resp := s.service.GetOne(parsedId)
 
 		if resp.Err != nil {
 			c.JSON(
@@ -84,14 +84,14 @@ func (s *BuyerController) GetOne() gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			web.NewResponse(buyer),
+			web.NewResponse(seller),
 		)
 	}
 }
 
-func (s *BuyerController) GetAll() gin.HandlerFunc {
+func (s *SellerController) GetAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		BuyersList, resp := s.service.GetAll()
+		sellersList, resp := s.service.GetAll()
 
 		if resp.Err != nil {
 			c.JSON(
@@ -103,20 +103,15 @@ func (s *BuyerController) GetAll() gin.HandlerFunc {
 
 		c.JSON(
 			http.StatusOK,
-			web.NewResponse(BuyersList),
+			web.NewResponse(sellersList),
 		)
 	}
 }
 
-func (s *BuyerController) Delete() gin.HandlerFunc {
+func (s *SellerController) Delete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
@@ -130,21 +125,16 @@ func (s *BuyerController) Delete() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(resp.Code, web.NewResponse("Buyer with id "+id+" was deleted"))
+		c.JSON(resp.Code, web.NewResponse("seller with id "+id+" was deleted"))
 	}
 }
 
-func (s *BuyerController) Update() gin.HandlerFunc {
+func (s *SellerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestValidatorType reqBuyers
-		requestData := make(map[string]interface{})
+		var requestValidatorType reqSellers
+		var requestData map[string]interface{}
 
 		id := c.Param("id")
-
-		if id == "" {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be informed"))
-			return
-		}
 
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
@@ -167,20 +157,23 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 			return
 		}
 
-		if requestData["card_number_id"] != nil {
-			if strings.ReplaceAll(requestData["card_number_id"].(string), " ", "") == "" {
-				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty card_number_id not allowed"))
+		if value, ok := requestData["cid"].(float64); ok {
+			if value < 1 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("cid must be greather than 0"),
+				)
 				return
 			}
 		}
 
-		buyer, resp := s.service.Update(parsedId, requestData)
+		seller, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, web.DecodeError(resp.Err.Error()))
 			return
 		}
 
-		c.JSON(resp.Code, web.NewResponse(buyer))
+		c.JSON(resp.Code, web.NewResponse(seller))
 	}
 }

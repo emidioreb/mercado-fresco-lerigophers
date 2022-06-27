@@ -1,12 +1,14 @@
 package warehouses
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var warehouses = []Warehouse{}
 var globalID = 1
 
 type Repository interface {
-	Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error)
+	Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error)
 	GetOne(id int) (Warehouse, error)
 	GetAll() ([]Warehouse, error)
 	Delete(id int) error
@@ -20,14 +22,15 @@ func NewRepository() Repository {
 	return &repository{}
 }
 
-func (repository) Create(warehouseCode, adress, telephone string, minimumCapacity, maxmumCapacity int) (Warehouse, error) {
+func (repository) Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error) {
+
 	newWarehouse := Warehouse{
 		Id:                 globalID,
 		WarehouseCode:      warehouseCode,
 		Address:            adress,
 		Telephone:          telephone,
 		MinimumCapacity:    minimumCapacity,
-		MaximumTemperature: maxmumCapacity,
+		MinimumTemperature: minimumTemperature,
 	}
 
 	warehouses = append(warehouses, newWarehouse)
@@ -75,8 +78,8 @@ func (repository) Update(id int, requestData map[string]interface{}) (Warehouse,
 					w.Telephone = value.(string)
 				case "minimum_capacity":
 					w.MinimumCapacity = int(value.(float64))
-				case "maximum_temperature":
-					w.MaximumTemperature = int(value.(float64))
+				case "minimum_temperature":
+					w.MinimumTemperature = int(value.(float64))
 				}
 			}
 			return *w, nil

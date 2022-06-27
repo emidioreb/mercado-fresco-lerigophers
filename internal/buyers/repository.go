@@ -1,8 +1,9 @@
 package buyers
 
 import (
-"fmt"
+	"fmt"
 )
+
 var Buyers = []Buyer{}
 var globalID = 1
 
@@ -21,7 +22,7 @@ func NewRepository() Repository {
 	return &repository{}
 }
 
-func (repository) Create(cardNumberId string, firstName, lastName string) (Buyer, error) {
+func (repository) Create(cardNumberId , firstName, lastName string) (Buyer, error) {
 	newBuyer := Buyer{
 		Id:           globalID,
 		CardNumberId: cardNumberId,
