@@ -327,7 +327,7 @@ func TestDeleteSeller(t *testing.T) {
 		r.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNoContent, rec.Code)
-		assert.True(t, "" == rec.Body.String())
+		assert.True(t, rec.Body.String() == "")
 	})
 
 	t.Run("Error case if not exists", func(t *testing.T) {
@@ -338,9 +338,9 @@ func TestDeleteSeller(t *testing.T) {
 		})
 
 		r := gin.Default()
-		r.GET(idRequest, employeeController.Delete())
+		r.DELETE(idRequest, employeeController.Delete())
 
-		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
+		req, err := http.NewRequest(http.MethodDelete, idNumber1, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
