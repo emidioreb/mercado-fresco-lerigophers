@@ -174,14 +174,13 @@ func TestServiceDelete(t *testing.T) {
 }
 
 func TestServiceUpdate(t *testing.T) {
-	t.Run("Return the updated seller when successfully", func(t *testing.T) {
+	t.Run("Return the updated buyer when successfully updated", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		requestData := map[string]interface{}{
-			"cid":          1,
-			"company_name": "Mercado Solto",
-			"address":      "Av. Fake das Dores",
-			"telephone":    "12345",
+			"card_number_id": "12345",
+			"first_name":     "Fulano",
+			"last_name":      "Beltrano",
 		}
 
 		expectedBuyer := buyers.Buyer{

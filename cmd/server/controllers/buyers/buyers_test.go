@@ -518,7 +518,7 @@ func TestCreateBuyer(t *testing.T) {
 		assert.Equal(t, errCardNumberIdEmpty.Error(), bodyResponse.Error)
 	})
 
-	t.Run("Conflict CID", func(t *testing.T) {
+	t.Run("Conflict Card Number Id", func(t *testing.T) {
 		mockedService, buyerController := newBuyerController()
 		mockedService.On("GetAll").Return(fakeBuyers, nil)
 		mockedService.On(
