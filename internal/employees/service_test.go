@@ -74,7 +74,7 @@ func TestServiceCreate(t *testing.T) {
 }
 
 func TestServiceGetAll(t *testing.T) {
-	t.Run("tests if getAll returns employees", func(t *testing.T) {
+	t.Run("Tests if getAll returns employees", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		input := employees.Employee{
@@ -98,7 +98,7 @@ func TestServiceGetAll(t *testing.T) {
 }
 
 func TestServiceGetOne(t *testing.T) {
-	t.Run("tests if getOne returns employee", func(t *testing.T) {
+	t.Run("Tests if getOne returns employee", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		input := employees.Employee{
@@ -120,7 +120,7 @@ func TestServiceGetOne(t *testing.T) {
 		mockedRepository.AssertExpectations(t)
 	})
 
-	t.Run("tests if getOne returns error", func(t *testing.T) {
+	t.Run("Tests if getOne returns error", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		expectedError := errors.New("employee with id 1 not found")
