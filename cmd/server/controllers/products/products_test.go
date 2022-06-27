@@ -232,9 +232,9 @@ func TestDeleteProduct(t *testing.T) {
 		})
 
 		r := routerProducts()
-		r.GET(idRequest, productController.Delete())
+		r.DELETE(idRequest, productController.Delete())
 
-		req, err := http.NewRequest(http.MethodGet, idNumber1, nil)
+		req, err := http.NewRequest(http.MethodDelete, idNumber1, nil)
 		assert.Nil(t, err)
 
 		rec := httptest.NewRecorder()
@@ -424,7 +424,7 @@ func TestUpdateProduct(t *testing.T) {
 		assert.Equal(t, errProductWithBlankSpaces.Error(), bodyResponse.Error)
 	})
 
-	t.Run("Syntax error on body", func(t *testing.T) {
+	t.Run("Sysntax error on body", func(t *testing.T) {
 		mockedService, productController := newProductController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
 			Return(products.Product{}, web.ResponseCode{})
