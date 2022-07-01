@@ -51,15 +51,7 @@ var inputSections = []sections.Section{
 }
 
 var (
-	// errServer                   = errors.New("internal server error")
-	errNotFound = errors.New("section with id 1 not found")
-	// errIdNumber                 = errors.New("id must be a number")
-	// errInvalidData              = errors.New("invalid request data")
-	// errInvalidTypeOfData        = errors.New("invalid type of data")
-	// errInvalidDataBody          = errors.New("invalid request data - body needed")
-	// errGreatherThanZero         = errors.New("section number must be greather than 0")
-	// errInformedGreatherThanZero = errors.New("section number must be informed and greather than 0")
-	// errInput                    = errors.New("invalid request input")
+	errNotFound      = errors.New("section with id 1 not found")
 	errAlreadyExists = errors.New("section number already exists")
 )
 
