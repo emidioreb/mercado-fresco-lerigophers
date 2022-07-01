@@ -34,7 +34,13 @@ func (s service) Create(cid int, companyName, address, telephone string) (Seller
 		}
 	}
 
-	seller, _ := s.repository.Create(cid, companyName, address, telephone)
+	seller, err := s.repository.Create(cid, companyName, address, telephone)
+	if err != nil {
+		return Seller{}, web.NewCodeResponse(
+			http.StatusInternalServerError,
+			err,
+		)
+	}
 
 	return seller, web.NewCodeResponse(http.StatusCreated, nil)
 }

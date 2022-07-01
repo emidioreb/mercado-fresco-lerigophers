@@ -42,6 +42,21 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if len(requestData.CompanyName) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("company_name too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Address) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("address too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Telephone) > 20 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
+			return
+		}
+
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,

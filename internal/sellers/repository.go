@@ -28,16 +28,33 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 }
 
 func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone string) (Seller, error) {
+	insert := `INSERT INTO sellers (cid, company_name, address, telephone) VALUES (?, ?, ?, ?)`
+
 	newSeller := Seller{
-		Id:          globalID,
 		Cid:         cid,
 		CompanyName: companyName,
 		Address:     address,
 		Telephone:   telephone,
 	}
 
-	sellers = append(sellers, newSeller)
-	globalID++
+	result, err := mariaDb.db.Exec(
+		insert,
+		cid,
+		companyName,
+		address,
+		telephone,
+	)
+
+	if err != nil {
+		return Seller{}, errors.New("ocurred an error to create seller")
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return Seller{}, errors.New("ocurred an error to create seller")
+	}
+
+	newSeller.Id = int(lastId)
 
 	return newSeller, nil
 }
