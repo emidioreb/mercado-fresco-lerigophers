@@ -89,13 +89,22 @@ func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 	return sellers, nil
 }
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	for i, seller := range sellers {
-		if seller.Id == id {
-			sellers = append(sellers[:i], sellers[i+1:]...)
-			return nil
-		}
+	delete := "DELETE FROM sellers WHERE id = ?"
+	result, err := mariaDb.db.Exec(delete, id)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("seller with id %d not found", id)
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 {
+		return fmt.Errorf("seller with id %d not found", id)
+	}
+
+	if err != nil {
+		return fmt.Errorf("error to find seller")
+	}
+
+	return nil
 }
 func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Seller, error) {
 	var s *Seller
