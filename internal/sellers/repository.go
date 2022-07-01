@@ -65,6 +65,27 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
 	return currentSeller, nil
 }
 func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
+	getOne := `SELECT * FROM sellers`
+	sellers := []Seller{}
+
+	rows, err := mariaDb.db.Query(getOne)
+	if err != nil {
+		return []Seller{}, errors.New("couldn't get sellers")
+	}
+
+	for rows.Next() {
+		var currentSeller Seller
+		if err := rows.Scan(
+			&currentSeller.Id,
+			&currentSeller.Cid,
+			&currentSeller.CompanyName,
+			&currentSeller.Address,
+			&currentSeller.Telephone,
+		); err != nil {
+			return []Seller{}, errors.New("couldn't get sellers")
+		}
+		sellers = append(sellers, currentSeller)
+	}
 	return sellers, nil
 }
 func (mariaDb mariaDbRepository) Delete(id int) error {
