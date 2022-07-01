@@ -45,7 +45,7 @@ func (s service) GetOne(id int) (Seller, web.ResponseCode) {
 	if err != nil {
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
-	return seller, web.NewCodeResponse(http.StatusNotFound, nil)
+	return seller, web.NewCodeResponse(http.StatusOK, nil)
 }
 
 func (s service) GetAll() ([]Seller, web.ResponseCode) {

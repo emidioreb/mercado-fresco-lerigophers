@@ -1,6 +1,10 @@
 package sellers
 
-import "fmt"
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+)
 
 var sellers = []Seller{}
 var globalID = 1
@@ -13,14 +17,17 @@ type Repository interface {
 	Update(id int, requestData map[string]interface{}) (Seller, error)
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(cid int, companyName, address, telephone string) (Seller, error) {
+func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone string) (Seller, error) {
 	newSeller := Seller{
 		Id:          globalID,
 		Cid:         cid,
@@ -34,19 +41,33 @@ func (repository) Create(cid int, companyName, address, telephone string) (Selle
 
 	return newSeller, nil
 }
-func (repository) GetOne(id int) (Seller, error) {
-	for _, seller := range sellers {
-		if seller.Id == id {
-			return seller, nil
-		}
+func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
+	getOne := `SELECT * FROM sellers WHERE id = ?`
+	currentSeller := Seller{}
+
+	row := mariaDb.db.QueryRow(getOne, id)
+	err := row.Scan(
+		&currentSeller.Id,
+		&currentSeller.Cid,
+		&currentSeller.CompanyName,
+		&currentSeller.Address,
+		&currentSeller.Telephone,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Seller{}, fmt.Errorf("seller with id %d not found", id)
 	}
 
-	return Seller{}, fmt.Errorf("seller with id %d not found", id)
+	if err != nil {
+		return Seller{}, errors.New("unexpected error")
+	}
+
+	return currentSeller, nil
 }
-func (repository) GetAll() ([]Seller, error) {
+func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 	return sellers, nil
 }
-func (repository) Delete(id int) error {
+func (mariaDb mariaDbRepository) Delete(id int) error {
 	for i, seller := range sellers {
 		if seller.Id == id {
 			sellers = append(sellers[:i], sellers[i+1:]...)
@@ -55,7 +76,7 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("seller with id %d not found", id)
 }
-func (repository) Update(id int, requestData map[string]interface{}) (Seller, error) {
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Seller, error) {
 	var s *Seller
 
 	for i, seller := range sellers {
