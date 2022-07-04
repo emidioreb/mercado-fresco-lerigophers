@@ -17,7 +17,7 @@ type WarehouseController struct {
 
 type reqWarehouses struct {
 	WarehouseCode      string `json:"warehouse_code"`
-	Address            string `json:"adress"`
+	Address            string `json:"address"`
 	Telephone          string `json:"telephone"`
 	MinimumCapacity    int    `json:"minimum_capacity"`
 	MinimumTemperature int    `json:"minimum_temperature"`
