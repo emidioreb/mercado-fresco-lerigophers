@@ -42,6 +42,21 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			return
 		}
 
+		if len(requestData.CompanyName) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("company_name too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Address) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("address too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Telephone) > 20 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
+			return
+		}
+
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,
@@ -162,6 +177,36 @@ func (s *SellerController) Update() gin.HandlerFunc {
 				c.AbortWithStatusJSON(
 					http.StatusUnprocessableEntity,
 					web.DecodeError("cid must be greather than 0"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["address"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("address too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["company_name"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("company_name too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["telephone"].(string); ok {
+			if len(value) > 20 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("telephone too long: max 20 characters"),
 				)
 				return
 			}
