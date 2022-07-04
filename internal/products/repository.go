@@ -1,6 +1,10 @@
 package products
 
-import "fmt"
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+)
 
 var Products = []Product{}
 var globalID = 1
@@ -14,14 +18,17 @@ type Repository interface {
 	Update(id int, requestData map[string]interface{}) (Product, error)
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
+func (mariaDb mariaDbRepository) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
 	freezingRate float64, productTypeId int) (Product, error) {
 	newProduct := Product{
 		Id:                             globalID,
@@ -43,19 +50,41 @@ func (repository) Create(productCode, description string, width, height, length,
 	return newProduct, nil
 }
 
-func (repository) GetOne(id int) (Product, error) {
-	for _, Product := range Products {
-		if Product.Id == id {
-			return Product, nil
-		}
+func (mariaDb mariaDbRepository) GetOne(id int) (Product, error) {
+	query := `SELECT * FROM products WHERE ID = ?`
+	row := mariaDb.db.QueryRow(query, id)
+
+	product := Product{}
+	err := row.Scan(&product.Id,
+		&product.ProductCode,
+		&product.Description,
+		&product.Width,
+		&product.Height,
+		&product.Length,
+		&product.NetWeight,
+		&product.ExpirationRate,
+		&product.RecommendedFreezingTemperature,
+		&product.FreezingRate,
+		&product.ProductTypeId,
+		&product.SellerId,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Product{}, fmt.Errorf("product with id %d not found", id)
 	}
 
-	return Product{}, fmt.Errorf("product with id %d not found", id)
+	if err != nil {
+		fmt.Printf("erro aqui", err)
+		return Product{}, errors.New("")
+	}
+
+	return product, nil
 }
-func (repository) GetAll() ([]Product, error) {
+
+func (mariaDb mariaDbRepository) GetAll() ([]Product, error) {
 	return Products, nil
 }
-func (repository) Delete(id int) error {
+func (mariaDb mariaDbRepository) Delete(id int) error {
 	for i, Product := range Products {
 		if Product.Id == id {
 			Products = append(Products[:i], Products[i+1:]...)
@@ -64,7 +93,7 @@ func (repository) Delete(id int) error {
 	}
 	return fmt.Errorf("product with id %d not found", id)
 }
-func (repository) Update(id int, requestData map[string]interface{}) (Product, error) {
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Product, error) {
 	var p *Product
 
 	for i, product := range Products {

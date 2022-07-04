@@ -90,7 +90,7 @@ func main() {
 		sectionGroup.PATCH("/:id", controllerSection.Update())
 	}
 
-	repoProduct := products.NewRepository()
+	repoProduct := products.NewMariaDbRepository(conn)
 	serviceProduct := products.NewService(repoProduct)
 	controllerProduct := productsController.NewProduct(serviceProduct)
 

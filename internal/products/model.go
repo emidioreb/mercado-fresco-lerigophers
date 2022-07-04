@@ -12,4 +12,5 @@ type Product struct {
 	RecommendedFreezingTemperature float64 `json:"recommended_freezing_temperature"`
 	FreezingRate                   float64 `json:"freezing_rate"`
 	ProductTypeId                  int     `json:"product_type_id"`
+	SellerId                       int     `json:"seller_id"`
 }
