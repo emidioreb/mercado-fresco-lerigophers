@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	"log"
+
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
@@ -16,10 +19,25 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	server := gin.Default()
+
+	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+
+	conn, _ := sql.Open("mysql", dataSource)
+	_, err := conn.Query("USE mercado_fresco")
+	if err != nil {
+		log.Fatal("Couldn't connect to database: mercado_fresco do not exists")
+	}
+
+	conn, err = sql.Open("mysql", dataSource)
+	if err != nil {
+		log.Fatal("failed to connect to mariadb")
+	}
 
 	repoBuyer := buyers.NewRepository()
 	serviceBuyer := buyers.NewService(repoBuyer)
@@ -33,7 +51,7 @@ func main() {
 		buyerGroup.PATCH("/:id", controllerBuyer.Update())
 	}
 
-	repoSellers := sellers.NewRepository()
+	repoSellers := sellers.NewMariaDbRepository(conn)
 	service := sellers.NewService(repoSellers)
 	controller := sellersController.NewSeller(service)
 	sellerGroup := server.Group("/api/v1/sellers")
@@ -98,5 +116,5 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
-	server.Run(":4000")
+	server.Run(":4400")
 }
