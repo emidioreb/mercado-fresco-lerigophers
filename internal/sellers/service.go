@@ -51,12 +51,18 @@ func (s service) GetOne(id int) (Seller, web.ResponseCode) {
 	if err != nil {
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
+
 	return seller, web.NewCodeResponse(http.StatusOK, nil)
 }
 
 func (s service) GetAll() ([]Seller, web.ResponseCode) {
 	sellers, err := s.repository.GetAll()
-	return sellers, web.NewCodeResponse(http.StatusOK, err)
+
+	if err != nil {
+		return []Seller{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
+	return sellers, web.NewCodeResponse(http.StatusOK, nil)
 }
 
 func (s service) Delete(id int) web.ResponseCode {
@@ -85,7 +91,10 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 		}
 	}
 
-	seller, _ := s.repository.Update(id, requestData)
+	seller, err := s.repository.Update(id, requestData)
+	if err != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
 	return seller, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

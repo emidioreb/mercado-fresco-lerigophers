@@ -182,6 +182,36 @@ func (s *SellerController) Update() gin.HandlerFunc {
 			}
 		}
 
+		if value, ok := requestData["address"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("address too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["company_name"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("company_name too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["telephone"].(string); ok {
+			if len(value) > 20 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("telephone too long: max 20 characters"),
+				)
+				return
+			}
+		}
+
 		seller, resp := s.service.Update(parsedId, requestData)
 
 		if resp.Err != nil {
