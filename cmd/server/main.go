@@ -91,7 +91,7 @@ func main() {
 	}
 
 	repoProduct := products.NewMariaDbRepository(conn)
-	serviceProduct := products.NewService(repoProduct)
+	serviceProduct := products.NewService(repoProduct, repoSellers)
 	controllerProduct := productsController.NewProduct(serviceProduct)
 
 	productGroup := server.Group("/api/v1/products")

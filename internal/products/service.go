@@ -2,14 +2,16 @@ package products
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
 	Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate float64, productTypeId int) (Product, web.ResponseCode)
+		freezingRate float64, productTypeId, sellerId int) (Product, web.ResponseCode)
 	GetOne(id int) (Product, web.ResponseCode)
 	GetAll() ([]Product, web.ResponseCode)
 	Delete(id int) web.ResponseCode
@@ -17,17 +19,19 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository       Repository
+	sellerRepository sellers.Repository
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, sr sellers.Repository) Service {
 	return &service{
-		repository: r,
+		repository:       r,
+		sellerRepository: sr,
 	}
 }
 
-func (s service) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-	freezingRate float64, productTypeId int) (Product, web.ResponseCode) {
+func (s service) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperature,
+	freezingRate float64, productTypeId, sellerId int) (Product, web.ResponseCode) {
 	allProducts, _ := s.repository.GetAll()
 
 	for _, product := range allProducts {
@@ -36,8 +40,15 @@ func (s service) Create(productCode, description string, width, height, length, 
 		}
 	}
 
-	product, _ := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate, productTypeId)
+	if _, err := s.sellerRepository.GetOne(sellerId); err != nil {
+		fmt.Println(err, 44)
+		return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed seller_id don't exists"))
+	}
+
+	product, err := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperature,
+		freezingRate, productTypeId, sellerId)
+
+	fmt.Println(err)
 
 	return product, web.NewCodeResponse(http.StatusCreated, nil)
 }

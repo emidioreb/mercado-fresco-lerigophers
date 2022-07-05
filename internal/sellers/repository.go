@@ -81,6 +81,7 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
 	}
 
 	if err != nil {
+		fmt.Println(err, 84)
 		return Seller{}, errGetOneSeller
 	}
 

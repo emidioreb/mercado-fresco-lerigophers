@@ -27,6 +27,7 @@ type reqProducts struct {
 	RecommendedFreezingTemperature float64 `json:"recommended_freezing_temperature"`
 	FreezingRate                   float64 `json:"freezing_rate"`
 	ProductTypeId                  int     `json:"product_type_id"`
+	SellerId                       int     `json:"seller_id"`
 }
 
 func NewProduct(s products.Service) *ProductController {
@@ -51,7 +52,7 @@ func (s *ProductController) Create() gin.HandlerFunc {
 
 		product, resp := s.service.Create(requestData.ProductCode, requestData.Description,
 			requestData.Width, requestData.Height, requestData.Length, requestData.NetWeight, requestData.ExpirationRate,
-			requestData.RecommendedFreezingTemperature, requestData.FreezingRate, requestData.ProductTypeId)
+			requestData.RecommendedFreezingTemperature, requestData.FreezingRate, requestData.ProductTypeId, requestData.SellerId)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, gin.H{
