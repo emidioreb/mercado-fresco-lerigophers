@@ -15,7 +15,7 @@ var (
 )
 
 type Repository interface {
-	Create(cid int, companyName, address, telephone string) (Seller, error)
+	Create(cid int, companyName, address, telephone, localityId string) (Seller, error)
 	GetOne(id int) (Seller, error)
 	GetAll() ([]Seller, error)
 	Delete(id int) error
@@ -32,14 +32,15 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 	}
 }
 
-func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone string) (Seller, error) {
-	insert := `INSERT INTO sellers (cid, company_name, address, telephone) VALUES (?, ?, ?, ?)`
+func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone, localityId string) (Seller, error) {
+	insert := `INSERT INTO sellers (cid, company_name, address, telephone, locality_id) VALUES (?, ?, ?, ?, ?)`
 
 	newSeller := Seller{
 		Cid:         cid,
 		CompanyName: companyName,
 		Address:     address,
 		Telephone:   telephone,
+		LocalityId:  localityId,
 	}
 
 	result, err := mariaDb.db.Exec(
@@ -48,6 +49,7 @@ func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone
 		companyName,
 		address,
 		telephone,
+		localityId,
 	)
 
 	if err != nil {
@@ -63,6 +65,7 @@ func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone
 
 	return newSeller, nil
 }
+
 func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
 	getOne := `SELECT * FROM sellers WHERE id = ?`
 	currentSeller := Seller{}
@@ -104,6 +107,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 			&currentSeller.CompanyName,
 			&currentSeller.Address,
 			&currentSeller.Telephone,
+			&currentSeller.LocalityId,
 		); err != nil {
 			return []Seller{}, errGetSellers
 		}

@@ -20,6 +20,7 @@ type reqSellers struct {
 	CompanyName string `json:"company_name"`
 	Address     string `json:"address"`
 	Telephone   string `json:"telephone"`
+	LocalityId  string `json:"locality_id"`
 }
 
 func NewSeller(s sellers.Service) *SellerController {
@@ -60,7 +61,9 @@ func (s *SellerController) Create() gin.HandlerFunc {
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,
-			requestData.Address, requestData.Telephone,
+			requestData.Address,
+			requestData.Telephone,
+			requestData.LocalityId,
 		)
 
 		if resp.Err != nil {
