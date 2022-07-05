@@ -25,6 +25,9 @@ var (
 			case "telephone":
 				fieldsToUpdate = append(fieldsToUpdate, " telephone = ?")
 				valuesToUse = append(valuesToUse, requestData[key])
+			case "locality_id":
+				fieldsToUpdate = append(fieldsToUpdate, " locality_id = ?")
+				valuesToUse = append(valuesToUse, requestData[key])
 			case "cid":
 				fieldsToUpdate = append(fieldsToUpdate, " cid = ?")
 				valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
