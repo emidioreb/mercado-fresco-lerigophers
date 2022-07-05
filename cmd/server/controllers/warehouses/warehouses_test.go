@@ -160,7 +160,8 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		input := controllers.ReqWarehouses{
+		input := warehouses.Warehouse{
+			Id:                 1,
 			WarehouseCode:      "1",
 			Address:            "rua do bobo",
 			Telephone:          "0",
