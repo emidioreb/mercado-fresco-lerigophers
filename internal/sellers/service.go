@@ -4,11 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
-	Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
+	Create(cid int, companyName, address, telephone, localityId string) (Seller, web.ResponseCode)
 	GetOne(id int) (Seller, web.ResponseCode)
 	GetAll() ([]Seller, web.ResponseCode)
 	Delete(id int) web.ResponseCode
@@ -16,25 +17,31 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository         Repository
+	localityRepository localities.Repository
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, lr localities.Repository) Service {
 	return &service{
-		repository: r,
+		repository:         r,
+		localityRepository: lr,
 	}
 }
 
-func (s service) Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
+func (s service) Create(cid int, companyName, address, telephone, localityId string) (Seller, web.ResponseCode) {
 	allSellers, _ := s.repository.GetAll()
-
 	for _, seller := range allSellers {
 		if seller.Cid == cid {
 			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 		}
 	}
 
-	seller, err := s.repository.Create(cid, companyName, address, telephone)
+	_, localityErr := s.localityRepository.GetOne(localityId)
+	if localityErr != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed locality_id don't exists"))
+	}
+
+	seller, err := s.repository.Create(cid, companyName, address, telephone, localityId)
 	if err != nil {
 		return Seller{}, web.NewCodeResponse(
 			http.StatusInternalServerError,

@@ -7,6 +7,7 @@ import (
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
+	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
@@ -15,6 +16,7 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
@@ -28,7 +30,7 @@ import (
 func main() {
 	server := gin.Default()
 
-	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -50,7 +52,16 @@ func main() {
 		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSellers())
 	}
 
-	repoBuyer := buyers.NewRepository()
+	repoLocalities := localities.NewMariaDbRepository(conn)
+	serviceLocality := localities.NewService(repoLocalities)
+	controllerLocality := localitiesController.NewSeller(serviceLocality)
+	localityGroup := server.Group("/api/v1/localities")
+	{
+		localityGroup.POST("/", controllerLocality.CreateLocality())
+		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+	}
+
+	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
 	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
 	buyerGroup := server.Group("/api/v1/buyers")
@@ -63,7 +74,7 @@ func main() {
 	}
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
-	service := sellers.NewService(repoSellers)
+	service := sellers.NewService(repoSellers, repoLocalities)
 	controller := sellersController.NewSeller(service)
 	sellerGroup := server.Group("/api/v1/sellers")
 	{
