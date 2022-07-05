@@ -6,6 +6,7 @@ import (
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
+	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
@@ -37,6 +39,15 @@ func main() {
 	conn, err = sql.Open("mysql", dataSource)
 	if err != nil {
 		log.Fatal("failed to connect to mariadb")
+	}
+
+	repoProductBatches := product_batches.NewMariaDbRepository(conn)
+	serviceProductBatches := product_batches.NewService(repoProductBatches)
+	controllerProductBatches := productBatchesController.NewProductBatch(serviceProductBatches)
+	ProductBatchesGroup := server.Group("/api/v1/productBatches")
+	{
+		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSellers())
 	}
 
 	repoBuyer := buyers.NewRepository()
