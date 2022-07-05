@@ -28,7 +28,7 @@ import (
 func main() {
 	server := gin.Default()
 
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -50,7 +50,7 @@ func main() {
 		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
 	}
 
-	repoBuyer := buyers.NewRepository()
+	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
 	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
 	buyerGroup := server.Group("/api/v1/buyers")
