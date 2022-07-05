@@ -5,6 +5,7 @@ import (
 	"log"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
@@ -12,6 +13,7 @@ import (
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
@@ -26,7 +28,7 @@ import (
 func main() {
 	server := gin.Default()
 
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -114,6 +116,15 @@ func main() {
 		employeeGroup.POST("/", controllerEmployee.Create())
 		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+
+	repoCarriers := carriers.NewMariaDbRepository(conn)
+	serviceCarriers := carriers.NewService(repoCarriers)
+	controllerCarriers := controllers.NewCarry(serviceCarriers)
+
+	carriersGroup := server.Group("/api/v1/carries")
+	{
+		carriersGroup.POST("/", controllerCarriers.Create())
 	}
 
 	server.Run(":4400")

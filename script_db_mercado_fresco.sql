@@ -179,7 +179,7 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- Table `mercado_fresco`.`carriers`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mercado_fresco`.`carriers` (
-  `id` INT UNSIGNED NOT NULL,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `cid` VARCHAR(255) NOT NULL,
   `company_name` VARCHAR(255) NULL,
   `address` VARCHAR(255) NULL,
@@ -350,3 +350,7 @@ INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("food");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("data storage");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("test");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("xablau");
+
+-- Localities
+INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("65760000", "Presidente Dutra", "Maranhão", "Brasil");
+INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("456", "Cidad Delest", "Paraguay", "PY");
