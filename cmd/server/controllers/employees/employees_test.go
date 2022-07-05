@@ -71,7 +71,7 @@ var (
 	errCardIdExists     = errors.New("card_number_id already exists")
 )
 
-func TestCreateSeller(t *testing.T) {
+func TestCreateEmployee(t *testing.T) {
 	t.Run("Successfully on Create", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
 		mockedService.On(
@@ -106,7 +106,7 @@ func TestCreateSeller(t *testing.T) {
 		assert.Equal(t, fakeEmployee[0], bodyResponse.Data)
 	})
 
-	t.Run("invalid request input", func(t *testing.T) {
+	t.Run("Invalid request input", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
 		mockedService.On(
 			"Create",
@@ -135,7 +135,7 @@ func TestCreateSeller(t *testing.T) {
 		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
 	})
 
-	t.Run("card_number_id must be informed", func(t *testing.T) {
+	t.Run("Card_number_id must be informed", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
 		mockedService.On(
 			"Create",
@@ -376,7 +376,7 @@ func TestDeleteSeller(t *testing.T) {
 	})
 }
 
-func TestUpdateSeller(t *testing.T) {
+func TestUpdateEmployee(t *testing.T) {
 	t.Run("Sucessfully case", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).

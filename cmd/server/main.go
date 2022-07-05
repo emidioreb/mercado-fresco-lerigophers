@@ -26,7 +26,7 @@ import (
 func main() {
 	server := gin.Default()
 
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -103,8 +103,8 @@ func main() {
 		productGroup.PATCH("/:id", controllerProduct.Update())
 	}
 
-	repoEmployee := employees.NewRepository()
-	serviceEmployee := employees.NewService(repoEmployee)
+	repoEmployee := employees.NewMariaDbRepository(conn)
+	serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
 	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
 
 	employeeGroup := server.Group("/api/v1/employees")
@@ -116,5 +116,5 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
-	server.Run(":4400")
+	server.Run(":4000")
 }

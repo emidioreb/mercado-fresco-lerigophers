@@ -32,12 +32,32 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 		var requestData reqEmployee
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request input"))
 			return
 		}
 
 		if strings.ReplaceAll(requestData.CardNumberId, " ", "") == "" {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty card_number_id not allowed"))
+			return
+		}
+
+		if len(requestData.CardNumberId) > 45 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("card_number_id too long: max 45 characters"))
+			return
+		}
+
+		if len(requestData.FirstName) > 45 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("first_name too long: max 45 characters"))
+			return
+		}
+
+		if len(requestData.LastName) > 45 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("last_name too long: max 45 characters"))
+			return
+		}
+
+		if requestData.WarehouseId == 0 {
+			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("warehouse_id must be informed and greather than 0"))
 			return
 		}
 
@@ -158,7 +178,32 @@ func (s *EmployeeController) Update() gin.HandlerFunc {
 
 		if requestData["card_number_id"] != nil {
 			if strings.ReplaceAll(requestData["card_number_id"].(string), " ", "") == "" {
-				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty card_number_id not allowed"))
+				return
+			}
+			if len(requestData["card_number_id"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("card_number_id too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["first_name"] != nil {
+			if len(requestData["first_name"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("first_name too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["last_name"] != nil {
+			if len(requestData["last_name"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("last_name too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["warehouse_id"] != nil {
+			if int(requestData["warehouse_id"].(float64)) == 0 {
+				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("warehouse_id must be greather than 0"))
 				return
 			}
 		}
