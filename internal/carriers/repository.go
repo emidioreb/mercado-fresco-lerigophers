@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	errCreateCarry  = errors.New("ocurred an error to create seller")
+	errCreateCarry = errors.New("ocurred an error to create seller")
 )
 
 type Repository interface {

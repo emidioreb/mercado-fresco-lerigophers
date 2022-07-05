@@ -88,8 +88,7 @@ CREATE TABLE IF NOT EXISTS `mercado_fresco`.`localities` (
   `province_name` VARCHAR(255) NOT NULL,
   `country_name` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
-  UNIQUE INDEX `cid_UNIQUE` (`locality_name` ASC) VISIBLE)
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
@@ -354,3 +353,4 @@ INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("xablau");
 -- Localities
 INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("65760000", "Presidente Dutra", "Maranhão", "Brasil");
 INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("456", "Cidad Delest", "Paraguay", "PY");
+

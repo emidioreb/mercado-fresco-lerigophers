@@ -7,6 +7,7 @@ import (
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
+	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
@@ -15,6 +16,7 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
@@ -41,6 +43,16 @@ func main() {
 		log.Fatal("failed to connect to mariadb")
 	}
 
+	repoLocalities := localities.NewMariaDbRepository(conn)
+	serviceLocality := localities.NewService(repoLocalities)
+	controllerLocality := localitiesController.NewSeller(serviceLocality)
+	localityGroup := server.Group("/api/v1/localities")
+	{
+		localityGroup.POST("/", controllerLocality.CreateLocality())
+		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
+	}
+
 	repoBuyer := buyers.NewRepository()
 	serviceBuyer := buyers.NewService(repoBuyer)
 	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
@@ -54,7 +66,7 @@ func main() {
 	}
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
-	service := sellers.NewService(repoSellers)
+	service := sellers.NewService(repoSellers, repoLocalities)
 	controller := sellersController.NewSeller(service)
 	sellerGroup := server.Group("/api/v1/sellers")
 	{
