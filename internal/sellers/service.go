@@ -82,19 +82,25 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
-	_, err := s.repository.GetOne(id)
-	if err != nil {
+	if _, err := s.repository.GetOne(id); err != nil {
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
 	allSellers, _ := s.GetAll()
-	currentCid := requestData["cid"]
-
-	if currentCid != nil {
+	if currCid := requestData["cid"]; currCid != nil {
 		for _, seller := range allSellers {
-			if float64(seller.Cid) == currentCid && seller.Id != id {
+			if float64(seller.Cid) == currCid && seller.Id != id {
 				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 			}
+		}
+	}
+
+	if currLocalityId := requestData["locality_id"]; currLocalityId != nil {
+		parsedLocalityId, _ := currLocalityId.(string)
+		if _, err := s.localityRepository.GetOne(parsedLocalityId); err != nil {
+			return Seller{}, web.NewCodeResponse(
+				http.StatusConflict,
+				errors.New("informed locality_id don't exists"))
 		}
 	}
 

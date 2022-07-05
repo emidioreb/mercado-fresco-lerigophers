@@ -153,7 +153,6 @@ func (s *SellerController) Update() gin.HandlerFunc {
 		var requestData map[string]interface{}
 
 		id := c.Param("id")
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -210,6 +209,16 @@ func (s *SellerController) Update() gin.HandlerFunc {
 				c.AbortWithStatusJSON(
 					http.StatusUnprocessableEntity,
 					web.DecodeError("telephone too long: max 20 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["locality_id"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("locality_id too long: max 255 characters"),
 				)
 				return
 			}

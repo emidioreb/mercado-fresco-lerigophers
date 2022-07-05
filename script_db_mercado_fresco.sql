@@ -98,7 +98,7 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mercado_fresco`.`sellers` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `cid` INT UNSIGNED NOT NULL,
+  `cid` BIGINT(8) UNSIGNED NOT NULL,
   `company_name` VARCHAR(255) NULL DEFAULT NULL,
   `address` VARCHAR(255) NULL DEFAULT NULL,
   `telephone` VARCHAR(20) NULL DEFAULT NULL,
