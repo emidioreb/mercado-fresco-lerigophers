@@ -46,12 +46,16 @@ var fakeSellers = []sellers.Seller{{
 	CompanyName: "Fake Business",
 	Address:     "Fake Address",
 	Telephone:   "Fake Number",
+	LocalityId:  "12345",
 }, {
 	Id:          2,
 	Cid:         2,
 	CompanyName: "Fake Business",
 	Address:     "Fake Address",
-	Telephone:   "Fake Number"}}
+	Telephone:   "Fake Number",
+	LocalityId:  "67890",
+},
+}
 
 const (
 	defaultURL = "/api/v1/sellers/"
