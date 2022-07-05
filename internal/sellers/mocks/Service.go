@@ -13,20 +13,20 @@ type Service struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: cid, companyName, address, telephone
-func (_m *Service) Create(cid int, companyName string, address string, telephone string) (sellers.Seller, web.ResponseCode) {
-	ret := _m.Called(cid, companyName, address, telephone)
+// Create provides a mock function with given fields: cid, companyName, address, telephone, localityId
+func (_m *Service) Create(cid int, companyName string, address string, telephone string, localityId string) (sellers.Seller, web.ResponseCode) {
+	ret := _m.Called(cid, companyName, address, telephone, localityId)
 
 	var r0 sellers.Seller
-	if rf, ok := ret.Get(0).(func(int, string, string, string) sellers.Seller); ok {
-		r0 = rf(cid, companyName, address, telephone)
+	if rf, ok := ret.Get(0).(func(int, string, string, string, string) sellers.Seller); ok {
+		r0 = rf(cid, companyName, address, telephone, localityId)
 	} else {
 		r0 = ret.Get(0).(sellers.Seller)
 	}
 
 	var r1 web.ResponseCode
-	if rf, ok := ret.Get(1).(func(int, string, string, string) web.ResponseCode); ok {
-		r1 = rf(cid, companyName, address, telephone)
+	if rf, ok := ret.Get(1).(func(int, string, string, string, string) web.ResponseCode); ok {
+		r1 = rf(cid, companyName, address, telephone, localityId)
 	} else {
 		r1 = ret.Get(1).(web.ResponseCode)
 	}

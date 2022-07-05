@@ -15,7 +15,7 @@ var (
 )
 
 type Repository interface {
-	Create(cid int, companyName, address, telephone string) (Seller, error)
+	Create(cid int, companyName, address, telephone, localityId string) (Seller, error)
 	GetOne(id int) (Seller, error)
 	GetAll() ([]Seller, error)
 	Delete(id int) error
@@ -32,22 +32,22 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 	}
 }
 
-func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone string) (Seller, error) {
-	insert := `INSERT INTO sellers (cid, company_name, address, telephone) VALUES (?, ?, ?, ?)`
-
+func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone, localityId string) (Seller, error) {
 	newSeller := Seller{
 		Cid:         cid,
 		CompanyName: companyName,
 		Address:     address,
 		Telephone:   telephone,
+		LocalityId:  localityId,
 	}
 
 	result, err := mariaDb.db.Exec(
-		insert,
+		queryCreateSeller,
 		cid,
 		companyName,
 		address,
 		telephone,
+		localityId,
 	)
 
 	if err != nil {
@@ -63,17 +63,18 @@ func (mariaDb mariaDbRepository) Create(cid int, companyName, address, telephone
 
 	return newSeller, nil
 }
+
 func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
-	getOne := `SELECT * FROM sellers WHERE id = ?`
 	currentSeller := Seller{}
 
-	row := mariaDb.db.QueryRow(getOne, id)
+	row := mariaDb.db.QueryRow(queryGetOneSeller, id)
 	err := row.Scan(
 		&currentSeller.Id,
 		&currentSeller.Cid,
 		&currentSeller.CompanyName,
 		&currentSeller.Address,
 		&currentSeller.Telephone,
+		&currentSeller.LocalityId,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -89,10 +90,9 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Seller, error) {
 }
 
 func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
-	query := `SELECT * FROM sellers`
 	sellers := []Seller{}
 
-	rows, err := mariaDb.db.Query(query)
+	rows, err := mariaDb.db.Query(queryGetAllSellers)
 	if err != nil {
 		return []Seller{}, errGetSellers
 	}
@@ -105,6 +105,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 			&currentSeller.CompanyName,
 			&currentSeller.Address,
 			&currentSeller.Telephone,
+			&currentSeller.LocalityId,
 		); err != nil {
 			return []Seller{}, errGetSellers
 		}
@@ -114,8 +115,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 }
 
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	delete := "DELETE FROM sellers WHERE id = ?"
-	result, err := mariaDb.db.Exec(delete, id)
+	result, err := mariaDb.db.Exec(queryDeleteSeller, id)
 	if err != nil {
 		return err
 	}
@@ -132,39 +132,7 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 	return nil
 }
 func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Seller, error) {
-	prefixQuery := "UPDATE sellers SET"
-	fieldsToUpdate := []string{}
-	valuesToUse := []interface{}{}
-	whereCase := "WHERE id = ?"
-	var finalQuery string
-
-	for key, _ := range requestData {
-		switch key {
-		case "company_name":
-			fieldsToUpdate = append(fieldsToUpdate, " company_name = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "address":
-			fieldsToUpdate = append(fieldsToUpdate, " address = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "telephone":
-			fieldsToUpdate = append(fieldsToUpdate, " telephone = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "cid":
-			fieldsToUpdate = append(fieldsToUpdate, " cid = ?")
-			valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
-		}
-	}
-
-	valuesToUse = append(valuesToUse, id)
-	finalQuery += prefixQuery
-	for index, field := range fieldsToUpdate {
-		if index+1 == len(fieldsToUpdate) {
-			finalQuery += field + " "
-		} else {
-			finalQuery += field + ", "
-		}
-	}
-	finalQuery += whereCase
+	finalQuery, valuesToUse := queryUpdateSeller(requestData, id)
 
 	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
 	if err != nil {

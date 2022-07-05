@@ -41,7 +41,6 @@ func (s service) Create(productCode, description string, width, height, length, 
 	}
 
 	if _, err := s.sellerRepository.GetOne(sellerId); err != nil {
-		fmt.Println(err, 44)
 		return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed seller_id don't exists"))
 	}
 

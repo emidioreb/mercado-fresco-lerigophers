@@ -1,11 +1,18 @@
 package buyers
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 )
 
-var Buyers = []Buyer{}
-var globalID = 1
+var (
+	errUpdatedBuyer = errors.New("ocurred an error while updating the buyer")
+	errCreateBuyer  = errors.New("ocurred an error to create buyer")
+	errGetBuyers    = errors.New("couldn't get buyers")
+	errGetOneBuyer  = errors.New("unexpected error to get buyer")
+	errDeleteBuyer  = errors.New("unexpected error to delete buyer")
+)
 
 type Repository interface {
 	Create(cardNumberId string, firstName, lastName string) (Buyer, error)
@@ -15,69 +22,156 @@ type Repository interface {
 	Update(id int, requestData map[string]interface{}) (Buyer, error)
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(cardNumberId , firstName, lastName string) (Buyer, error) {
+func (mariaDb mariaDbRepository) Create(cardNumberId, firstName, lastName string) (Buyer, error) {
+	insert := `INSERT INTO buyers(card_number_id, first_name, last_name) VALUES(?, ?, ?);`
+
 	newBuyer := Buyer{
-		Id:           globalID,
 		CardNumberId: cardNumberId,
 		FirstName:    firstName,
 		LastName:     lastName,
 	}
 
-	Buyers = append(Buyers, newBuyer)
-	globalID++
+	result, err := mariaDb.db.Exec(
+		insert,
+		cardNumberId,
+		firstName,
+		lastName,
+	)
+
+	if err != nil {
+		return Buyer{}, errCreateBuyer
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return Buyer{}, errCreateBuyer
+	}
+
+	newBuyer.Id = int(lastId)
 
 	return newBuyer, nil
 }
 
-func (repository) GetOne(id int) (Buyer, error) {
-	for _, Buyer := range Buyers {
-		if Buyer.Id == id {
-			return Buyer, nil
+func (mariaDb mariaDbRepository) GetOne(id int) (Buyer, error) {
+	getOne := `SELECT * FROM buyers WHERE id = ?`
+	currentBuyer := Buyer{}
+
+	row := mariaDb.db.QueryRow(getOne, id)
+	err := row.Scan(
+		&currentBuyer.Id,
+		&currentBuyer.CardNumberId,
+		&currentBuyer.FirstName,
+		&currentBuyer.LastName,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Buyer{}, fmt.Errorf("buyer with id %d not found", id)
+	}
+
+	if err != nil {
+		return Buyer{}, errGetOneBuyer
+	}
+
+	return currentBuyer, nil
+}
+
+func (mariaDb mariaDbRepository) GetAll() ([]Buyer, error) {
+	query := `SELECT * FROM buyers`
+	buyers := []Buyer{}
+
+	rows, err := mariaDb.db.Query(query)
+	if err != nil {
+		return []Buyer{}, errGetBuyers
+	}
+
+	for rows.Next() {
+		var currentBuyer Buyer
+		if err := rows.Scan(
+			&currentBuyer.Id,
+			&currentBuyer.CardNumberId,
+			&currentBuyer.FirstName,
+			&currentBuyer.LastName,
+		); err != nil {
+			return []Buyer{}, errGetBuyers
+		}
+		buyers = append(buyers, currentBuyer)
+	}
+	return buyers, nil
+}
+func (mariaDb mariaDbRepository) Delete(id int) error {
+	delete := "DELETE FROM buyers WHERE id = ?"
+	result, err := mariaDb.db.Exec(delete, id)
+	if err != nil {
+		return err
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 {
+		return fmt.Errorf("buyer with id %d not found", id)
+	}
+
+	if err != nil {
+		return errDeleteBuyer
+	}
+
+	return nil
+}
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Buyer, error) {
+	prefixQuery := "UPDATE buyers SET"
+	fieldsToUpdate := []string{}
+	valuesToUse := []interface{}{}
+	whereCase := "WHERE id = ?"
+	var finalQuery string
+
+	for key, _ := range requestData {
+		switch key {
+		case "card_number_id":
+			fieldsToUpdate = append(fieldsToUpdate, " card_number_id = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
+		case "first_name":
+			fieldsToUpdate = append(fieldsToUpdate, " first_name = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
+		case "last_name":
+			fieldsToUpdate = append(fieldsToUpdate, " last_name = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
 		}
 	}
 
-	return Buyer{}, fmt.Errorf("buyer with id %d not found", id)
-}
-func (repository) GetAll() ([]Buyer, error) {
-	return Buyers, nil
-}
-func (repository) Delete(id int) error {
-	for i, Buyer := range Buyers {
-		if Buyer.Id == id {
-			Buyers = append(Buyers[:i], Buyers[i+1:]...)
-			return nil
+	valuesToUse = append(valuesToUse, id)
+	finalQuery += prefixQuery
+	for index, field := range fieldsToUpdate {
+		if index+1 == len(fieldsToUpdate) {
+			finalQuery += field + " "
+		} else {
+			finalQuery += field + ", "
 		}
 	}
-	return fmt.Errorf("buyer with id %d not found", id)
-}
-func (repository) Update(id int, requestData map[string]interface{}) (Buyer, error) {
-	var s *Buyer
+	finalQuery += whereCase
 
-	for i, buyer := range Buyers {
-		if buyer.Id == id {
-			s = &Buyers[i]
-
-			for key, value := range requestData {
-				switch key {
-				case "card_number_id":
-					s.CardNumberId = value.(string)
-				case "first_name":
-					s.FirstName = value.(string)
-				case "last_name":
-					s.LastName = value.(string)
-				}
-			}
-			return *s, nil
-		}
-
+	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
+	if err != nil {
+		return Buyer{}, errUpdatedBuyer
 	}
 
-	return Buyer{}, fmt.Errorf("buyer with id %d not found", id)
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 && err != nil {
+		return Buyer{}, errUpdatedBuyer
+	}
+
+	currentBuyer, err := mariaDb.GetOne(id)
+	if err != nil {
+		return Buyer{}, errUpdatedBuyer
+	}
+
+	return currentBuyer, nil
 }
