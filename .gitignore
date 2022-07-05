@@ -27,4 +27,6 @@ go.work
 
 *DS_STORE
 # End of https://www.toptal.com/developers/gitignore/api/go
-.vscode/launch.json
+
+# Additional cconfigs
+.vscode
