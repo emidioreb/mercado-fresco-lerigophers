@@ -32,7 +32,7 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 		var requestData reqEmployee
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request input"))
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
 
