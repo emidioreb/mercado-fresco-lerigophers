@@ -93,7 +93,7 @@ func (mariaDb mariaDbRepository) Create(productCode, description string, width, 
 }
 
 func (mariaDb mariaDbRepository) GetOne(id int) (Product, error) {
-	getOne := `SELECT * FROM products WHERE ID = ?`
+	getOne := `SELECT * FROM products WHERE id = ?`
 	currentProduct := Product{}
 
 	row := mariaDb.db.QueryRow(getOne, id)

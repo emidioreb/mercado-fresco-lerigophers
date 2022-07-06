@@ -8,6 +8,7 @@ import (
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
+	productRecordsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productRecords"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
@@ -17,6 +18,7 @@ import (
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
+	product_records "github.com/emidioreb/mercado-fresco-lerigophers/internal/productRecords"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
@@ -123,6 +125,15 @@ func main() {
 		productGroup.POST("/", controllerProduct.Create())
 		productGroup.DELETE("/:id", controllerProduct.Delete())
 		productGroup.PATCH("/:id", controllerProduct.Update())
+	}
+
+	repoProductRecords := product_records.NewMariaDbRepository(conn)
+	serviceProductRecords := product_records.NewService(repoProductRecords, repoProduct)
+	controllerProductRecords := productRecordsController.NewProductRecord(serviceProductRecords)
+	ProductRecordsGroup := server.Group("/api/v1/productRecords")
+	{
+		ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
+		//ProductRecordsGroup.GET("/reportProducts", controllerProductRecords.GetReportSellers())
 	}
 
 	repoEmployee := employees.NewRepository()
