@@ -26,7 +26,7 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 }
 
 func (mariaDb mariaDbRepository) GetOne(cid string) (Carry, error) {
-	query := `SELECT * FROM mercado_fresco.carriers WHERE cid=?`
+	query := `SELECT * FROM carriers WHERE cid=?`
 
 	currentCarry := Carry{}
 
@@ -76,7 +76,10 @@ func (mariaDb mariaDbRepository) Create(cid, companyName, address, telephone, lo
 		return Carry{}, errCreateCarry
 	}
 
+	// nao estou conseguindo forcar esse erro para testar
 	lastId, err := result.LastInsertId()
+	// fmt.Println("lastId",lastId)
+	// fmt.Println("Erro lastId",err)
 	if err != nil {
 		return Carry{}, errCreateCarry
 	}
