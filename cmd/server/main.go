@@ -141,6 +141,7 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
+
 	repoCarriers := carriers.NewMariaDbRepository(conn)
 	serviceCarriers := carriers.NewService(repoCarriers)
 	controllerCarriers := controllers.NewCarry(serviceCarriers)
@@ -151,4 +152,5 @@ func main() {
 	}
 
 	server.Run(":4400")
+
 }
