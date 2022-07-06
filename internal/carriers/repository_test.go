@@ -1,7 +1,6 @@
 package carriers
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 
@@ -129,9 +128,6 @@ func TestGetOne(t *testing.T) {
 		carriersRepo := NewMariaDbRepository(db)
 
 		_, err = carriersRepo.GetOne("CID#1")
-
-
-		fmt.Println("xablauuu",err)
 
 		assert.NotNil(t, err)
 	})
