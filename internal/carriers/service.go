@@ -29,7 +29,7 @@ func (s service) Create(cid, companyName, address, telephone, localityId string)
 		return Carry{}, web.NewCodeResponse(http.StatusConflict, errors.New("CID already exists"))
 	}
 
-	seller, err := s.repository.Create(cid, companyName, address, telephone, localityId)
+	CarryResult, err := s.repository.Create(cid, companyName, address, telephone, localityId)
 	if err != nil {
 		return Carry{}, web.NewCodeResponse(
 			http.StatusInternalServerError,
@@ -37,5 +37,5 @@ func (s service) Create(cid, companyName, address, telephone, localityId string)
 		)
 	}
 
-	return seller, web.NewCodeResponse(http.StatusCreated, nil)
+	return CarryResult, web.NewCodeResponse(http.StatusCreated, nil)
 }

@@ -76,10 +76,7 @@ func (mariaDb mariaDbRepository) Create(cid, companyName, address, telephone, lo
 		return Carry{}, errCreateCarry
 	}
 
-	// nao estou conseguindo forcar esse erro para testar
 	lastId, err := result.LastInsertId()
-	// fmt.Println("lastId",lastId)
-	// fmt.Println("Erro lastId",err)
 	if err != nil {
 		return Carry{}, errCreateCarry
 	}
