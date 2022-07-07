@@ -348,9 +348,26 @@ INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("freezed");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("food");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("data storage");
 INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("test");
-INSERT INTO `mercado_fresco`.`product_type` (name) VALUES ("xablau");
 
 -- Localities
-INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("65760000", "Presidente Dutra", "Maranhão", "Brasil");
-INSERT INTO `mercado_fresco`.`localities` (id, locality_name, province_name, country_name) VALUES ("456", "Cidad Delest", "Paraguay", "PY");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("1", "Presidente Dutra", "MA", "BR");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("2", "Osasco", "SP", "BR");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("3", "Aparecida de Goiânia", "GO", "BR");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("4", "Tuntum", "MA", "BR");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("5", "Barra do Corda", "MA", "BR");
+INSERT INTO `mercado_fresco`.`localities` (`id`, `locality_name`, `province_name`, `country_name`) VALUES ("6", "Florianópolis", "SC", "BR");
 
+-- Sellers
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('1', '1', 'Mercado Livre', 'Av. Tancredo Neves', '123', '1');
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('2', '2', 'Mercado Livre', 'Av. Das Nações Unidas', '123', '2');
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('3', '3', 'Mercado Livre', 'Av. Olavo Sampaio', '123', '3');
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('4', '4', 'Mercado Livre', 'Av. Paulista', '123', '4');
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('5', '5', 'Mercado Livre', 'Av. Das Flores', '456', '5');
+INSERT INTO `mercado_fresco`.`sellers` (`id`, `cid`, `company_name`, `address`, `telephone`, `locality_id`) VALUES ('6', '6', 'Mercado Livre', 'Av. Campo Dantas', '456', '6');
+
+-- Products
+INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('1', '1', 'Tomato', '250', '250', '250', '10', '50', '34', '50', '1', '1');
+INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('2', '2', 'Purple Onion', '250', '250', '250', '10', '60', '34', '50', '2', '2');
+INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('3', '3', 'RAM 16GB DDR5', '260', '250', '250', '10', '70', '34', '50', '3', '3');
+INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('4', '4', 'RTX 3080 16GB', '250', '250', '250', '10', '90', '34', '50', '4', '4');
+INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('5', '5', 'Intel Core i9', '250', '250', '250', '10', '80', '34', '50', '5', '5');

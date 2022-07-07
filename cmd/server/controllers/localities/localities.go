@@ -92,5 +92,4 @@ func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 			web.NewResponse(reportSellers),
 		)
 	}
-
 }

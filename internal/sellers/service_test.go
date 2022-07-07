@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	mockLocalityRepository "github.com/emidioreb/mercado-fresco-lerigophers/internal/localities/mocks"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers/mocks"
@@ -33,6 +34,8 @@ func TestServiceCreate(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 		mockedLocality := new(mockLocalityRepository.Repository)
 		mockedRepository.On("GetAll").Return([]sellers.Seller{}, nil)
+		mockedLocality.On("GetOne", fakeSellers[0].LocalityId).Return(localities.Locality{}, nil)
+
 		mockedRepository.On("Create",
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("string"),
@@ -62,16 +65,8 @@ func TestServiceCreate(t *testing.T) {
 		expectedError := errors.New("cid already exists")
 
 		mockedRepository.On("GetAll").Return(fakeSellers, nil)
-		mockedRepository.On("Create",
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(sellers.Seller{}, expectedError)
 
 		service := sellers.NewService(mockedRepository, mockedLocality)
-
 		_, err := service.Create(
 			fakeSellers[0].Cid,
 			fakeSellers[0].CompanyName,
@@ -196,6 +191,7 @@ func TestServiceUpdate(t *testing.T) {
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(fakeSellers[0], nil)
 		mockedRepository.On("GetAll").Return([]sellers.Seller{}, nil)
+		mockedLocality.On("GetOne", mock.AnythingOfType("string")).Return(localities.Locality{}, nil)
 		mockedRepository.On("Update",
 			mock.AnythingOfType("int"),
 			mock.Anything,
@@ -218,14 +214,6 @@ func TestServiceUpdate(t *testing.T) {
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
 			Return(sellers.Seller{}, expectedError).Once()
 
-		mockedRepository.On("GetAll").
-			Return([]sellers.Seller{}, nil).Once()
-
-		mockedRepository.On("Update",
-			mock.AnythingOfType("int"),
-			mock.Anything,
-		).Return(sellers.Seller{}, nil).Once()
-
 		service := sellers.NewService(mockedRepository, mockedLocality)
 		_, err := service.Update(1, requestData)
 
@@ -238,18 +226,12 @@ func TestServiceUpdate(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 		mockedLocality := new(mockLocalityRepository.Repository)
 
-		requestData := map[string]interface{}{
-			"cid": 2.0,
-		}
+		requestData := map[string]interface{}{"cid": 2.0}
 
 		expectedError := errors.New("cid already exists")
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil).Once()
 		mockedRepository.On("GetAll").Return(fakeSellers, nil).Once()
-		mockedRepository.On("Update",
-			mock.AnythingOfType("int"),
-			mock.Anything,
-		).Return(sellers.Seller{}, expectedError).Once()
 
 		service := sellers.NewService(mockedRepository, mockedLocality)
 

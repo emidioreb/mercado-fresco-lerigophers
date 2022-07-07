@@ -443,6 +443,7 @@ func TestCreateSeller(t *testing.T) {
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).
 			Return(fakeSellers[0], web.ResponseCode{
 				Code: http.StatusCreated,
@@ -532,6 +533,7 @@ func TestCreateSeller(t *testing.T) {
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
