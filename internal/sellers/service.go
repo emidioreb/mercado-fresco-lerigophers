@@ -4,11 +4,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
-	Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode)
+	Create(cid int, companyName, address, telephone, localityId string) (Seller, web.ResponseCode)
 	GetOne(id int) (Seller, web.ResponseCode)
 	GetAll() ([]Seller, web.ResponseCode)
 	Delete(id int) web.ResponseCode
@@ -16,25 +17,31 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository         Repository
+	localityRepository localities.Repository
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, lr localities.Repository) Service {
 	return &service{
-		repository: r,
+		repository:         r,
+		localityRepository: lr,
 	}
 }
 
-func (s service) Create(cid int, companyName, address, telephone string) (Seller, web.ResponseCode) {
+func (s service) Create(cid int, companyName, address, telephone, localityId string) (Seller, web.ResponseCode) {
 	allSellers, _ := s.repository.GetAll()
-
 	for _, seller := range allSellers {
 		if seller.Cid == cid {
 			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 		}
 	}
 
-	seller, err := s.repository.Create(cid, companyName, address, telephone)
+	_, localityErr := s.localityRepository.GetOne(localityId)
+	if localityErr != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed locality_id don't exists"))
+	}
+
+	seller, err := s.repository.Create(cid, companyName, address, telephone, localityId)
 	if err != nil {
 		return Seller{}, web.NewCodeResponse(
 			http.StatusInternalServerError,
@@ -75,19 +82,25 @@ func (s service) Delete(id int) web.ResponseCode {
 }
 
 func (s service) Update(id int, requestData map[string]interface{}) (Seller, web.ResponseCode) {
-	_, err := s.repository.GetOne(id)
-	if err != nil {
+	if _, err := s.repository.GetOne(id); err != nil {
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
 	allSellers, _ := s.GetAll()
-	currentCid := requestData["cid"]
-
-	if currentCid != nil {
+	if currCid := requestData["cid"]; currCid != nil {
 		for _, seller := range allSellers {
-			if float64(seller.Cid) == currentCid && seller.Id != id {
+			if float64(seller.Cid) == currCid && seller.Id != id {
 				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
 			}
+		}
+	}
+
+	if currLocalityId := requestData["locality_id"]; currLocalityId != nil {
+		parsedLocalityId, _ := currLocalityId.(string)
+		if _, err := s.localityRepository.GetOne(parsedLocalityId); err != nil {
+			return Seller{}, web.NewCodeResponse(
+				http.StatusConflict,
+				errors.New("informed locality_id don't exists"))
 		}
 	}
 
