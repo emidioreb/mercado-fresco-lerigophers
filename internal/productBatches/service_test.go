@@ -129,3 +129,30 @@ func TestServiceCreate(t *testing.T) {
 		assert.Equal(t, err.Code, http.StatusInternalServerError)
 	})
 }
+
+func TestServiceGetReport(t *testing.T) {
+	t.Run("get report - success case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportSection", mock.AnythingOfType("int")).Return([]product_batches.ProductsQuantity{}, nil)
+		service := product_batches.NewService(mockedRepository)
+
+		result, err := service.GetReportSection(0)
+		assert.NoError(t, err.Err)
+
+		assert.Equal(t, result, []product_batches.ProductsQuantity{})
+		assert.Equal(t, http.StatusOK, err.Code)
+	})
+
+	t.Run("get report - error case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportSection", mock.AnythingOfType("int")).Return([]product_batches.ProductsQuantity{}, errors.New("error to report sections by product_batches"))
+		service := product_batches.NewService(mockedRepository)
+
+		result, err := service.GetReportSection(0)
+		assert.NotNil(t, err.Err)
+
+		assert.Equal(t, result, []product_batches.ProductsQuantity{})
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
+		assert.Equal(t, "error to report sections by product_batches", err.Err.Error())
+	})
+}
