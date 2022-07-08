@@ -1,7 +1,6 @@
 package sellers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
@@ -29,16 +28,15 @@ func NewService(r Repository, lr localities.Repository) Service {
 }
 
 func (s service) Create(cid int, companyName, address, telephone, localityId string) (Seller, web.ResponseCode) {
-	allSellers, _ := s.repository.GetAll()
-	for _, seller := range allSellers {
-		if seller.Cid == cid {
-			return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
-		}
+	if id, err := s.repository.FindByCID(cid); err != nil && id != 0 {
+		return Seller{}, web.NewCodeResponse(http.StatusConflict, err)
+	} else if id == 0 && err != nil {
+		return Seller{}, web.NewCodeResponse(http.StatusInternalServerError, err)
 	}
 
 	_, localityErr := s.localityRepository.GetOne(localityId)
 	if localityErr != nil {
-		return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed locality_id don't exists"))
+		return Seller{}, web.NewCodeResponse(http.StatusConflict, localityErr)
 	}
 
 	seller, err := s.repository.Create(cid, companyName, address, telephone, localityId)
@@ -86,21 +84,17 @@ func (s service) Update(id int, requestData map[string]interface{}) (Seller, web
 		return Seller{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
-	allSellers, _ := s.GetAll()
 	if currCid := requestData["cid"]; currCid != nil {
-		for _, seller := range allSellers {
-			if float64(seller.Cid) == currCid && seller.Id != id {
-				return Seller{}, web.NewCodeResponse(http.StatusConflict, errors.New("cid already exists"))
-			}
+		selectedID, err := s.repository.FindByCID(int(currCid.(float64)))
+		if err != nil && id != selectedID {
+			return Seller{}, web.NewCodeResponse(http.StatusConflict, err)
 		}
 	}
 
 	if currLocalityId := requestData["locality_id"]; currLocalityId != nil {
 		parsedLocalityId, _ := currLocalityId.(string)
 		if _, err := s.localityRepository.GetOne(parsedLocalityId); err != nil {
-			return Seller{}, web.NewCodeResponse(
-				http.StatusConflict,
-				errors.New("informed locality_id don't exists"))
+			return Seller{}, web.NewCodeResponse(http.StatusConflict, err)
 		}
 	}
 

@@ -47,4 +47,6 @@ var (
 
 		return finalQuery, valuesToUse
 	}
+
+	queryFindByCID = "SELECT id, cid FROM sellers WHERE cid = ?"
 )

@@ -47,6 +47,27 @@ func (_m *Repository) Delete(id int) error {
 	return r0
 }
 
+// FindByCID provides a mock function with given fields: cid
+func (_m *Repository) FindByCID(cid int) (int, error) {
+	ret := _m.Called(cid)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(int) int); ok {
+		r0 = rf(cid)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(cid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetAll provides a mock function with given fields:
 func (_m *Repository) GetAll() ([]sellers.Seller, error) {
 	ret := _m.Called()

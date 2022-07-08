@@ -20,6 +20,7 @@ type Repository interface {
 	GetAll() ([]Seller, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Seller, error)
+	FindByCID(cid int) (int, error)
 }
 
 type mariaDbRepository struct {
@@ -130,6 +131,7 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 
 	return nil
 }
+
 func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Seller, error) {
 	finalQuery, valuesToUse := queryUpdateSeller(requestData, id)
 
@@ -149,4 +151,22 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 	}
 
 	return currentSeller, nil
+}
+
+func (mariaDb mariaDbRepository) FindByCID(cid int) (int, error) {
+	row := mariaDb.db.QueryRow(queryFindByCID, cid)
+
+	var currCID int
+	var id int
+	err := row.Scan(&id, &currCID)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, errors.New("failed to verify if cid already exists")
+	}
+
+	return id, errors.New("cid already exists")
 }
