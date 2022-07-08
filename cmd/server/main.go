@@ -6,6 +6,7 @@ import (
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
+	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 
@@ -136,6 +138,16 @@ func main() {
 		employeeGroup.POST("/", controllerEmployee.Create())
 		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+
+	repoInbound := inboundorders.NewMariaDbRepository(conn)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee)
+	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
+
+	inboundGroup := server.Group("/api/v1")
+	{
+		inboundGroup.GET("employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
+		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
 	}
 
 	server.Run(":4000")

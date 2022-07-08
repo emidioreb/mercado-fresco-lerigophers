@@ -82,7 +82,6 @@ func (s service) Delete(id int) web.ResponseCode {
 
 func (s service) Update(id int, requestData map[string]interface{}) (Employee, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
-	allEmployees, _ := s.GetAll()
 
 	cardNumberReqData := requestData["card_number_id"]
 
@@ -90,10 +89,13 @@ func (s service) Update(id int, requestData map[string]interface{}) (Employee, w
 		return Employee{}, web.NewCodeResponse(http.StatusNotFound, responseCode.Err)
 	}
 
-	for _, employee := range allEmployees {
-		if employee.CardNumberId == cardNumberReqData && employee.Id != id {
+	errGetByCardNumber := s.repository.GetOneByCardNumber(id, cardNumberReqData.(string))
+
+	if errGetByCardNumber != nil {
+		if errGetByCardNumber.Error() == "card_number_id already exists" {
 			return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("card_number_id already exists"))
 		}
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, errGetByCardNumber)
 	}
 
 	if requestData["warehouse_id"] != nil {
