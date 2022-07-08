@@ -20,6 +20,7 @@ type Repository interface {
 	GetAll() ([]Employee, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Employee, error)
+	GetOneByCardNumber(id int, cardNumber string) error
 }
 
 type mariaDbRepository struct {
@@ -85,6 +86,26 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Employee, error) {
 	}
 
 	return currentEmployee, nil
+}
+
+func (mariaDb mariaDbRepository) GetOneByCardNumber(id int, cardNumber string) error {
+
+	currentEmployee := Employee{}
+
+	row := mariaDb.db.QueryRow(queryByCardNumber, cardNumber, id)
+	err := row.Scan(
+		&currentEmployee.Id,
+	)
+
+	if err != nil {
+		return errors.New("ocurred an error during the validation of a card_number_id's unicity")
+	}
+
+	if currentEmployee.Id != 0 {
+		return errors.New("card_number_id already exists")
+	}
+
+	return nil
 }
 
 func (mariaDb mariaDbRepository) GetAll() ([]Employee, error) {
