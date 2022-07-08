@@ -72,6 +72,38 @@ func TestServiceCreate(t *testing.T) {
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
 		assert.Equal(t, http.StatusConflict, err.Code)
 	})
+
+	t.Run("must return an error from the repository", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		input := warehouses.Warehouse{
+			Id:                 1,
+			WarehouseCode:      "212",
+			Address:            "rua do bobo",
+			Telephone:          "0",
+			MinimumCapacity:    10,
+			MinimumTemperature: 30,
+		}
+
+		expectedError := errors.New("ocurred an error to create warehouse")
+
+		mockedRepository.On("GetAll").Return([]warehouses.Warehouse{}, nil)
+		mockedRepository.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+		).Return(warehouses.Warehouse{}, expectedError)
+
+		service := warehouses.NewService(mockedRepository)
+
+		_, err := service.Create(input.WarehouseCode, input.Address, input.Telephone, input.MinimumCapacity, input.MinimumTemperature)
+
+		assert.NotNil(t, err.Err)
+		assert.Equal(t, err.Err.Error(), expectedError.Error())
+		assert.Equal(t, http.StatusConflict, err.Code)
+	})
 }
 
 func TestServiceGetAll(t *testing.T) {
@@ -107,6 +139,22 @@ func TestServiceGetAll(t *testing.T) {
 			assert.Equal(t, result[i], warehouse)
 		}
 		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("must return an error", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		expectedError := errors.New("couldn't get warehouses")
+
+		mockedRepository.On("GetAll").Return([]warehouses.Warehouse{}, expectedError).Once()
+
+		service := warehouses.NewService(mockedRepository)
+
+		_, err := service.GetAll()
+
+		assert.NotNil(t, err.Err)
+		assert.Equal(t, err.Err.Error(), expectedError.Error())
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
 	})
 }
 
@@ -292,6 +340,30 @@ func TestServiceUpdate(t *testing.T) {
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, http.StatusNotFound, err.Code)
+		assert.Equal(t, err.Err, expectedError)
+	})
+
+	t.Run("return error from repository update", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		expectedError := errors.New("ocurred an error while updating the warehouse")
+		requestData := map[string]interface{}{}
+
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
+			Return(warehouses.Warehouse{}, nil).Once()
+
+		mockedRepository.On("GetAll").
+			Return([]warehouses.Warehouse{}, nil).Once()
+
+		mockedRepository.On("Update",
+			mock.AnythingOfType("int"),
+			mock.Anything,
+		).Return(warehouses.Warehouse{}, expectedError).Once()
+
+		service := warehouses.NewService(mockedRepository)
+		_, err := service.Update(1, requestData)
+
+		assert.NotNil(t, err.Err)
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
 		assert.Equal(t, err.Err, expectedError)
 	})
 }

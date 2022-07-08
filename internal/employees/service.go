@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
@@ -16,17 +17,23 @@ type Service interface {
 }
 
 type service struct {
-	repository Repository
+	repository    Repository
+	warehouseRepo warehouses.Repository
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, w warehouses.Repository) Service {
 	return &service{
-		repository: r,
+		repository:    r,
+		warehouseRepo: w,
 	}
 }
 
 func (s service) Create(cardNumber string, firstName, lastName string, warehouseId int) (Employee, web.ResponseCode) {
-	allEmployees, _ := s.GetAll()
+	allEmployees, err := s.GetAll()
+
+	if err.Err != nil {
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, err.Err)
+	}
 
 	for _, employee := range allEmployees {
 		if employee.CardNumberId == cardNumber {
@@ -34,7 +41,18 @@ func (s service) Create(cardNumber string, firstName, lastName string, warehouse
 		}
 	}
 
-	employee, _ := s.repository.Create(cardNumber, firstName, lastName, warehouseId)
+	if warehouseId != 0 {
+		_, warehouseErr := s.warehouseRepo.GetOne(warehouseId)
+		if warehouseErr != nil {
+			return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed warehouse_id don't exists"))
+		}
+	}
+
+	employee, errCreate := s.repository.Create(cardNumber, firstName, lastName, warehouseId)
+
+	if errCreate != nil {
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, errCreate)
+	}
 
 	return employee, web.NewCodeResponse(http.StatusCreated, nil)
 }
@@ -64,7 +82,6 @@ func (s service) Delete(id int) web.ResponseCode {
 
 func (s service) Update(id int, requestData map[string]interface{}) (Employee, web.ResponseCode) {
 	_, responseCode := s.GetOne(id)
-	allEmployees, _ := s.GetAll()
 
 	cardNumberReqData := requestData["card_number_id"]
 
@@ -72,13 +89,28 @@ func (s service) Update(id int, requestData map[string]interface{}) (Employee, w
 		return Employee{}, web.NewCodeResponse(http.StatusNotFound, responseCode.Err)
 	}
 
-	for _, employee := range allEmployees {
-		if employee.CardNumberId == cardNumberReqData && employee.Id != id {
+	errGetByCardNumber := s.repository.GetOneByCardNumber(id, cardNumberReqData.(string))
+
+	if errGetByCardNumber != nil {
+		if errGetByCardNumber.Error() == "card_number_id already exists" {
 			return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("card_number_id already exists"))
+		}
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, errGetByCardNumber)
+	}
+
+	if requestData["warehouse_id"] != nil {
+		if int(requestData["warehouse_id"].(float64)) != 0 {
+			_, warehouseErr := s.warehouseRepo.GetOne(int(requestData["warehouse_id"].(float64)))
+			if warehouseErr != nil {
+				return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed warehouse_id don't exists"))
+			}
 		}
 	}
 
-	employee, _ := s.repository.Update(id, requestData)
+	employee, err := s.repository.Update(id, requestData)
+	if err != nil {
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
 	return employee, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

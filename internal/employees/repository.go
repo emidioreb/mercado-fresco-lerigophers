@@ -1,9 +1,18 @@
 package employees
 
-import "fmt"
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+)
 
-var Employees = []Employee{}
-var globalID = 1
+var (
+	errUpdatedEmployee = errors.New("ocurred an error while updating the employee")
+	errCreateEmployee  = errors.New("ocurred an error to create employee")
+	errGetEmployees    = errors.New("couldn't get employees")
+	errGetOneEmployees = errors.New("unexpected error to get employee")
+	errDeleteEmployee  = errors.New("unexpected error to delete employee")
+)
 
 type Repository interface {
 	Create(cardNumber, firstName, lastName string, warehouseId int) (Employee, error)
@@ -11,74 +20,156 @@ type Repository interface {
 	GetAll() ([]Employee, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Employee, error)
+	GetOneByCardNumber(id int, cardNumber string) error
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(cardNumber, firstName, lastName string, warehouseId int) (Employee, error) {
+func (mariaDb mariaDbRepository) Create(cardNumber, firstName, lastName string, warehouseId int) (Employee, error) {
+
 	newEmployee := Employee{
-		Id:           globalID,
 		CardNumberId: cardNumber,
 		FirstName:    firstName,
 		LastName:     lastName,
 		WarehouseId:  warehouseId,
 	}
 
-	Employees = append(Employees, newEmployee)
-	globalID++
+	result, err := mariaDb.db.Exec(
+		queryCreate,
+		cardNumber,
+		firstName,
+		lastName,
+		warehouseId,
+	)
+
+	if err != nil {
+		return Employee{}, errCreateEmployee
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return Employee{}, errCreateEmployee
+	}
+
+	newEmployee.Id = int(lastId)
 
 	return newEmployee, nil
 }
 
-func (repository) GetOne(id int) (Employee, error) {
-	for _, Employee := range Employees {
-		if Employee.Id == id {
-			return Employee, nil
-		}
+func (mariaDb mariaDbRepository) GetOne(id int) (Employee, error) {
+
+	currentEmployee := Employee{}
+
+	row := mariaDb.db.QueryRow(queryGetOne, id)
+	err := row.Scan(
+		&currentEmployee.Id,
+		&currentEmployee.CardNumberId,
+		&currentEmployee.FirstName,
+		&currentEmployee.LastName,
+		&currentEmployee.WarehouseId,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Employee{}, fmt.Errorf("employee with id %d not found", id)
 	}
 
-	return Employee{}, fmt.Errorf("employee with id %d not found", id)
-}
-func (repository) GetAll() ([]Employee, error) {
-	return Employees, nil
-}
-func (repository) Delete(id int) error {
-	for i, Employee := range Employees {
-		if Employee.Id == id {
-			Employees = append(Employees[:i], Employees[i+1:]...)
-			return nil
-		}
+	if err != nil {
+		return Employee{}, errGetOneEmployees
 	}
-	return fmt.Errorf("employee with id %d not found", id)
+
+	return currentEmployee, nil
 }
-func (repository) Update(id int, requestData map[string]interface{}) (Employee, error) {
-	var e *Employee
 
-	for i, employee := range Employees {
-		if employee.Id == id {
-			e = &Employees[i]
+func (mariaDb mariaDbRepository) GetOneByCardNumber(id int, cardNumber string) error {
 
-			for key, value := range requestData {
+	currentEmployee := Employee{}
 
-				switch key {
-				case "card_number_id":
-					e.CardNumberId = value.(string)
-				case "first_name":
-					e.FirstName = value.(string)
-				case "last_name":
-					e.LastName = value.(string)
-				case "warehouse_id":
-					e.WarehouseId = int(value.(float64))
-				}
-			}
-			return *e, nil
-		}
+	row := mariaDb.db.QueryRow(queryByCardNumber, cardNumber, id)
+	err := row.Scan(
+		&currentEmployee.Id,
+	)
 
+	if err != nil {
+		return errors.New("ocurred an error during the validation of a card_number_id's unicity")
 	}
-	return Employee{}, fmt.Errorf("employee with id %d not found", id)
+
+	if currentEmployee.Id != 0 {
+		return errors.New("card_number_id already exists")
+	}
+
+	return nil
+}
+
+func (mariaDb mariaDbRepository) GetAll() ([]Employee, error) {
+
+	employees := []Employee{}
+
+	rows, err := mariaDb.db.Query(queryGetAll)
+	if err != nil {
+		return []Employee{}, errGetEmployees
+	}
+
+	for rows.Next() {
+		var currentEmployee Employee
+		if err := rows.Scan(
+			&currentEmployee.Id,
+			&currentEmployee.CardNumberId,
+			&currentEmployee.FirstName,
+			&currentEmployee.LastName,
+			&currentEmployee.WarehouseId,
+		); err != nil {
+			return []Employee{}, errGetEmployees
+		}
+		employees = append(employees, currentEmployee)
+	}
+	return employees, nil
+}
+
+func (mariaDb mariaDbRepository) Delete(id int) error {
+
+	result, err := mariaDb.db.Exec(queryDelete, id)
+	if err != nil {
+		return err
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 {
+		return fmt.Errorf("employee with id %d not found", id)
+	}
+
+	if err != nil {
+		return errDeleteEmployee
+	}
+
+	return nil
+}
+
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Employee, error) {
+
+	finalQuery, valuesToUse := queryUpdate(requestData, id)
+
+	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
+	if err != nil {
+		return Employee{}, errUpdatedEmployee
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 && err != nil {
+		return Employee{}, errUpdatedEmployee
+	}
+
+	currentEmployee, err := mariaDb.GetOne(id)
+	if err != nil {
+		return Employee{}, errUpdatedEmployee
+	}
+
+	return currentEmployee, nil
 }

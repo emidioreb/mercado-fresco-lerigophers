@@ -32,7 +32,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 		).Return(input, nil)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 
 		result, err := service.Create(input.CardNumberId, input.FirstName, input.LastName, input.WarehouseId)
 		assert.Nil(t, err.Err)
@@ -64,7 +64,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 		).Return(employees.Employee{}, expectedError)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 
 		_, err := service.Create(input.CardNumberId, input.FirstName, input.LastName, input.WarehouseId)
 
@@ -89,7 +89,7 @@ func TestServiceGetAll(t *testing.T) {
 
 		mockedRepository.On("GetAll").Return(listaEmployees, nil)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 
 		result, _ := service.GetAll()
 
@@ -111,7 +111,7 @@ func TestServiceGetOne(t *testing.T) {
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input, nil)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 
 		result, err := service.GetOne(1)
 		assert.Nil(t, err.Err)
@@ -127,7 +127,7 @@ func TestServiceGetOne(t *testing.T) {
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(employees.Employee{}, expectedError)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 
 		_, err := service.GetOne(1)
 
@@ -173,7 +173,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(expectedEmployee, nil)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 		result, err := service.Update(1, requestData)
 
 		assert.Nil(t, err.Err)
@@ -197,7 +197,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(employees.Employee{}, nil).Once()
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 		_, err := service.Update(1, requestData)
 
 		assert.NotNil(t, err.Err)
@@ -238,7 +238,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(employees.Employee{}, expectedError)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 		_, err := service.Update(1, requestData)
 
 		assert.NotNil(t, err.Err)
@@ -253,7 +253,7 @@ func TestServiceDelete(t *testing.T) {
 
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(nil)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 		result := service.Delete(1)
 		assert.Nil(t, result.Err)
 
@@ -267,7 +267,7 @@ func TestServiceDelete(t *testing.T) {
 
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(expectedError)
 
-		service := employees.NewService(mockedRepository)
+		service := employees.NewService(mockedRepository, nil)
 		result := service.Delete(1)
 		assert.NotNil(t, result.Err)
 

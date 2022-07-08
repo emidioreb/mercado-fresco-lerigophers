@@ -145,7 +145,7 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 	whereCase := "WHERE id = ?"
 	var finalQuery string
 
-	for key, _ := range requestData {
+	for key := range requestData {
 		switch key {
 		case "warehouse_code":
 			fieldsToUpdate = append(fieldsToUpdate, " warehouse_code = ?")
