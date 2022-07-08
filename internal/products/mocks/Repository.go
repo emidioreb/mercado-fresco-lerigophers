@@ -92,15 +92,15 @@ func (_m *Repository) GetOne(id int) (products.Product, error) {
 }
 
 // GetReportProduct provides a mock function with given fields: ProductId
-func (_m *Repository) GetReportProduct(ProductId int) ([]products.ProductsQuantity, error) {
+func (_m *Repository) GetReportProduct(ProductId int) ([]products.ProductRecords, error) {
 	ret := _m.Called(ProductId)
 
-	var r0 []products.ProductsQuantity
-	if rf, ok := ret.Get(0).(func(int) []products.ProductsQuantity); ok {
+	var r0 []products.ProductRecords
+	if rf, ok := ret.Get(0).(func(int) []products.ProductRecords); ok {
 		r0 = rf(ProductId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]products.ProductsQuantity)
+			r0 = ret.Get(0).([]products.ProductRecords)
 		}
 	}
 
@@ -110,7 +110,6 @@ func (_m *Repository) GetReportProduct(ProductId int) ([]products.ProductsQuanti
 	} else {
 		r1 = ret.Error(1)
 	}
-
 	return r0, r1
 }
 

@@ -15,7 +15,7 @@ type Product struct {
 	SellerId                       int     `json:"seller_id"`
 }
 
-type ProductsQuantity struct {
+type ProductRecords struct {
 	ProductId    int    `json:"product_id"`
 	Description  string `json:"description"`
 	RecordsCount int    `json:"records_count"`

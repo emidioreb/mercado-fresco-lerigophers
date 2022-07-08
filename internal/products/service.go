@@ -16,7 +16,7 @@ type Service interface {
 	GetAll() ([]Product, web.ResponseCode)
 	Delete(id int) web.ResponseCode
 	Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode)
-	GetReportRecord(ProductId int) ([]ProductsQuantity, web.ResponseCode)
+	GetReportRecord(ProductId int) ([]ProductRecords, web.ResponseCode)
 }
 
 type service struct {
@@ -96,11 +96,11 @@ func (s service) Update(id int, requestData map[string]interface{}) (Product, we
 	return product, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }
 
-func (s service) GetReportRecord(ProductId int) ([]ProductsQuantity, web.ResponseCode) {
+func (s service) GetReportRecord(ProductId int) ([]ProductRecords, web.ResponseCode) {
 	report, err := s.repository.GetReportProduct(ProductId)
 
 	if err != nil {
-		return []ProductsQuantity{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+		return []ProductRecords{}, web.NewCodeResponse(http.StatusInternalServerError, err)
 	}
 
 	return report, web.NewCodeResponse(http.StatusOK, nil)

@@ -93,15 +93,15 @@ func (_m *Service) GetOne(id int) (products.Product, web.ResponseCode) {
 }
 
 // GetReportRecord provides a mock function with given fields: ProductId
-func (_m *Service) GetReportRecord(ProductId int) ([]products.ProductsQuantity, web.ResponseCode) {
+func (_m *Service) GetReportRecord(ProductId int) ([]products.ProductRecords, web.ResponseCode) {
 	ret := _m.Called(ProductId)
 
-	var r0 []products.ProductsQuantity
-	if rf, ok := ret.Get(0).(func(int) []products.ProductsQuantity); ok {
+	var r0 []products.ProductRecords
+	if rf, ok := ret.Get(0).(func(int) []products.ProductRecords); ok {
 		r0 = rf(ProductId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]products.ProductsQuantity)
+			r0 = ret.Get(0).([]products.ProductRecords)
 		}
 	}
 
