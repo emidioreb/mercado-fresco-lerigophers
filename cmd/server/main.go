@@ -32,7 +32,7 @@ import (
 func main() {
 	server := gin.Default()
 
-	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -141,7 +141,7 @@ func main() {
 	}
 
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
-	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
 	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
 
 	inboundGroup := server.Group("/api/v1")
