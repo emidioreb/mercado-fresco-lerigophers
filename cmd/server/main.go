@@ -16,6 +16,8 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+
 	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
@@ -31,7 +33,6 @@ import (
 
 func main() {
 	server := gin.Default()
-
 	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
@@ -101,8 +102,10 @@ func main() {
 		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
 	}
 
-	repoSection := sections.NewRepository()
-	serviceSection := sections.NewService(repoSection)
+	repoProductType := producttypes.NewMariaDbRepository(conn)
+
+	repoSection := sections.NewMariaDbRepository(conn)
+	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
 	controllerSection := sectionsController.NewSection(serviceSection)
 
 	sectionGroup := server.Group("/api/v1/sections")
