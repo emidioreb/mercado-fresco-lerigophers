@@ -6,6 +6,7 @@ import (
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
+	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
@@ -15,9 +16,11 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+
+	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
-	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sections"
@@ -30,8 +33,7 @@ import (
 
 func main() {
 	server := gin.Default()
-
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -141,5 +143,15 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
-	server.Run(":4400")
+	repoInbound := inboundorders.NewMariaDbRepository(conn)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee)
+	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
+
+	inboundGroup := server.Group("/api/v1")
+	{
+		inboundGroup.GET("employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
+		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
+	}
+
+	server.Run(":4000")
 }

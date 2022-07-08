@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
@@ -14,16 +15,16 @@ type ProductBatchController struct {
 }
 
 type reqProductBatch struct {
-	BatchNumber        int    `json:"batch_number" binding:"required"`
-	CurrentQuantity    int    `json:"current_quantity" binding:"required"`
-	CurrentTemperature int    `json:"current_temperature" binding:"required"`
-	InitialQuantity    int    `json:"initial_quantity" binding:"required"`
-	ManufacturingHour  int    `json:"manufacturing_hour" binding:"required"`
-	MinimumTemperature int    `json:"minumum_temperature" binding:"required"`
-	ProductId          int    `json:"product_id" binding:"required"`
-	SectionId          int    `json:"section_id" binding:"required"`
-	DueDate            string `json:"due_date" binding:"required"`
-	ManufacturingDate  string `json:"manufacturing_date" binding:"required"`
+	BatchNumber        int       `json:"batch_number" binding:"required"`
+	CurrentQuantity    int       `json:"current_quantity" binding:"required"`
+	CurrentTemperature int       `json:"current_temperature" binding:"required"`
+	InitialQuantity    int       `json:"initial_quantity" binding:"required"`
+	ManufacturingHour  int       `json:"manufacturing_hour" binding:"required"`
+	MinimumTemperature int       `json:"minumum_temperature" binding:"required"`
+	ProductId          int       `json:"product_id" binding:"required"`
+	SectionId          int       `json:"section_id" binding:"required"`
+	DueDate            time.Time `json:"due_date" binding:"required"`
+	ManufacturingDate  time.Time `json:"manufacturing_date" binding:"required"`
 }
 
 func NewProductBatch(s product_batches.Service) *ProductBatchController {
@@ -66,7 +67,7 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 			return
 		}
 
-		seller, resp := s.service.CreateProductBatch(
+		productBatch, resp := s.service.CreateProductBatch(
 			requestData.BatchNumber,
 			requestData.CurrentQuantity,
 			requestData.CurrentTemperature,
@@ -88,7 +89,7 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 
 		c.JSON(
 			resp.Code,
-			web.NewResponse(seller),
+			web.NewResponse(productBatch),
 		)
 	}
 }

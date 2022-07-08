@@ -1,11 +1,12 @@
 package employees
 
 var (
-	queryCreate = `INSERT INTO employees(card_number_id, first_name, last_name, warehouse_id) VALUES(?, ?, ?, ?)`
-	queryGetOne = `SELECT * FROM employees WHERE id = ?`
-	queryGetAll = `SELECT * FROM employees`
-	queryDelete = "DELETE FROM employees WHERE id = ?"
-	queryUpdate = func(
+	queryCreate       = `INSERT INTO employees(card_number_id, first_name, last_name, warehouse_id) VALUES(?, ?, ?, ?)`
+	queryGetOne       = `SELECT * FROM employees WHERE id = ?`
+	queryGetAll       = `SELECT * FROM employees`
+	queryDelete       = "DELETE FROM employees WHERE id = ?"
+	queryByCardNumber = `SELECT * FROM mercado_fresco.employees WHERE card_number_id = ? AND id <> ?`
+	queryUpdate       = func(
 		requestData map[string]interface{},
 		id int) (
 		finalQuery string,
