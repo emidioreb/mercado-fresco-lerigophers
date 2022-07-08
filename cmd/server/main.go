@@ -125,8 +125,8 @@ func main() {
 		productGroup.PATCH("/:id", controllerProduct.Update())
 	}
 
-	repoEmployee := employees.NewRepository()
-	serviceEmployee := employees.NewService(repoEmployee)
+	repoEmployee := employees.NewMariaDbRepository(conn)
+	serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
 	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
 
 	employeeGroup := server.Group("/api/v1/employees")
@@ -138,5 +138,5 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
-	server.Run(":4401")
+	server.Run(":4000")
 }
