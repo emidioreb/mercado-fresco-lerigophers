@@ -155,7 +155,7 @@ func main() {
 	}
 
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
-	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
 	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
 
 	inboundGroup := server.Group("/api/v1")
