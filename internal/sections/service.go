@@ -86,7 +86,7 @@ func (s service) Update(id int, requestData map[string]interface{}) (Section, we
 	_, responseCode := s.GetOne(id)
 
 	if responseCode.Err != nil {
-		return Section{}, web.NewCodeResponse(responseCode.Code, responseCode.Err)
+		return Section{}, responseCode
 	}
 
 	if sectionNumberReqData := requestData["section_number"]; sectionNumberReqData != nil {
