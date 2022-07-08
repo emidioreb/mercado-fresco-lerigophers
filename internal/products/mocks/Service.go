@@ -13,20 +13,20 @@ type Service struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId
-func (_m *Service) Create(productCode string, description string, width float64, height float64, length float64, netWeight float64, expirationRate float64, recommendedFreezingTemperaturechan float64, freezingRate float64, productTypeId int) (products.Product, web.ResponseCode) {
-	ret := _m.Called(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId)
+// Create provides a mock function with given fields: productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId, sellerId
+func (_m *Service) Create(productCode string, description string, width float64, height float64, length float64, netWeight float64, expirationRate float64, recommendedFreezingTemperaturechan float64, freezingRate float64, productTypeId int, sellerId int) (products.Product, web.ResponseCode) {
+	ret := _m.Called(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId, sellerId)
 
 	var r0 products.Product
-	if rf, ok := ret.Get(0).(func(string, string, float64, float64, float64, float64, float64, float64, float64, int) products.Product); ok {
-		r0 = rf(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId)
+	if rf, ok := ret.Get(0).(func(string, string, float64, float64, float64, float64, float64, float64, float64, int, int) products.Product); ok {
+		r0 = rf(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId, sellerId)
 	} else {
 		r0 = ret.Get(0).(products.Product)
 	}
 
 	var r1 web.ResponseCode
-	if rf, ok := ret.Get(1).(func(string, string, float64, float64, float64, float64, float64, float64, float64, int) web.ResponseCode); ok {
-		r1 = rf(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId)
+	if rf, ok := ret.Get(1).(func(string, string, float64, float64, float64, float64, float64, float64, float64, int, int) web.ResponseCode); ok {
+		r1 = rf(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan, freezingRate, productTypeId, sellerId)
 	} else {
 		r1 = ret.Get(1).(web.ResponseCode)
 	}
@@ -85,6 +85,29 @@ func (_m *Service) GetOne(id int) (products.Product, web.ResponseCode) {
 	var r1 web.ResponseCode
 	if rf, ok := ret.Get(1).(func(int) web.ResponseCode); ok {
 		r1 = rf(id)
+	} else {
+		r1 = ret.Get(1).(web.ResponseCode)
+	}
+
+	return r0, r1
+}
+
+// GetReportRecord provides a mock function with given fields: ProductId
+func (_m *Service) GetReportRecord(ProductId int) ([]products.ProductsQuantity, web.ResponseCode) {
+	ret := _m.Called(ProductId)
+
+	var r0 []products.ProductsQuantity
+	if rf, ok := ret.Get(0).(func(int) []products.ProductsQuantity); ok {
+		r0 = rf(ProductId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]products.ProductsQuantity)
+		}
+	}
+
+	var r1 web.ResponseCode
+	if rf, ok := ret.Get(1).(func(int) web.ResponseCode); ok {
+		r1 = rf(ProductId)
 	} else {
 		r1 = ret.Get(1).(web.ResponseCode)
 	}

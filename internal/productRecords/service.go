@@ -2,7 +2,6 @@ package product_records
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
@@ -28,7 +27,6 @@ func NewService(r Repository, pr products.Repository) Service {
 func (s service) CreateProductRecord(LastUpdateDate string, PurchasePrice float64, SalePrice float64, ProductId int) (ProductRecords, web.ResponseCode) {
 	_, err := s.productRepository.GetOne(ProductId)
 	if err != nil {
-		fmt.Println(err, 30)
 		return ProductRecords{}, web.NewCodeResponse(http.StatusConflict, errors.New("product_id don`t exists"))
 	}
 

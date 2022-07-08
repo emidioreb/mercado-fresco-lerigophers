@@ -179,3 +179,44 @@ func (s *ProductController) Update() gin.HandlerFunc {
 		c.JSON(resp.Code, web.NewResponse(product))
 	}
 }
+
+func (s *ProductController) GetReportRecords() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Query("id")
+		if id != "" {
+			parsedId, err := strconv.Atoi(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+				return
+			}
+
+			reportRecords, resp := s.service.GetReportRecord(parsedId)
+			if resp.Err != nil {
+				c.JSON(
+					http.StatusNotFound,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
+			c.JSON(
+				http.StatusOK,
+				web.NewResponse(reportRecords),
+			)
+		} else {
+			reportRecords, resp := s.service.GetReportRecord(0)
+			if resp.Err != nil {
+				c.JSON(
+					http.StatusNotFound,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
+			c.JSON(
+				http.StatusOK,
+				web.NewResponse(reportRecords),
+			)
+		}
+	}
+}

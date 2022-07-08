@@ -125,6 +125,7 @@ func main() {
 		productGroup.POST("/", controllerProduct.Create())
 		productGroup.DELETE("/:id", controllerProduct.Delete())
 		productGroup.PATCH("/:id", controllerProduct.Update())
+		productGroup.GET("/reportRecords", controllerProduct.GetReportRecords())
 	}
 
 	repoProductRecords := product_records.NewMariaDbRepository(conn)
@@ -133,7 +134,6 @@ func main() {
 	ProductRecordsGroup := server.Group("/api/v1/productRecords")
 	{
 		ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
-		//ProductRecordsGroup.GET("/reportProducts", controllerProductRecords.GetReportSellers())
 	}
 
 	repoEmployee := employees.NewRepository()

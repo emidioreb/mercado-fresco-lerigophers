@@ -8,7 +8,6 @@ import (
 
 type Repository interface {
 	CreateProductRecord(LastUpdateDate string, PurchasePrice float64, SalePrice float64, ProductId int) (ProductRecords, error)
-	//GetReportProduct(ProductId int) ([]RecordsQuantity, error)
 }
 
 type mariaDbRepository struct {
@@ -49,5 +48,4 @@ func (mariaDb mariaDbRepository) CreateProductRecord(LastUpdateDate string, Purc
 	newProductRecord.Id = int(lastId)
 
 	return newProductRecord, nil
-
 }

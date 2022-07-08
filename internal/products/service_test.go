@@ -27,6 +27,7 @@ func TestServiceCreate(t *testing.T) {
 			RecommendedFreezingTemperature: 17,
 			FreezingRate:                   23,
 			ProductTypeId:                  7,
+			SellerId:                       1,
 		}
 
 		mockedRepository.On("GetAll").Return([]products.Product{}, nil)
@@ -41,6 +42,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
 		).Return(input, nil)
 
 		service := products.NewService(mockedRepository)
@@ -48,7 +50,7 @@ func TestServiceCreate(t *testing.T) {
 		result, err := service.Create(input.ProductCode, input.Description,
 			input.Width, input.Height, input.Length, input.NetWeight,
 			input.ExpirationRate, input.RecommendedFreezingTemperature,
-			input.FreezingRate, input.ProductTypeId)
+			input.FreezingRate, input.ProductTypeId, input.SellerId)
 		assert.Nil(t, err.Err)
 
 		assert.Equal(t, input, result)

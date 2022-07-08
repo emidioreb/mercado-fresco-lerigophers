@@ -21,6 +21,7 @@ type Repository interface {
 	GetAll() ([]Product, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Product, error)
+	GetReportProduct(ProductId int) ([]ProductsQuantity, error)
 }
 
 type mariaDbRepository struct {
@@ -246,5 +247,38 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 	}
 
 	return currentProduct, nil
+}
 
+func (mariaDb mariaDbRepository) GetReportProduct(ProductId int) ([]ProductsQuantity, error) {
+	reports := []ProductsQuantity{}
+
+	var (
+		rows *sql.Rows
+		err  error
+	)
+
+	if ProductId != 0 {
+		rows, err = mariaDb.db.Query(queryGetReportOne, ProductId)
+	} else {
+		rows, err = mariaDb.db.Query(queryGetReportAll)
+	}
+
+	if err != nil {
+		fmt.Print(err, 267)
+		return []ProductsQuantity{}, errors.New("error to report products by product_id")
+	}
+
+	for rows.Next() {
+		var currentReport ProductsQuantity
+		if err := rows.Scan(
+			&currentReport.ProductId,
+			&currentReport.Description,
+			&currentReport.RecordsCount,
+		); err != nil {
+			return []ProductsQuantity{}, errors.New("error to report products by product_id")
+		}
+		reports = append(reports, currentReport)
+	}
+
+	return reports, nil
 }

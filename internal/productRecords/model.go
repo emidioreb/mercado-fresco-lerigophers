@@ -7,9 +7,3 @@ type ProductRecords struct {
 	SalePrice      float64 `json:"sale_price"`
 	ProductId      int     `json:"product_id"`
 }
-
-type RecordsQuantity struct {
-	ProductId    int    `json:"product_id"`
-	ProductCode  string `json:"product_code"`
-	RecordsCount int    `json:"records_count"`
-}
