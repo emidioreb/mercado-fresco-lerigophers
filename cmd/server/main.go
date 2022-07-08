@@ -152,5 +152,4 @@ func main() {
 	}
 
 	server.Run(":4400")
-
 }

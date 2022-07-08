@@ -20,7 +20,7 @@ func TestServiceCreate(t *testing.T) {
 		LocalityId:  "456",
 	}
 
-	t.Run("should return create carriers", func(t *testing.T) {
+	t.Run("should return create Carry", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 
 		mockedRepository.On("GetOne",

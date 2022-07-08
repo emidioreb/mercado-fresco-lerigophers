@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 
 	query := `INSERT INTO carriers (cid, company_name, address, telephone,locality_id) VALUES (?, ?, ?, ?,?)`
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success create_carry_repository ", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
@@ -47,7 +47,7 @@ func TestCreate(t *testing.T) {
 
 	})
 
-	t.Run("failed to create", func(t *testing.T) {
+	t.Run("failed create_carry_repository", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
@@ -73,7 +73,7 @@ func TestGetOne(t *testing.T) {
 		LocalityId:  "456",
 	}
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success getOne_carry_repository", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 
 		assert.NoError(t, err)
@@ -104,7 +104,7 @@ func TestGetOne(t *testing.T) {
 
 	})
 
-	t.Run("failed to use GetOne", func(t *testing.T) {
+	t.Run("failed getOne_carry_repository", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 
 		assert.NoError(t, err)
