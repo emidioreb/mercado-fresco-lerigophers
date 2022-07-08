@@ -120,8 +120,8 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 		return err
 	}
 
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 {
+	_, err = result.RowsAffected()
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("seller with id %d not found", id)
 	}
 
