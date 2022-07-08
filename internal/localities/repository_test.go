@@ -66,23 +66,13 @@ func TestDBCreateLocality(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
-		// rows := sqlmock.NewRows([]string{
-		// 	"id",
-		// 	"locality_name",
-		// 	"province_name",
-		// 	"country_name",
-		// }).
-		// AddRow(
-		// 	"000",
-		// )
+
 		mock.ExpectExec(regexp.QuoteMeta(queryCreateLocality)).WillReturnError(errors.New(""))
-		// mock.ExpectQuery(regexp.QuoteMeta(queryCreate)).WillReturnRows(rows)
 		localitiesRepo := NewMariaDbRepository(db)
 
 		emptyLocality, err := localitiesRepo.CreateLocality("123", "Presidente Dutra", "MA", "BR")
 		assert.NotNil(t, err)
 		assert.Equal(t, "", emptyLocality.CountryName)
-		// assert.Equal(t, 1, 1)
 	})
 
 }
