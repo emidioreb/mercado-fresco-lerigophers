@@ -3,12 +3,13 @@ package product_batches
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
-	CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate string) (ProductBatches, web.ResponseCode)
+	CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate time.Time) (ProductBatches, web.ResponseCode)
 	GetReportSection(SectionId int) ([]ProductsQuantity, web.ResponseCode)
 }
 
@@ -22,7 +23,7 @@ func NewService(r Repository) Service {
 	}
 }
 
-func (s service) CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate string) (ProductBatches, web.ResponseCode) {
+func (s service) CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate time.Time) (ProductBatches, web.ResponseCode) {
 	_, err := s.repository.GetOne(BatchNumber)
 	if err == nil {
 		return ProductBatches{}, web.NewCodeResponse(http.StatusConflict, errors.New("product_batch already exists"))
