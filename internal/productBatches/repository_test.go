@@ -152,7 +152,7 @@ func TestGetOne(t *testing.T) {
 	})
 }
 
-func TestDBGetReportSellers(t *testing.T) {
+func TestDBGetReportSections(t *testing.T) {
 	t.Run("Get all reports", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)

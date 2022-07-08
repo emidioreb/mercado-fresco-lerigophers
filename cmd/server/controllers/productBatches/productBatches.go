@@ -97,25 +97,42 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 func (s *ProductBatchController) GetReportSellers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Query("id")
-		parsedId, err := strconv.Atoi(id)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
-			return
-		}
+		if id != "" {
+			parsedId, err := strconv.Atoi(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+				return
+			}
 
-		reportSellers, resp := s.service.GetReportSection(parsedId)
-		if resp.Err != nil {
+			reportSellers, resp := s.service.GetReportSection(parsedId)
+			if resp.Err != nil {
+				c.JSON(
+					http.StatusNotFound,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
 			c.JSON(
-				http.StatusNotFound,
-				web.DecodeError(resp.Err.Error()),
+				http.StatusOK,
+				web.NewResponse(reportSellers),
 			)
-			return
+		} else {
+			reportSellers, resp := s.service.GetReportSection(0)
+			if resp.Err != nil {
+				c.JSON(
+					http.StatusNotFound,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
+			c.JSON(
+				http.StatusOK,
+				web.NewResponse(reportSellers),
+			)
 		}
 
-		c.JSON(
-			http.StatusOK,
-			web.NewResponse(reportSellers),
-		)
 	}
 
 }
