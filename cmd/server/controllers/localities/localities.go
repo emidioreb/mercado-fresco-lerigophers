@@ -19,7 +19,7 @@ type reqLocality struct {
 	CountryName  string `json:"country_name" binding:"required"`
 }
 
-func NewSeller(s localities.Service) *LocalityController {
+func NewLocality(s localities.Service) *LocalityController {
 	return &LocalityController{
 		service: s,
 	}
@@ -81,7 +81,7 @@ func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 		reportSellers, resp := s.service.GetReportSellers(id)
 		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
+				resp.Code,
 				web.DecodeError(resp.Err.Error()),
 			)
 			return
