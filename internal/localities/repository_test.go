@@ -11,7 +11,6 @@ import (
 )
 
 func TestDBCreateLocality(t *testing.T) {
-
 	t.Run("Success case", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
@@ -209,13 +208,13 @@ func TestDBGetReportSellers(t *testing.T) {
 			"locality_id",
 			"locality_name",
 			"sellers_count",
-		})
+		}).AddRow("123", "", "")
 
-		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportOne)).WithArgs("").WillReturnRows(rows)
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportOne)).WillReturnRows(rows)
 
 		localityRepo := NewMariaDbRepository(db)
 
 		_, err = localityRepo.GetReportSellers("123")
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 }
