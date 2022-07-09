@@ -76,7 +76,79 @@ func TestServiceCreate(t *testing.T) {
 		assert.Error(t, resp.Err)
 		assert.Equal(t, expectedError.Error(), resp.Err.Error())
 		mockedRepository.AssertExpectations(t)
-		assert.Equal(t, resp.Code, http.StatusConflict)
+		assert.Equal(t, http.StatusConflict, resp.Code)
+	})
+
+	t.Run("Test internal server error when verify CID", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		expectedError := errors.New("some error")
+		mockedRepository.On("FindByCID", mock.AnythingOfType("int")).Return(0, expectedError).Once()
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+		_, resp := service.Create(
+			fakeSellers[0].Cid,
+			fakeSellers[0].CompanyName,
+			fakeSellers[0].Address,
+			fakeSellers[0].Telephone,
+			fakeSellers[0].LocalityId)
+
+		assert.Error(t, resp.Err)
+		mockedRepository.AssertExpectations(t)
+		assert.Equal(t, expectedError.Error(), resp.Err.Error())
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
+	})
+
+	t.Run("Test conflict if locality_id do not exist", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		expectedError := errors.New("some error")
+		mockedRepository.On("FindByCID", mock.AnythingOfType("int")).Return(1, nil).Once()
+		mockedLocality.On("GetOne", mock.AnythingOfType("string")).Return(localities.Locality{}, expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+		_, resp := service.Create(
+			fakeSellers[0].Cid,
+			fakeSellers[0].CompanyName,
+			fakeSellers[0].Address,
+			fakeSellers[0].Telephone,
+			fakeSellers[0].LocalityId)
+
+		assert.Error(t, resp.Err)
+		assert.Equal(t, expectedError, resp.Err)
+		assert.Equal(t, http.StatusConflict, resp.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test internal server error when create seller", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		expectedError := errors.New("some error")
+		mockedRepository.On("FindByCID", mock.AnythingOfType("int")).Return(1, nil).Once()
+		mockedLocality.On("GetOne", mock.AnythingOfType("string")).Return(localities.Locality{}, nil)
+		mockedRepository.On("Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(sellers.Seller{}, expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+		_, resp := service.Create(
+			fakeSellers[0].Cid,
+			fakeSellers[0].CompanyName,
+			fakeSellers[0].Address,
+			fakeSellers[0].Telephone,
+			fakeSellers[0].LocalityId)
+
+		assert.Error(t, resp.Err)
+		assert.Equal(t, expectedError, resp.Err)
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
+		mockedRepository.AssertExpectations(t)
 	})
 }
 
@@ -126,6 +198,21 @@ func TestServiceGetAll(t *testing.T) {
 
 		assert.Len(t, result, 2)
 		assert.Equal(t, fakeSellers[1].Cid, result[1].Cid)
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test internal server error when get all", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		expectedError := errors.New("any error")
+		mockedRepository.On("GetAll").Return([]sellers.Seller{}, expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+
+		_, err := service.GetAll()
+		assert.Error(t, err.Err)
+		assert.Equal(t, expectedError, err.Err)
 		mockedRepository.AssertExpectations(t)
 	})
 }
@@ -239,6 +326,49 @@ func TestServiceUpdate(t *testing.T) {
 		assert.Error(t, resp.Err)
 
 		assert.Equal(t, expectedError, resp.Err)
-		assert.Equal(t, resp.Code, http.StatusConflict)
+		assert.Equal(t, http.StatusConflict, resp.Code)
+	})
+
+	t.Run("Update seller when locality_id do not exists", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		requestData := map[string]interface{}{"locality_id": 2.0}
+
+		expectedError := errors.New("cid already exists")
+
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil)
+		mockedLocality.On("GetOne", mock.AnythingOfType("string")).Return(localities.Locality{}, expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+
+		_, resp := service.Update(1, requestData)
+		assert.Error(t, resp.Err)
+
+		assert.Equal(t, expectedError, resp.Err)
+		assert.Equal(t, http.StatusConflict, resp.Code)
+	})
+
+	t.Run("Internal server error when updating seller", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+
+		requestData := map[string]interface{}{"address": "FAKE ADDRESS"}
+
+		expectedError := errors.New("cid already exists")
+
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil)
+		mockedRepository.On("Update",
+			mock.AnythingOfType("int"),
+			mock.Anything,
+		).Return(sellers.Seller{}, expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+
+		_, resp := service.Update(1, requestData)
+		assert.Error(t, resp.Err)
+
+		assert.Equal(t, expectedError, resp.Err)
+		assert.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
 }
