@@ -140,8 +140,8 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 		return Seller{}, errUpdatedSeller
 	}
 
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 && err != nil {
+	_, err = result.RowsAffected()
+	if err != nil || errors.Is(err, sql.ErrNoRows) {
 		return Seller{}, errUpdatedSeller
 	}
 

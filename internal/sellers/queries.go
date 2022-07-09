@@ -1,5 +1,7 @@
 package sellers
 
+import "fmt"
+
 var (
 	queryCreateSeller  = "INSERT INTO sellers (cid, company_name, address, telephone, locality_id) VALUES (?, ?, ?, ?, ?)"
 	queryGetOneSeller  = "SELECT * FROM sellers WHERE id = ?"
@@ -14,23 +16,21 @@ var (
 		fieldsToUpdate := []string{}
 		whereCase := "WHERE id = ?"
 
-		for key, _ := range requestData {
-			switch key {
-			case "company_name":
-				fieldsToUpdate = append(fieldsToUpdate, " company_name = ?")
-				valuesToUse = append(valuesToUse, requestData[key])
-			case "address":
-				fieldsToUpdate = append(fieldsToUpdate, " address = ?")
-				valuesToUse = append(valuesToUse, requestData[key])
-			case "telephone":
-				fieldsToUpdate = append(fieldsToUpdate, " telephone = ?")
-				valuesToUse = append(valuesToUse, requestData[key])
-			case "locality_id":
-				fieldsToUpdate = append(fieldsToUpdate, " locality_id = ?")
-				valuesToUse = append(valuesToUse, requestData[key])
-			case "cid":
-				fieldsToUpdate = append(fieldsToUpdate, " cid = ?")
-				valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
+		var fields = []string{
+			"company_name",
+			"address",
+			"telephone",
+			"locality_id",
+			"cid",
+		}
+		for _, currField := range fields {
+			if _, ok := requestData[currField]; ok {
+				fieldsToUpdate = append(fieldsToUpdate, fmt.Sprintf(" %s = ?", currField))
+				if currField == "cid" {
+					valuesToUse = append(valuesToUse, int(requestData[currField].(float64)))
+				} else {
+					valuesToUse = append(valuesToUse, requestData[currField])
+				}
 			}
 		}
 

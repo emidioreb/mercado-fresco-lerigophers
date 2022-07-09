@@ -255,7 +255,52 @@ func TestDBDeleteSeller(t *testing.T) {
 }
 
 func TestDBUpdateSeller(t *testing.T) {
-	t.Run("Success case", func(t *testing.T) {})
+	requestData := map[string]interface{}{
+		"cid":          1.0,
+		"address":      "Nações Separadas",
+		"telephone":    "123",
+		"locality_id":  "1",
+		"company_name": "Mercado Free",
+	}
+
+	t.Run("Success case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		query := `UPDATE sellers
+		SET 
+			company_name = ?,
+			address = ?,
+			telephone = ?,
+			locality_id = ?,
+			cid = ?
+		WHERE id = ?`
+
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WithArgs(
+				"Mercado Free",
+				"Nações Separadas",
+				"123",
+				"1",
+				1,
+				1, // Seller ID to update
+			).WillReturnResult(sqlmock.NewResult(1, 1))
+
+		newRow := mock.
+			NewRows([]string{"id", "cid", "company_name", "address", "telephone", "locality_id"}).
+			AddRow(1, 1, "Mercado Libre", "", "", "")
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneSeller)).
+			WithArgs(1).WillReturnRows(newRow)
+
+		sellersRepo := NewMariaDbRepository(db)
+
+		seller, err := sellersRepo.Update(1, requestData)
+		assert.Nil(t, err)
+
+		assert.Equal(t, "Mercado Libre", seller.CompanyName)
+	})
 
 	t.Run("Not found case", func(t *testing.T) {})
 
