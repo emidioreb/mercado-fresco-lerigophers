@@ -263,19 +263,19 @@ func TestDBUpdateSeller(t *testing.T) {
 		"company_name": "Mercado Free",
 	}
 
+	query := `UPDATE sellers
+	SET 
+		company_name = ?,
+		address = ?,
+		telephone = ?,
+		locality_id = ?,
+		cid = ?
+	WHERE id = ?`
+
 	t.Run("Success case", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
-
-		query := `UPDATE sellers
-		SET 
-			company_name = ?,
-			address = ?,
-			telephone = ?,
-			locality_id = ?,
-			cid = ?
-		WHERE id = ?`
 
 		mock.ExpectExec(regexp.QuoteMeta(query)).
 			WithArgs(
@@ -288,7 +288,13 @@ func TestDBUpdateSeller(t *testing.T) {
 			).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		newRow := mock.
-			NewRows([]string{"id", "cid", "company_name", "address", "telephone", "locality_id"}).
+			NewRows([]string{
+				"id",
+				"cid",
+				"company_name",
+				"address",
+				"telephone",
+				"locality_id"}).
 			AddRow(1, 1, "Mercado Libre", "", "", "")
 
 		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneSeller)).
@@ -302,13 +308,107 @@ func TestDBUpdateSeller(t *testing.T) {
 		assert.Equal(t, "Mercado Libre", seller.CompanyName)
 	})
 
-	t.Run("Not found case", func(t *testing.T) {})
+	t.Run("Exec error", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
 
-	t.Run("DB Error case", func(t *testing.T) {})
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnError(errors.New("any error"))
+
+		sellersRepo := NewMariaDbRepository(db)
+
+		_, err = sellersRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedSeller, err)
+	})
+
+	t.Run("Not found case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		newResult := sqlmock.NewResult(0, 0)
+		newErrorResult := sqlmock.NewErrorResult(errors.New("any error"))
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnResult(newResult).
+			WillReturnResult(newErrorResult)
+
+		sellersRepo := NewMariaDbRepository(db)
+
+		_, err = sellersRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedSeller, err)
+	})
+
+	t.Run("Return updated seller case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		newResult := sqlmock.NewResult(0, 0)
+		newErrorResult := sqlmock.NewErrorResult(errors.New("any error"))
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnResult(newResult)
+
+		mock.ExpectExec(regexp.QuoteMeta(queryGetOneSeller)).
+			WillReturnResult(newErrorResult)
+
+		sellersRepo := NewMariaDbRepository(db)
+
+		_, err = sellersRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedSeller, err)
+	})
 }
 
 func TestDBFindByCID(t *testing.T) {
-	t.Run("Success case", func(t *testing.T) {})
+	t.Run("Already exists case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
 
-	t.Run("Not found case", func(t *testing.T) {})
+		rows := sqlmock.NewRows([]string{
+			"id",
+			"cid",
+		}).
+			AddRow(1, 1)
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryFindByCID)).WillReturnRows(rows)
+
+		sellersRepo := NewMariaDbRepository(db)
+		id, err := sellersRepo.FindByCID(1)
+		assert.Error(t, err)
+		assert.Greater(t, id, 0)
+		assert.Equal(t, "cid already exists", err.Error())
+	})
+
+	t.Run("No rows case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryFindByCID)).
+			WillReturnError(sql.ErrNoRows)
+
+		sellersRepo := NewMariaDbRepository(db)
+		id, err := sellersRepo.FindByCID(1)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, id)
+	})
+
+	t.Run("Another erro to verify cid", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryFindByCID)).
+			WillReturnError(errors.New("any error"))
+
+		sellersRepo := NewMariaDbRepository(db)
+		id, err := sellersRepo.FindByCID(1)
+		assert.Error(t, err)
+		assert.Equal(t, 0, id)
+		assert.Equal(t, "failed to verify if cid already exists", err.Error())
+	})
 }
