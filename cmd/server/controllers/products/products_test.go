@@ -53,6 +53,7 @@ var fakeProducts = []products.Product{
 		RecommendedFreezingTemperature: 17,
 		FreezingRate:                   23,
 		ProductTypeId:                  7,
+		SellerId:                       1,
 	},
 	{
 		Id:                             2,
@@ -66,6 +67,7 @@ var fakeProducts = []products.Product{
 		RecommendedFreezingTemperature: 17,
 		FreezingRate:                   23,
 		ProductTypeId:                  7,
+		SellerId:                       1,
 	},
 }
 
@@ -462,6 +464,7 @@ func TestCreateProduct(t *testing.T) {
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
 		).
 			Return(fakeProducts[0], web.ResponseCode{
 				Code: http.StatusCreated,
@@ -570,6 +573,7 @@ func TestCreateProduct(t *testing.T) {
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("float64"),
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
 		).Return(products.Product{}, web.ResponseCode{
 			Code: http.StatusConflict,
 			Err:  errProductCodeExists,
@@ -590,5 +594,46 @@ func TestCreateProduct(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, errProductCodeExists.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Success on Create", func(t *testing.T) {
+		mockedService, productController := newProductController()
+		mockedService.On("Create",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+		).
+			Return(products.Product{}, web.ResponseCode{
+				Code: http.StatusInternalServerError,
+				Err:  errServer,
+			})
+
+		parsedFakeProduct, err := json.Marshal(fakeProducts[0])
+		assert.NoError(t, err)
+
+		r := gin.Default()
+		r.POST(defaultURL, productController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer(parsedFakeProduct))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+		bodyResponse := ObjectErrorResponse{}
+		err = json.Unmarshal(rec.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errServer.Error(), bodyResponse.Error)
 	})
 }
