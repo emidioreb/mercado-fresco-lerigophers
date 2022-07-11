@@ -4,16 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-var duedate, _ = time.Parse("2006-02-01", "2021-04-01")
-var manufacturingdate, _ = time.Parse("2006-02-01", "2021-04-01")
 
 var fakeProductBatches = []product_batches.ProductBatches{{
 	BatchNumber:        1,
@@ -24,8 +20,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            duedate,
-	ManufacturingDate:  manufacturingdate,
+	DueDate:            date,
+	ManufacturingDate:  date,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    10,
@@ -35,8 +31,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            duedate,
-	ManufacturingDate:  manufacturingdate,
+	DueDate:            date,
+	ManufacturingDate:  date,
 }}
 
 func TestServiceCreate(t *testing.T) {

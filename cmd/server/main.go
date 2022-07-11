@@ -35,7 +35,7 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -54,7 +54,7 @@ func main() {
 	ProductBatchesGroup := server.Group("/api/v1/productBatches")
 	{
 		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSellers())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
 	}
 
 	repoLocalities := localities.NewMariaDbRepository(conn)

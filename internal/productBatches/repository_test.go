@@ -5,11 +5,16 @@ import (
 	"errors"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	"github.com/stretchr/testify/assert"
 )
+
+const layout = "2006-01-02"
+
+var date, _ = time.Parse(layout, layout)
 
 var mockProductBatch = product_batches.ProductBatches{
 	BatchNumber:        1,
@@ -20,8 +25,8 @@ var mockProductBatch = product_batches.ProductBatches{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            duedate,
-	ManufacturingDate:  manufacturingdate,
+	DueDate:            date,
+	ManufacturingDate:  date,
 }
 
 func TestCreate(t *testing.T) {
@@ -111,7 +116,7 @@ func TestGetOne(t *testing.T) {
 			"section_id",
 			"due_date",
 			"manufacturing_date",
-		}).AddRow(1, 1, 1, 1, 1, 1, 1, 1, 1, duedate, manufacturingdate)
+		}).AddRow(1, 1, 1, 1, 1, 1, 1, 1, 1, date, date)
 
 		mock.ExpectQuery(regexp.QuoteMeta(product_batches.QueryGetOneProductBatch)).WillReturnRows(rows)
 
