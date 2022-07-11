@@ -5,6 +5,7 @@ import (
 	"log"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
@@ -16,6 +17,7 @@ import (
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	product_records "github.com/emidioreb/mercado-fresco-lerigophers/internal/productRecords"
 	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
@@ -64,6 +66,7 @@ func main() {
 	{
 		localityGroup.POST("/", controllerLocality.CreateLocality())
 		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
 	}
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
@@ -152,6 +155,16 @@ func main() {
 		employeeGroup.POST("/", controllerEmployee.Create())
 		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+
+
+	repoCarriers := carriers.NewMariaDbRepository(conn)
+	serviceCarriers := carriers.NewService(repoCarriers)
+	controllerCarriers := controllers.NewCarry(serviceCarriers)
+
+	carriersGroup := server.Group("/api/v1/carries")
+	{
+		carriersGroup.POST("/", controllerCarriers.Create())
 	}
 
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
