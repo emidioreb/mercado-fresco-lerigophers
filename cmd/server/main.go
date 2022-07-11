@@ -37,7 +37,7 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
