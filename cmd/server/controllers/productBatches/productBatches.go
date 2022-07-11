@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,16 +16,16 @@ type ProductBatchController struct {
 }
 
 type reqProductBatch struct {
-	BatchNumber        int       `json:"batch_number" binding:"required"`
-	CurrentQuantity    int       `json:"current_quantity" binding:"required"`
-	CurrentTemperature int       `json:"current_temperature" binding:"required"`
-	InitialQuantity    int       `json:"initial_quantity" binding:"required"`
-	ManufacturingHour  int       `json:"manufacturing_hour" binding:"required"`
-	MinimumTemperature int       `json:"minumum_temperature" binding:"required"`
-	ProductId          int       `json:"product_id" binding:"required"`
-	SectionId          int       `json:"section_id" binding:"required"`
-	DueDate            time.Time `json:"due_date" binding:"required"`
-	ManufacturingDate  time.Time `json:"manufacturing_date" binding:"required"`
+	BatchNumber        int    `json:"batch_number" binding:"required"`
+	CurrentQuantity    int    `json:"current_quantity" binding:"required"`
+	CurrentTemperature int    `json:"current_temperature" binding:"required"`
+	InitialQuantity    int    `json:"initial_quantity" binding:"required"`
+	ManufacturingHour  int    `json:"manufacturing_hour" binding:"required"`
+	MinimumTemperature int    `json:"minumum_temperature" binding:"required"`
+	ProductId          int    `json:"product_id" binding:"required"`
+	SectionId          int    `json:"section_id" binding:"required"`
+	DueDate            string `json:"due_date" binding:"required"`
+	ManufacturingDate  string `json:"manufacturing_date" binding:"required"`
 }
 
 func NewProductBatch(s product_batches.Service) *ProductBatchController {
@@ -38,6 +39,7 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 		var requestData reqProductBatch
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
+			log.Println(err)
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
@@ -67,6 +69,21 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 			return
 		}
 
+		const layout = "2006-01-02"
+
+		duedate, errDate := time.Parse(layout, requestData.DueDate)
+
+		if errDate != nil {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("due_date format incorrect, model: YYYY-MM-DD"))
+			return
+		}
+
+		manufacturingdate, errDate := time.Parse(layout, requestData.ManufacturingDate)
+		if errDate != nil {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("manufacturing_date format incorrect, model: YYYY-MM-DD"))
+			return
+		}
+
 		productBatch, resp := s.service.CreateProductBatch(
 			requestData.BatchNumber,
 			requestData.CurrentQuantity,
@@ -76,8 +93,8 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 			requestData.MinimumTemperature,
 			requestData.ProductId,
 			requestData.SectionId,
-			requestData.DueDate,
-			requestData.ManufacturingDate,
+			duedate,
+			manufacturingdate,
 		)
 
 		if resp.Err != nil {
@@ -94,7 +111,7 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 	}
 }
 
-func (s *ProductBatchController) GetReportSellers() gin.HandlerFunc {
+func (s *ProductBatchController) GetReportSection() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Query("id")
 		if id != "" {
@@ -104,7 +121,7 @@ func (s *ProductBatchController) GetReportSellers() gin.HandlerFunc {
 				return
 			}
 
-			reportSellers, resp := s.service.GetReportSection(parsedId)
+			reportSections, resp := s.service.GetReportSection(parsedId)
 			if resp.Err != nil {
 				c.JSON(
 					http.StatusNotFound,
@@ -115,10 +132,10 @@ func (s *ProductBatchController) GetReportSellers() gin.HandlerFunc {
 
 			c.JSON(
 				http.StatusOK,
-				web.NewResponse(reportSellers),
+				web.NewResponse(reportSections),
 			)
 		} else {
-			reportSellers, resp := s.service.GetReportSection(0)
+			reportSections, resp := s.service.GetReportSection(0)
 			if resp.Err != nil {
 				c.JSON(
 					http.StatusNotFound,
@@ -129,7 +146,7 @@ func (s *ProductBatchController) GetReportSellers() gin.HandlerFunc {
 
 			c.JSON(
 				http.StatusOK,
-				web.NewResponse(reportSellers),
+				web.NewResponse(reportSections),
 			)
 		}
 
