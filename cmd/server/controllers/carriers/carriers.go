@@ -38,7 +38,6 @@ func (s *CarryController) Create() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("CID too long: max 255 characters"))
 			return
 		}
-		// CID length must be
 
 		if len(requestData.CompanyName) > 255 {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("company_name too long: max 255 characters"))

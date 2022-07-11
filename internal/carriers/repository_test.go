@@ -3,10 +3,7 @@ package carriers
 import (
 	"regexp"
 	"testing"
-
 	"github.com/DATA-DOG/go-sqlmock"
-
-	// "github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
