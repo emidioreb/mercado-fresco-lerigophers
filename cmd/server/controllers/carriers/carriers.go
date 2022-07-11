@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 	"github.com/gin-gonic/gin"
@@ -12,11 +13,11 @@ type CarryController struct {
 }
 
 type reqCarries struct {
-	Cid         string `json:"cid"`
-	CompanyName string `json:"company_name"`
-	Address     string `json:"address"`
-	Telephone   string `json:"telephone"`
-	LocalityId  string `json:"locality_id"`
+	Cid         string `json:"cid" binding:"required"`
+	CompanyName string `json:"company_name" binding:"required"`
+	Address     string `json:"address" binding:"required"`
+	Telephone   string `json:"telephone" binding:"required"`
+	LocalityId  string `json:"locality_id" binding:"required"`
 }
 
 func NewCarry(s carriers.Service) *CarryController {

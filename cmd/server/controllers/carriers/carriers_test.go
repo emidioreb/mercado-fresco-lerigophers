@@ -43,7 +43,7 @@ func newCarryController() (*mocks.Service, *controllers.CarryController) {
 }
 
 const (
-	defaultURL = "/api/v1/carries/"
+	defaultURL = "/api/v1/carries"
 )
 
 var (
@@ -147,7 +147,13 @@ func TestCreateBuyer(t *testing.T) {
 		r := gin.Default()
 		r.POST(defaultURL, carryController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(`{"cid": "%s"}`)),repetitionCharacters256))))
+		req, err := http.NewRequest(http.MethodPost, defaultURL,
+			bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(
+				`{"cid": "%s",
+				 "company_name":"Mercado Livre",
+				 "address":"Rua sem nome",
+				 "telephone":"0880-5555",
+				 "locality_id":"65760000"}`)), repetitionCharacters256))))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -177,7 +183,13 @@ func TestCreateBuyer(t *testing.T) {
 		r := gin.Default()
 		r.POST(defaultURL, carryController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(`{"company_name": "%s"}`)),repetitionCharacters256))))
+		req, err := http.NewRequest(http.MethodPost, defaultURL,
+			bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(
+				`{"cid": "teste",
+				 "company_name":"%s",
+				 "address":"Rua sem nome",
+				 "telephone":"0880-5555",
+				 "locality_id":"65760000"}`)), repetitionCharacters256))))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -207,7 +219,13 @@ func TestCreateBuyer(t *testing.T) {
 		r := gin.Default()
 		r.POST(defaultURL, carryController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(`{"address": "%s"}`)),repetitionCharacters256))))
+		req, err := http.NewRequest(http.MethodPost, defaultURL,
+			bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(
+				`{"cid": "teste",
+				 "company_name":"Mercado Livre",
+				 "address":"%s",
+				 "telephone":"0880-5555",
+				 "locality_id":"65760000"}`)), repetitionCharacters256))))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -237,7 +255,14 @@ func TestCreateBuyer(t *testing.T) {
 		r := gin.Default()
 		r.POST(defaultURL, carryController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(`{"telephone": "%s"}`)),repetitionCharacters21))))
+		req, err := http.NewRequest(http.MethodPost, defaultURL,
+			bytes.NewBuffer([]byte(fmt.Sprintf(string([]byte(
+				`{"cid": "teste",
+				 "company_name":"Mercado Livre",
+				 "address":"Rua sem nome",
+				 "telephone":"%s",
+				 "locality_id":"65760000"
+		}`)), repetitionCharacters21))))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()

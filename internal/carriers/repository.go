@@ -26,11 +26,9 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 }
 
 func (mariaDb mariaDbRepository) GetOne(cid string) (Carry, error) {
-	query := `SELECT * FROM carriers WHERE cid=?`
-
 	currentCarry := Carry{}
 
-	row := mariaDb.db.QueryRow(query, cid)
+	row := mariaDb.db.QueryRow(queryGetOneCarry, cid)
 
 	err := row.Scan(
 		&currentCarry.Id,
@@ -53,8 +51,6 @@ func (mariaDb mariaDbRepository) GetOne(cid string) (Carry, error) {
 }
 
 func (mariaDb mariaDbRepository) Create(cid, companyName, address, telephone, localityId string) (Carry, error) {
-	insert := `INSERT INTO carriers (cid, company_name, address, telephone,locality_id) VALUES (?, ?, ?, ?,?)`
-
 	newCarry := Carry{
 		Cid:         cid,
 		CompanyName: companyName,
@@ -64,7 +60,7 @@ func (mariaDb mariaDbRepository) Create(cid, companyName, address, telephone, lo
 	}
 
 	result, err := mariaDb.db.Exec(
-		insert,
+		queryCreateCarry ,
 		cid,
 		companyName,
 		address,
