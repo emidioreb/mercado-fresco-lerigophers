@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 )
 
 type Repository interface {
-	CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate string) (ProductBatches, error)
+	CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate time.Time) (ProductBatches, error)
 	GetReportSection(SectionId int) ([]ProductsQuantity, error)
 	GetOne(BatchNumber int) (ProductBatches, error)
 }
@@ -27,19 +26,19 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 func (mariaDb mariaDbRepository) GetOne(BatchNumber int) (ProductBatches, error) {
 	currentProductBatch := ProductBatches{}
 
-	row := mariaDb.db.QueryRow(queryGetOneProductBatch, BatchNumber)
+	row := mariaDb.db.QueryRow(QueryGetOneProductBatch, BatchNumber)
 	err := row.Scan(
 		&currentProductBatch.Id,
 		&currentProductBatch.BatchNumber,
 		&currentProductBatch.CurrentQuantity,
 		&currentProductBatch.CurrentTemperature,
-		&currentProductBatch.DueDate,
 		&currentProductBatch.InitialQuantity,
-		&currentProductBatch.ManufacturingDate,
 		&currentProductBatch.ManufacturingHour,
 		&currentProductBatch.MinimumTemperature,
 		&currentProductBatch.ProductId,
 		&currentProductBatch.SectionId,
+		&currentProductBatch.DueDate,
+		&currentProductBatch.ManufacturingDate,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -53,17 +52,9 @@ func (mariaDb mariaDbRepository) GetOne(BatchNumber int) (ProductBatches, error)
 	return currentProductBatch, nil
 }
 
-func (mariaDb mariaDbRepository) CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate string) (ProductBatches, error) {
-	layout := "2006-01-02"
-	dueDate, _ := time.Parse(layout, DueDate)
-	manufacturingDate, err := time.Parse(layout, ManufacturingDate)
+func (mariaDb mariaDbRepository) CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate time.Time) (ProductBatches, error) {
+	_, err := mariaDb.db.Exec(QueryCreateProductBatch, BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId, DueDate, ManufacturingDate)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = mariaDb.db.Exec(queryCreateProductBatch, BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId, dueDate, manufacturingDate)
-	if err != nil {
-		log.Fatal(err)
 		return ProductBatches{}, errors.New("couldn't create a product_batch")
 	}
 
@@ -92,9 +83,9 @@ func (mariaDb mariaDbRepository) GetReportSection(SectionId int) ([]ProductsQuan
 	)
 
 	if SectionId != 0 {
-		rows, err = mariaDb.db.Query(queryGetReportOne, SectionId)
+		rows, err = mariaDb.db.Query(QueryGetReportOne, SectionId)
 	} else {
-		rows, err = mariaDb.db.Query(queryGetReportAll)
+		rows, err = mariaDb.db.Query(QueryGetReportAll)
 	}
 
 	if err != nil {
