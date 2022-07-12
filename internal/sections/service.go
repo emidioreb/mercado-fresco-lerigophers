@@ -3,7 +3,7 @@ package sections
 import (
 	"net/http"
 
-	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+	product_types "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
@@ -19,10 +19,10 @@ type Service interface {
 type service struct {
 	repository            Repository
 	warehouseRepository   warehouses.Repository
-	productTypeRepository producttypes.Repository
+	productTypeRepository product_types.Repository
 }
 
-func NewService(r Repository, wr warehouses.Repository, pr producttypes.Repository) Service {
+func NewService(r Repository, wr warehouses.Repository, pr product_types.Repository) Service {
 	return &service{
 		repository:            r,
 		warehouseRepository:   wr,
@@ -74,11 +74,16 @@ func (s service) GetAll() ([]Section, web.ResponseCode) {
 }
 
 func (s service) Delete(id int) web.ResponseCode {
-	err := s.repository.Delete(id)
-
+	_, err := s.repository.GetOne(id)
 	if err != nil {
 		return web.NewCodeResponse(http.StatusNotFound, err)
 	}
+
+	err = s.repository.Delete(id)
+	if err != nil {
+		return web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 
