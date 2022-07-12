@@ -120,7 +120,7 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- Table `mercado_fresco`.`products`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mercado_fresco`.`products` (
-  `id` INT UNSIGNED NOT NULL,
+  `id` INT UNSIGNED AUTO_INCREMENT NOT NULL,
   `product_code` VARCHAR(255) NOT NULL,
   `description` VARCHAR(255) NULL DEFAULT NULL,
   `width` FLOAT NULL DEFAULT NULL,
@@ -178,7 +178,7 @@ DEFAULT CHARACTER SET = utf8mb3;
 -- Table `mercado_fresco`.`carriers`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mercado_fresco`.`carriers` (
-  `id` INT UNSIGNED NOT NULL,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `cid` VARCHAR(255) NOT NULL,
   `company_name` VARCHAR(255) NULL,
   `address` VARCHAR(255) NULL,

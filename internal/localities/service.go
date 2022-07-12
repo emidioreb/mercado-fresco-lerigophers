@@ -16,6 +16,7 @@ type Service interface {
 	) (Locality, web.ResponseCode)
 	GetAllReportSellers() ([]ReportSellers, web.ResponseCode)
 	GetReportOneSeller(localityId string) ([]ReportSellers, web.ResponseCode)
+	GetReportCarriers(localityId string) ([]ReportCarriers, web.ResponseCode) 
 }
 
 type service struct {
@@ -63,3 +64,15 @@ func (s service) GetReportOneSeller(localityId string) ([]ReportSellers, web.Res
 
 	return report, web.NewCodeResponse(http.StatusOK, nil)
 }
+
+func (s service) GetReportCarriers(localityId string) ([]ReportCarriers, web.ResponseCode) {
+	report, err := s.repository.GetReportCarriers(localityId)
+
+	if err != nil {
+		return []ReportCarriers{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
+	return report, web.NewCodeResponse(http.StatusOK, nil)
+}
+
+

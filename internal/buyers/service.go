@@ -13,6 +13,7 @@ type Service interface {
 	GetAll() ([]Buyer, web.ResponseCode)
 	Delete(id int) web.ResponseCode
 	Update(id int, requestData map[string]interface{}) (Buyer, web.ResponseCode)
+	GetReportPurchaseOrders(SectionId int) ([]ReportPurchaseOrders, web.ResponseCode)
 }
 
 type service struct {
@@ -29,12 +30,12 @@ func (s service) Create(cardNumberId string, firstName string, lastName string) 
 	allBuyers, _ := s.GetAll()
 
 	for _, buyer := range allBuyers {
-		if buyer.CardNumberId == cardNumberId  {
+		if buyer.CardNumberId == cardNumberId {
 			return Buyer{}, web.NewCodeResponse(http.StatusConflict, errors.New("CardNumberId already exists"))
 		}
 	}
 
-	Buyer, _ := s.repository.Create(cardNumberId , firstName, lastName )
+	Buyer, _ := s.repository.Create(cardNumberId, firstName, lastName)
 
 	return Buyer, web.NewCodeResponse(http.StatusCreated, nil)
 }
@@ -80,4 +81,18 @@ func (s service) Update(id int, requestData map[string]interface{}) (Buyer, web.
 	buyer, _ := s.repository.Update(id, requestData)
 
 	return buyer, web.ResponseCode{Code: http.StatusOK, Err: nil}
+}
+
+func (s service) GetReportPurchaseOrders(BuyerId int) ([]ReportPurchaseOrders, web.ResponseCode) {
+	report, err := s.repository.GetReportPurchaseOrders(BuyerId)
+
+	if err != nil {
+		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
+	if len(report) == 0 {
+		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusNotFound, errors.New("buyer not found"))
+	}
+
+	return report, web.NewCodeResponse(http.StatusOK, nil)
 }

@@ -15,9 +15,9 @@ type WarehouseController struct {
 	service warehouses.Service
 }
 
-type ReqWarehouses struct {
+type reqWarehouses struct {
 	WarehouseCode      string `json:"warehouse_code"`
-	Address            string `json:"adress"`
+	Address            string `json:"address"`
 	Telephone          string `json:"telephone"`
 	MinimumCapacity    int    `json:"minimum_capacity"`
 	MinimumTemperature int    `json:"minimum_temperature"`
@@ -31,14 +31,30 @@ func NewWarehouse(s warehouses.Service) *WarehouseController {
 
 func (s *WarehouseController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData ReqWarehouses
+		var requestData reqWarehouses
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
+
 		if strings.ReplaceAll(requestData.WarehouseCode, " ", "") == "" {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty warehouse_code not allowed"))
+			return
+		}
+
+		if len(requestData.WarehouseCode) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("warehouse_code too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Address) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("address too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Telephone) > 20 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
 			return
 		}
 
@@ -121,7 +137,7 @@ func (s *WarehouseController) Delete() gin.HandlerFunc {
 
 func (s *WarehouseController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestValidatorType ReqWarehouses
+		var requestValidatorType reqWarehouses
 		requestData := make(map[string]interface{})
 		id := c.Param("id")
 
@@ -149,6 +165,46 @@ func (s *WarehouseController) Update() gin.HandlerFunc {
 		if requestData["warehouse_code"] != nil {
 			if strings.ReplaceAll(requestData["warehouse_code"].(string), " ", "") == "" {
 				c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("empty warehouse_code not allowed"))
+				return
+			}
+		}
+
+		if value, ok := requestData["warehouse_code"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("warehouse_code too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["address"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("address too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["telephone"].(string); ok {
+			if len(value) > 20 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("telephone too long: max 20 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["minimum_capacity"].(int); ok {
+			if value < 0 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("minimum_capacity must be greather than 0"),
+				)
 				return
 			}
 		}
