@@ -68,7 +68,6 @@ var (
 	errCardIdNeeded     = errors.New("empty card_number_id not allowed")
 	errTypeData         = errors.New("invalid type of data")
 	errInvalidInput     = errors.New("invalid request input")
-	errCardIdExists     = errors.New("card_number_id already exists")
 )
 
 func TestCreateEmployee(t *testing.T) {
@@ -163,35 +162,155 @@ func TestCreateEmployee(t *testing.T) {
 		assert.Equal(t, errCardIdNeeded.Error(), bodyResponse.Error)
 	})
 
-	t.Run("Conflict card_number_id", func(t *testing.T) {
+	t.Run("Create fail", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
-		mockedService.On("GetAll").Return(fakeEmployee, nil)
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("int"),
-		).Return(employees.Employee{}, web.ResponseCode{
-			Code: http.StatusConflict,
-			Err:  errCardIdExists,
-		})
+		).Return(employees.Employee{}, web.ResponseCode{Code: http.StatusInternalServerError, Err: errors.New("any error")})
 
-		r := gin.Default()
-		r.POST(defaultURL, employeeController.Create())
+		router := gin.Default()
+		router.POST(defaultURL, employeeController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"card_number_id": "100"}`)))
+		parsedFakeEmployee, err := json.Marshal(fakeEmployee[0])
+		assert.Nil(t, err)
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(parsedFakeEmployee)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
+		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+
 		var bodyResponse objectErrorResponseEmp
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, errCardIdExists.Error(), bodyResponse.Error)
+		assert.Equal(t, errors.New("any error").Error(), bodyResponse.Error)
+	})
+
+	t.Run("Card_number_id has to be lesser than len(45)", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("card_number_id too long: max 45 characters")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(employees.Employee{}, web.ResponseCode{Code: http.StatusUnprocessableEntity, Err: expectedError})
+
+		router := gin.Default()
+		router.POST(defaultURL, employeeController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"card_number_id": "llllllllllllllllllllllllllllllllllllllllllllllllll"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("first_name has to be lesser than len(45)", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("first_name too long: max 45 characters")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(employees.Employee{}, web.ResponseCode{Code: http.StatusUnprocessableEntity, Err: expectedError})
+
+		router := gin.Default()
+		router.POST(defaultURL, employeeController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"card_number_id": "777", "first_name":"llllllllllllllllllllllllllllllllllllllllllllllllll"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("last_name has to be lesser than len(45)", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("last_name too long: max 45 characters")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(employees.Employee{}, web.ResponseCode{Code: http.StatusUnprocessableEntity, Err: expectedError})
+
+		router := gin.Default()
+		router.POST(defaultURL, employeeController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"card_number_id": "777", "last_name":"llllllllllllllllllllllllllllllllllllllllllllllllll"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("warehouse_id must be informed", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("warehouse_id must be informed and greather than 0")
+
+		mockedService.On(
+			"Create",
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
+		).Return(employees.Employee{}, web.ResponseCode{Code: http.StatusUnprocessableEntity, Err: expectedError})
+
+		router := gin.Default()
+		router.POST(defaultURL, employeeController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"card_number_id": "777"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
 	})
 }
 
@@ -264,10 +383,10 @@ func TestGetOne(t *testing.T) {
 		assert.Equal(t, fakeEmployee[0], currentResponse.Data)
 	})
 
-	t.Run("Not exist case", func(t *testing.T) {
+	t.Run("Error case on create", func(t *testing.T) {
 		mockedService, employeeController := newEmployeeController()
 		mockedService.On("GetOne", mock.AnythingOfType("int")).Return(employees.Employee{}, web.ResponseCode{
-			Code: http.StatusNotFound,
+			Code: http.StatusInternalServerError,
 			Err:  errEmployeeNotFound,
 		})
 
@@ -284,7 +403,6 @@ func TestGetOne(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
 		assert.Nil(t, err)
 
-		assert.Equal(t, http.StatusNotFound, rec.Code)
 		assert.Equal(t, errEmployeeNotFound.Error(), currentResponse.Error)
 	})
 
@@ -473,7 +591,7 @@ func TestUpdateEmployee(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
 		var bodyResponse objectErrorResponseEmp
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
@@ -496,7 +614,7 @@ func TestUpdateEmployee(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
 		var bodyResponse objectErrorResponseEmp
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
@@ -542,12 +660,112 @@ func TestUpdateEmployee(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
 		var bodyResponse objectErrorResponseEmp
 		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
 		assert.Nil(t, err)
 
 		assert.Equal(t, errTypeData.Error(), bodyResponse.Error)
+	})
+
+	t.Run("card_number_id too long", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("card_number_id too long: max 45 characters")
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(employees.Employee{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH(idRequest, employeeController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"card_number_id": "llllllllllllllllllllllllllllllllllllllllllllllllll" }`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("first_name too long", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("first_name too long: max 45 characters")
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(employees.Employee{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH(idRequest, employeeController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"card_number_id": "777", "first_name":"llllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("last_name too long", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("last_name too long: max 45 characters")
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(employees.Employee{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH(idRequest, employeeController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"card_number_id": "777", "last_name":"llllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
+	})
+
+	t.Run("warehouse_id lesser than zero", func(t *testing.T) {
+		mockedService, employeeController := newEmployeeController()
+		expectedError := errors.New("warehouse_id must be greather than 0")
+
+		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
+			Return(employees.Employee{}, web.ResponseCode{})
+
+		router := gin.Default()
+		router.PATCH(idRequest, employeeController.Update())
+
+		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"card_number_id": "777", "warehouse_id":0}`)))
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse objectErrorResponseEmp
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, expectedError.Error(), bodyResponse.Error)
 	})
 }
