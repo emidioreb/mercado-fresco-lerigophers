@@ -35,8 +35,6 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 }
 
 func (mariaDb mariaDbRepository) Create(cardNumberId, firstName, lastName string) (Buyer, error) {
-	insert := `INSERT INTO buyers(card_number_id, first_name, last_name) VALUES(?, ?, ?);`
-
 	newBuyer := Buyer{
 		CardNumberId: cardNumberId,
 		FirstName:    firstName,
@@ -44,7 +42,7 @@ func (mariaDb mariaDbRepository) Create(cardNumberId, firstName, lastName string
 	}
 
 	result, err := mariaDb.db.Exec(
-		insert,
+		QueryCreateBuyer,
 		cardNumberId,
 		firstName,
 		lastName,
@@ -65,10 +63,10 @@ func (mariaDb mariaDbRepository) Create(cardNumberId, firstName, lastName string
 }
 
 func (mariaDb mariaDbRepository) GetOne(id int) (Buyer, error) {
-	getOne := `SELECT * FROM buyers WHERE id = ?`
+
 	currentBuyer := Buyer{}
 
-	row := mariaDb.db.QueryRow(getOne, id)
+	row := mariaDb.db.QueryRow(QueryGetOneBuyer, id)
 	err := row.Scan(
 		&currentBuyer.Id,
 		&currentBuyer.CardNumberId,
@@ -88,10 +86,9 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Buyer, error) {
 }
 
 func (mariaDb mariaDbRepository) GetAll() ([]Buyer, error) {
-	query := `SELECT * FROM buyers`
 	buyers := []Buyer{}
 
-	rows, err := mariaDb.db.Query(query)
+	rows, err := mariaDb.db.Query(QueryGetAllBuyer)
 	if err != nil {
 		return []Buyer{}, errGetBuyers
 	}
@@ -111,8 +108,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Buyer, error) {
 	return buyers, nil
 }
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	delete := "DELETE FROM buyers WHERE id = ?"
-	result, err := mariaDb.db.Exec(delete, id)
+	result, err := mariaDb.db.Exec(QueryDeleteBuyer, id)
 	if err != nil {
 		return err
 	}
@@ -128,54 +124,26 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 
 	return nil
 }
+
 func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Buyer, error) {
-	prefixQuery := "UPDATE buyers SET"
-	fieldsToUpdate := []string{}
-	valuesToUse := []interface{}{}
-	whereCase := "WHERE id = ?"
-	var finalQuery string
-
-	for key := range requestData {
-		switch key {
-		case "card_number_id":
-			fieldsToUpdate = append(fieldsToUpdate, " card_number_id = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "first_name":
-			fieldsToUpdate = append(fieldsToUpdate, " first_name = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "last_name":
-			fieldsToUpdate = append(fieldsToUpdate, " last_name = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		}
-	}
-
-	valuesToUse = append(valuesToUse, id)
-	finalQuery += prefixQuery
-	for index, field := range fieldsToUpdate {
-		if index+1 == len(fieldsToUpdate) {
-			finalQuery += field + " "
-		} else {
-			finalQuery += field + ", "
-		}
-	}
-	finalQuery += whereCase
+	finalQuery, valuesToUse := QueryUpdateBuyer(requestData, id)
 
 	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
 	if err != nil {
-		return Buyer{}, errUpdatedBuyer
+		return Buyer{}, errors.New("ocurred an error while updating the buyer")
 	}
 
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 && err != nil {
-		return Buyer{}, errUpdatedBuyer
+	_, err = result.RowsAffected()
+	if err != nil || errors.Is(err, sql.ErrNoRows) {
+		return Buyer{}, errors.New("ocurred an error while updating the buyer")
 	}
 
-	currentBuyer, err := mariaDb.GetOne(id)
+	currentbuyer, err := mariaDb.GetOne(id)
 	if err != nil {
-		return Buyer{}, errUpdatedBuyer
+		return Buyer{}, errors.New("ocurred an error while updating the buyer")
 	}
 
-	return currentBuyer, nil
+	return currentbuyer, nil
 }
 
 func (mariaDb mariaDbRepository) GetReportPurchaseOrders(BuyerId int) ([]ReportPurchaseOrders, error) {
