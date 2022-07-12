@@ -70,8 +70,6 @@ var (
 	errIdNotNumber    = errors.New("id must be a number")
 	errInvalidRequest = errors.New("invalid request data")
 	errNeedBody       = errors.New("invalid request data - body needed")
-	errCidZero        = errors.New("cid must be greather than 0")
-	errCidNeeded      = errors.New("cid must be informed and greather than 0")
 	errTypeData       = errors.New("invalid type of data")
 	errInvalidInput   = errors.New("invalid request input")
 	errCidExists      = errors.New("cid already exists")

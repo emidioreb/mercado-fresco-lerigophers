@@ -336,4 +336,34 @@ func TestGetReportSellers(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
+
+	t.Run("Fail when get report", func(t *testing.T) {
+		mockedService, localityController := newLocalitiesController()
+		mockedService.On("GetAllReportSellers").
+			Return(
+				[]localities.ReportSellers{},
+				web.ResponseCode{
+					Code: http.StatusInternalServerError,
+					Err:  errors.New("error to get localities"),
+				},
+			)
+
+		r := routerSellers()
+		r.GET(
+			defaultReportURL,
+			localityController.GetReportSellers(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportAll,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
 }
