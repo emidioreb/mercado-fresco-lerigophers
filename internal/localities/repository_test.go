@@ -272,8 +272,8 @@ func TestDBGetReportCarriers(t *testing.T) {
 		carriersReports, err := localityRepo.GetReportCarriers("123")
 		assert.Nil(t, err)
 
-		assert.Len(t, sellerReports, 1)
-		assert.Equal(t, sellerReports[0].LocalityId, "123")
+		assert.Len(t, carriersReports, 1)
+		assert.Equal(t, carriersReports[0].LocalityId, "123")
 	})
 
 	t.Run("Error to exec query", func(t *testing.T) {
