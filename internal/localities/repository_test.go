@@ -245,10 +245,10 @@ func TestDBGetReportCarriers(t *testing.T) {
 		carriersReports, err := localityRepo.GetReportCarriers("")
 		assert.Nil(t, err)
 
-		assert.Len(t, sellerReports, 3)
-		assert.Equal(t, sellerReports[0].LocalityId, "123")
-		assert.Equal(t, sellerReports[1].LocalityId, "456")
-		assert.Equal(t, sellerReports[2].LocalityId, "789")
+		assert.Len(t, carriersReports, 3)
+		assert.Equal(t, carriersReports[0].LocalityId, "123")
+		assert.Equal(t, carriersReports[1].LocalityId, "456")
+		assert.Equal(t, carriersReports[2].LocalityId, "789")
 	})
 
 	t.Run("Get one report", func(t *testing.T) {
