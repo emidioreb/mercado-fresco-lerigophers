@@ -71,7 +71,7 @@ var fakeReports = []localities.ReportSellers{
 const (
 	defaultURL       = "/api/v1/localities/"
 	reportOne        = "/api/v1/localities/reportSellers?id=1"
-	reportAll        = "/api/v1/localities/reportSellers/"
+	reportAll        = "/api/v1/localities/reportSellers"
 	defaultReportURL = "/api/v1/localities/reportSellers"
 )
 
@@ -283,15 +283,12 @@ func TestGetReportSellers(t *testing.T) {
 	t.Run("Test get report by one", func(t *testing.T) {
 		mockedService, localityController := newLocalitiesController()
 		mockedService.On(
-			"GetReportSellers",
+			"GetReportOneSeller",
 			mock.AnythingOfType("string"),
 		).
 			Return(
-				[]localities.ReportSellers{},
-				web.ResponseCode{
-					Code: http.StatusInternalServerError,
-					Err:  errors.New("any error"),
-				},
+				[]localities.ReportSellers{fakeReports[0]},
+				web.ResponseCode{Code: http.StatusOK},
 			)
 
 		r := routerSellers()
@@ -310,17 +307,14 @@ func TestGetReportSellers(t *testing.T) {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("Test get report", func(t *testing.T) {
+	t.Run("Test get report all", func(t *testing.T) {
 		mockedService, localityController := newLocalitiesController()
-		mockedService.On(
-			"GetReportSellers",
-			mock.AnythingOfType("string"),
-		).
+		mockedService.On("GetAllReportSellers").
 			Return(
-				[]localities.ReportSellers{fakeReports[0]},
+				fakeReports,
 				web.ResponseCode{Code: http.StatusOK},
 			)
 
@@ -332,7 +326,7 @@ func TestGetReportSellers(t *testing.T) {
 
 		req, err := http.NewRequest(
 			http.MethodGet,
-			reportOne,
+			reportAll,
 			nil,
 		)
 		assert.NoError(t, err)

@@ -77,8 +77,17 @@ func (s *LocalityController) CreateLocality() gin.HandlerFunc {
 
 func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var (
+			reportSellers []localities.ReportSellers
+			resp          web.ResponseCode
+		)
 		id := c.Query("id")
-		reportSellers, resp := s.service.GetReportSellers(id)
+		if id != "" {
+			reportSellers, resp = s.service.GetReportOneSeller(id)
+		} else {
+			reportSellers, resp = s.service.GetAllReportSellers()
+		}
+
 		if resp.Err != nil {
 			c.JSON(
 				resp.Code,

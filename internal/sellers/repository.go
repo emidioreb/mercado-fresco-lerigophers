@@ -115,15 +115,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Seller, error) {
 }
 
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	result, err := mariaDb.db.Exec(queryDeleteSeller, id)
-	if err != nil {
-		return err
-	}
-
-	_, err = result.RowsAffected()
-	if errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("seller with id %d not found", id)
-	}
+	_, err := mariaDb.db.Exec(queryDeleteSeller, id)
 
 	if err != nil {
 		return errDeleteSeller

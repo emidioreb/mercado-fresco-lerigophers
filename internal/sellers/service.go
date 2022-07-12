@@ -71,11 +71,16 @@ func (s service) GetAll() ([]Seller, web.ResponseCode) {
 }
 
 func (s service) Delete(id int) web.ResponseCode {
-	err := s.repository.Delete(id)
-
+	_, err := s.repository.GetOne(id)
 	if err != nil {
 		return web.NewCodeResponse(http.StatusNotFound, err)
 	}
+
+	err = s.repository.Delete(id)
+	if err != nil {
+		return web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
 	return web.NewCodeResponse(http.StatusNoContent, nil)
 }
 

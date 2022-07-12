@@ -117,11 +117,14 @@ func TestCreateLocality(t *testing.T) {
 func TestGetReportSellers(t *testing.T) {
 	t.Run("Test if get successfully", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetOne", mock.AnythingOfType("string")).
+			Return(localities.Locality{}, nil)
+
 		mockedRepository.On("GetReportSellers", mock.AnythingOfType("string")).
 			Return(fakeReports, nil)
 
 		service := localities.NewService(mockedRepository)
-		result, err := service.GetReportSellers("")
+		result, err := service.GetReportOneSeller("")
 
 		assert.Nil(t, err.Err)
 		assert.Len(t, result, 2)
@@ -131,11 +134,14 @@ func TestGetReportSellers(t *testing.T) {
 
 	t.Run("Test fail case", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetOne", mock.AnythingOfType("string")).
+			Return(localities.Locality{}, nil)
+
 		mockedRepository.On("GetReportSellers", mock.AnythingOfType("string")).
 			Return([]localities.ReportSellers{}, errors.New("any error"))
 
 		service := localities.NewService(mockedRepository)
-		result, err := service.GetReportSellers("")
+		result, err := service.GetReportOneSeller("")
 
 		assert.Error(t, err.Err)
 		assert.Len(t, result, 0)

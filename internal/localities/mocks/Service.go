@@ -35,8 +35,31 @@ func (_m *Service) CreateLocality(id string, localityName string, provinceName s
 	return r0, r1
 }
 
-// GetReportSellers provides a mock function with given fields: localityId
-func (_m *Service) GetReportSellers(localityId string) ([]localities.ReportSellers, web.ResponseCode) {
+// GetAllReportSellers provides a mock function with given fields:
+func (_m *Service) GetAllReportSellers() ([]localities.ReportSellers, web.ResponseCode) {
+	ret := _m.Called()
+
+	var r0 []localities.ReportSellers
+	if rf, ok := ret.Get(0).(func() []localities.ReportSellers); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]localities.ReportSellers)
+		}
+	}
+
+	var r1 web.ResponseCode
+	if rf, ok := ret.Get(1).(func() web.ResponseCode); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(web.ResponseCode)
+	}
+
+	return r0, r1
+}
+
+// GetReportOneSeller provides a mock function with given fields: localityId
+func (_m *Service) GetReportOneSeller(localityId string) ([]localities.ReportSellers, web.ResponseCode) {
 	ret := _m.Called(localityId)
 
 	var r0 []localities.ReportSellers

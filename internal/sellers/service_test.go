@@ -157,6 +157,7 @@ func TestServiceDelete(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 		mockedLocality := new(mockLocalityRepository.Repository)
 
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil)
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(nil)
 
 		service := sellers.NewService(mockedRepository, mockedLocality)
@@ -172,14 +173,21 @@ func TestServiceDelete(t *testing.T) {
 		mockedLocality := new(mockLocalityRepository.Repository)
 		expectedError := errors.New("seller with id 1 not found")
 
-		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(expectedError)
+		mockedRepository.On(
+			"GetOne",
+			mock.AnythingOfType("int"),
+		).
+			Return(
+				sellers.Seller{},
+				expectedError,
+			)
 
 		service := sellers.NewService(mockedRepository, mockedLocality)
 		result := service.Delete(1)
 		assert.NotNil(t, result.Err)
 
-		assert.Equal(t, result.Code, http.StatusNotFound)
-		assert.Equal(t, result.Err, expectedError)
+		assert.Equal(t, http.StatusNotFound, result.Code)
+		assert.Equal(t, expectedError, result.Err)
 		mockedRepository.AssertExpectations(t)
 	})
 }

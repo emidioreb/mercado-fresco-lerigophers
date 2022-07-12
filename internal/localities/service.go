@@ -14,7 +14,8 @@ type Service interface {
 		provinceName,
 		countryName string,
 	) (Locality, web.ResponseCode)
-	GetReportSellers(localityId string) ([]ReportSellers, web.ResponseCode)
+	GetAllReportSellers() ([]ReportSellers, web.ResponseCode)
+	GetReportOneSeller(localityId string) ([]ReportSellers, web.ResponseCode)
 }
 
 type service struct {
@@ -41,9 +42,21 @@ func (s service) CreateLocality(id, localityName, provinceName, countryName stri
 	return result, web.NewCodeResponse(http.StatusCreated, nil)
 }
 
-func (s service) GetReportSellers(localityId string) ([]ReportSellers, web.ResponseCode) {
-	report, err := s.repository.GetReportSellers(localityId)
+func (s service) GetAllReportSellers() ([]ReportSellers, web.ResponseCode) {
+	report, err := s.repository.GetReportSellers("")
+	if err != nil {
+		return []ReportSellers{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
+	return report, web.NewCodeResponse(http.StatusOK, nil)
+}
+
+func (s service) GetReportOneSeller(localityId string) ([]ReportSellers, web.ResponseCode) {
+	if _, err := s.repository.GetOne(localityId); err != nil {
+		return []ReportSellers{}, web.NewCodeResponse(http.StatusNotFound, err)
+	}
+
+	report, err := s.repository.GetReportSellers(localityId)
 	if err != nil {
 		return []ReportSellers{}, web.NewCodeResponse(http.StatusInternalServerError, err)
 	}

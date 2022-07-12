@@ -15,7 +15,15 @@ type SellerController struct {
 	service sellers.Service
 }
 
-type reqSellers struct {
+type reqSellersCreate struct {
+	Cid         int    `json:"cid" binding:"required"`
+	CompanyName string `json:"company_name" binding:"required"`
+	Address     string `json:"address" binding:"required"`
+	Telephone   string `json:"telephone" binding:"required"`
+	LocalityId  string `json:"locality_id" binding:"required"`
+}
+
+type reqSellersUpdate struct {
 	Cid         int    `json:"cid"`
 	CompanyName string `json:"company_name"`
 	Address     string `json:"address"`
@@ -31,7 +39,7 @@ func NewSeller(s sellers.Service) *SellerController {
 
 func (s *SellerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSellers
+		var requestData reqSellersCreate
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
@@ -149,7 +157,7 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 
 func (s *SellerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestValidatorType reqSellers
+		var requestValidatorType reqSellersUpdate
 		var requestData map[string]interface{}
 
 		id := c.Param("id")

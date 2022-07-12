@@ -387,29 +387,6 @@ func TestUpdateSeller(t *testing.T) {
 		assert.Equal(t, errNeedBody.Error(), bodyResponse.Error)
 	})
 
-	t.Run("CID greather than 0", func(t *testing.T) {
-		mockedService, sellerController := newSellerController()
-		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
-			Return(sellers.Seller{}, web.ResponseCode{})
-
-		router := routerSellers()
-		router.PATCH(idRequest, sellerController.Update())
-
-		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"cid": 0 }`)))
-		assert.Nil(t, err)
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-
-		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
-		assert.Nil(t, err)
-
-		assert.Equal(t, errCidZero.Error(), bodyResponse.Error)
-	})
-
 	t.Run("Syntax error on body", func(t *testing.T) {
 		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
@@ -499,34 +476,6 @@ func TestCreateSeller(t *testing.T) {
 		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
 	})
 
-	t.Run("CID must be greather than 0", func(t *testing.T) {
-		mockedService, sellerController := newSellerController()
-		mockedService.On(
-			"Create",
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(sellers.Seller{}, web.ResponseCode{})
-
-		router := routerSellers()
-		router.POST(defaultURL, sellerController.Create())
-
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 0}`)))
-		assert.Nil(t, err)
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-
-		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
-		assert.Nil(t, err)
-
-		assert.Equal(t, errCidNeeded.Error(), bodyResponse.Error)
-	})
-
 	t.Run("Conflict CID", func(t *testing.T) {
 		mockedService, sellerController := newSellerController()
 		mockedService.On("GetAll").Return(fakeSellers, nil)
@@ -545,7 +494,7 @@ func TestCreateSeller(t *testing.T) {
 		r := routerSellers()
 		r.POST(defaultURL, sellerController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 2}`)))
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid":1,"address":"a","company_name":"a","locality_id":"123","telephone":"123"}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()

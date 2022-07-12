@@ -46,9 +46,9 @@ func TestDBCreateSeller(t *testing.T) {
 		defer db.Close()
 
 		mock.ExpectQuery(regexp.QuoteMeta(queryCreateSeller)).WillReturnError(errors.New("internal db error"))
-		localitiesRepo := NewMariaDbRepository(db)
+		sellersRepo := NewMariaDbRepository(db)
 
-		_, err = localitiesRepo.Create(0, "", "", "", "")
+		_, err = sellersRepo.Create(0, "", "", "", "")
 		assert.Error(t, err)
 	})
 
@@ -62,8 +62,8 @@ func TestDBCreateSeller(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1)).
 			WillReturnResult(sqlDriverResultErr)
 
-		localitiesRepo := NewMariaDbRepository(db)
-		_, err = localitiesRepo.Create(0, "", "", "", "")
+		sellersRepo := NewMariaDbRepository(db)
+		_, err = sellersRepo.Create(0, "", "", "", "")
 
 		assert.Error(t, err)
 		assert.Equal(t, "ocurred an error to create seller", err.Error())
@@ -207,22 +207,7 @@ func TestDBDeleteSeller(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Not found case", func(t *testing.T) {
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-		defer db.Close()
-
-		affectedRowsResult := sqlmock.NewErrorResult(sql.ErrNoRows)
-		mock.ExpectExec(regexp.QuoteMeta(queryDeleteSeller)).
-			WillReturnResult(affectedRowsResult)
-
-		sellersRepo := NewMariaDbRepository(db)
-		err = sellersRepo.Delete(1)
-		assert.NotNil(t, err)
-		assert.Equal(t, "seller with id 1 not found", err.Error())
-	})
-
-	t.Run("db Exec case", func(t *testing.T) {
+	t.Run("Error case", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
@@ -233,24 +218,7 @@ func TestDBDeleteSeller(t *testing.T) {
 		sellersRepo := NewMariaDbRepository(db)
 		err = sellersRepo.Delete(1)
 		assert.Error(t, err)
-		assert.Equal(t, "any error", err.Error())
-	})
-
-	t.Run("DB Error case", func(t *testing.T) {
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-		defer db.Close()
-
-		affectedRowsResult := sqlmock.NewResult(0, 1)
-		resultErr := sqlmock.NewErrorResult(errors.New("any error"))
-		mock.ExpectExec(regexp.QuoteMeta(queryDeleteSeller)).
-			WillReturnResult(affectedRowsResult).
-			WillReturnResult(resultErr)
-
-		sellersRepo := NewMariaDbRepository(db)
-		err = sellersRepo.Delete(1)
-		assert.Error(t, err)
-		assert.Equal(t, "unexpected error to delete seller", err.Error())
+		assert.Equal(t, errDeleteSeller, err)
 	})
 }
 
