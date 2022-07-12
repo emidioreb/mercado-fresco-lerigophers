@@ -25,9 +25,7 @@ func (mariaDb mariaDbRepository) GetOne(id int) error {
 	var idSelected int
 
 	row := mariaDb.db.QueryRow(queryGetOne, id)
-	err := row.Scan(
-		&idSelected,
-	)
+	err := row.Scan(&idSelected)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("order_status with id %d not found", id)
