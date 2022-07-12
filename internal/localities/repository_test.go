@@ -158,6 +158,7 @@ func TestDBGetReportSellers(t *testing.T) {
 		assert.Equal(t, sellerReports[1].LocalityId, "456")
 		assert.Equal(t, sellerReports[2].LocalityId, "789")
 	})
+
 	t.Run("Get one report", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 
@@ -181,6 +182,7 @@ func TestDBGetReportSellers(t *testing.T) {
 		assert.Len(t, sellerReports, 1)
 		assert.Equal(t, sellerReports[0].LocalityName, "Osasco")
 	})
+
 	t.Run("Error to get report - case query", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 
@@ -216,5 +218,102 @@ func TestDBGetReportSellers(t *testing.T) {
 
 		_, err = localityRepo.GetReportSellers("123")
 		assert.Error(t, err)
+	})
+}
+
+func TestDBGetReportCarriers(t *testing.T) {
+	t.Run("Get all reports", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+
+		assert.NoError(t, err)
+		defer db.Close()
+
+		rows := sqlmock.NewRows([]string{
+			"locality_id",
+			"locality_name",
+			"carriers_count",
+		}).
+			AddRow("123", "Pres. Dutra", 200).
+			AddRow("456", "Osasco", 150).
+			AddRow("789", "São Luís", 250)
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportCarriersAll)).
+			WillReturnRows(rows)
+
+		localityRepo := NewMariaDbRepository(db)
+
+		carriersReports, err := localityRepo.GetReportCarriers("")
+		assert.Nil(t, err)
+
+		assert.Len(t, carriersReports, 3)
+		assert.Equal(t, carriersReports[0].LocalityId, "123")
+		assert.Equal(t, carriersReports[1].LocalityId, "456")
+		assert.Equal(t, carriersReports[2].LocalityId, "789")
+	})
+
+	t.Run("Get one report", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+
+		assert.NoError(t, err)
+		defer db.Close()
+
+		rows := sqlmock.NewRows([]string{
+			"locality_id",
+			"locality_name",
+			"carriers_count",
+		}).
+			AddRow("123", "Pres. Dutra", 200)
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportCarriersOne)).
+			WillReturnRows(rows)
+
+		localityRepo := NewMariaDbRepository(db)
+
+		carriersReports, err := localityRepo.GetReportCarriers("123")
+		assert.Nil(t, err)
+
+		assert.Len(t, carriersReports, 1)
+		assert.Equal(t, carriersReports[0].LocalityId, "123")
+	})
+
+	t.Run("Error to exec query", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+
+		assert.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportCarriersOne)).
+			WillReturnError(errors.New("any error"))
+
+		localityRepo := NewMariaDbRepository(db)
+
+		_, err = localityRepo.GetReportCarriers("123")
+		assert.Error(t, err)
+		assert.Equal(t, "error to report carriers by locality", err.Error())
+	})
+
+	t.Run("Get all reports", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+
+		assert.NoError(t, err)
+		defer db.Close()
+
+		rows := sqlmock.NewRows([]string{
+			"locality_id",
+			"locality_name",
+			"carriers_count",
+		}).
+			AddRow("", "", "")
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportCarriersAll)).
+			WillReturnRows(rows)
+
+		localityRepo := NewMariaDbRepository(db)
+
+		carriersReport, err := localityRepo.GetReportCarriers("")
+		assert.Error(t, err)
+		assert.Equal(t, "error to report carriers by locality", err.Error())
+
+		assert.Equal(t, []ReportCarriers{}, carriersReport)
 	})
 }

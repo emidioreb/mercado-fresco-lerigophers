@@ -25,6 +25,10 @@ type ObjectResponseReports struct {
 	Data []localities.ReportSellers
 }
 
+type ObjectResponseCarriers struct {
+	Data []localities.ReportCarriers
+}
+
 type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -55,7 +59,7 @@ var fakeLocalities = []localities.Locality{
 	},
 }
 
-var fakeReports = []localities.ReportSellers{
+var fakeSellerReports = []localities.ReportSellers{
 	{
 		LocalityId:   "65760000",
 		LocalityName: "Presidente Dutra",
@@ -68,11 +72,26 @@ var fakeReports = []localities.ReportSellers{
 	},
 }
 
+var fakeCarriersReports = []localities.ReportCarriers{
+	{
+		LocalityId:    "123",
+		LocalityName:  "Locality",
+		CarriersCount: 1,
+	},
+	{
+		LocalityId:    "456",
+		LocalityName:  "Locality",
+		CarriersCount: 1,
+	},
+}
+
 const (
-	defaultURL       = "/api/v1/localities/"
-	reportOne        = "/api/v1/localities/reportSellers?id=1"
-	reportAll        = "/api/v1/localities/reportSellers"
-	defaultReportURL = "/api/v1/localities/reportSellers"
+	localitiesDefaultURL     = "/api/v1/localities/"
+	reportOneSeller          = "/api/v1/localities/reportSellers?id=1"
+	reportAllSellers         = "/api/v1/localities/reportSellers"
+	defaultSellersReportURL  = "/api/v1/localities/reportSellers"
+	defaultCarriersReportURL = "/api/v1/localities/reportCarriers"
+	reportOneCarry           = "/api/v1/localities/reportCarriers?id=1"
 )
 
 func TestCreateLocality(t *testing.T) {
@@ -91,11 +110,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -124,11 +143,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -154,11 +173,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -184,11 +203,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -214,11 +233,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -244,11 +263,11 @@ func TestCreateLocality(t *testing.T) {
 		assert.NoError(t, err)
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer(parsedFakeLocality),
 		)
 		assert.NoError(t, err)
@@ -263,11 +282,11 @@ func TestCreateLocality(t *testing.T) {
 		_, localityController := newLocalitiesController()
 
 		r := routerSellers()
-		r.POST(defaultURL, localityController.CreateLocality())
+		r.POST(localitiesDefaultURL, localityController.CreateLocality())
 
 		req, err := http.NewRequest(
 			http.MethodPost,
-			defaultURL,
+			localitiesDefaultURL,
 			bytes.NewBuffer([]byte("")),
 		)
 		assert.NoError(t, err)
@@ -287,19 +306,19 @@ func TestGetReportSellers(t *testing.T) {
 			mock.AnythingOfType("string"),
 		).
 			Return(
-				[]localities.ReportSellers{fakeReports[0]},
+				[]localities.ReportSellers{fakeSellerReports[0]},
 				web.ResponseCode{Code: http.StatusOK},
 			)
 
 		r := routerSellers()
 		r.GET(
-			defaultReportURL,
+			defaultSellersReportURL,
 			localityController.GetReportSellers(),
 		)
 
 		req, err := http.NewRequest(
 			http.MethodGet,
-			reportOne,
+			reportOneSeller,
 			nil,
 		)
 		assert.NoError(t, err)
@@ -314,19 +333,19 @@ func TestGetReportSellers(t *testing.T) {
 		mockedService, localityController := newLocalitiesController()
 		mockedService.On("GetAllReportSellers").
 			Return(
-				fakeReports,
+				fakeSellerReports,
 				web.ResponseCode{Code: http.StatusOK},
 			)
 
 		r := routerSellers()
 		r.GET(
-			defaultReportURL,
+			defaultSellersReportURL,
 			localityController.GetReportSellers(),
 		)
 
 		req, err := http.NewRequest(
 			http.MethodGet,
-			reportAll,
+			reportAllSellers,
 			nil,
 		)
 		assert.NoError(t, err)
@@ -350,13 +369,13 @@ func TestGetReportSellers(t *testing.T) {
 
 		r := routerSellers()
 		r.GET(
-			defaultReportURL,
+			defaultSellersReportURL,
 			localityController.GetReportSellers(),
 		)
 
 		req, err := http.NewRequest(
 			http.MethodGet,
-			reportAll,
+			reportAllSellers,
 			nil,
 		)
 		assert.NoError(t, err)
@@ -365,5 +384,75 @@ func TestGetReportSellers(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestGetReportCarriers(t *testing.T) {
+	t.Run("Test get report by one", func(t *testing.T) {
+		mockedService, localityController := newLocalitiesController()
+		mockedService.On(
+			"GetReportCarriers",
+			mock.AnythingOfType("string"),
+		).
+			Return(
+				[]localities.ReportCarriers{fakeCarriersReports[0]},
+				web.ResponseCode{Code: http.StatusOK},
+			)
+
+		r := routerSellers()
+		r.GET(
+			defaultCarriersReportURL,
+			localityController.GetReportCarriers(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportOneCarry,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Locality id not found case", func(t *testing.T) {
+		mockedService, localityController := newLocalitiesController()
+		mockedService.On(
+			"GetReportCarriers",
+			mock.AnythingOfType("string"),
+		).
+			Return(
+				[]localities.ReportCarriers{},
+				web.ResponseCode{
+					Code: http.StatusNotFound,
+					Err:  errors.New("locality with id 1 not found"),
+				},
+			)
+
+		r := routerSellers()
+		r.GET(
+			defaultCarriersReportURL,
+			localityController.GetReportCarriers(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportOneCarry,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		var objectRespo ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &objectRespo)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, "locality with id 1 not found", objectRespo.Error)
 	})
 }

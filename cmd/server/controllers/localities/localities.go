@@ -120,5 +120,4 @@ func (s *LocalityController) GetReportCarriers() gin.HandlerFunc {
 			web.NewResponse(reportCarries),
 		)
 	}
-
 }
