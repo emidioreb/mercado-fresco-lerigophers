@@ -46,11 +46,6 @@ func (s *SellerController) Create() gin.HandlerFunc {
 			return
 		}
 
-		if requestData.Cid < 1 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("cid must be informed and greather than 0"))
-			return
-		}
-
 		if len(requestData.CompanyName) > 255 {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("company_name too long: max 255 characters"))
 			return
@@ -63,6 +58,11 @@ func (s *SellerController) Create() gin.HandlerFunc {
 
 		if len(requestData.Telephone) > 20 {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
+			return
+		}
+
+		if len(requestData.LocalityId) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("locality_id too long: max 255 characters"))
 			return
 		}
 
