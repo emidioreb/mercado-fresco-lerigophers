@@ -19,7 +19,7 @@ type reqLocality struct {
 	CountryName  string `json:"country_name" binding:"required"`
 }
 
-func NewSeller(s localities.Service) *LocalityController {
+func NewLocality(s localities.Service) *LocalityController {
 	return &LocalityController{
 		service: s,
 	}
@@ -77,11 +77,20 @@ func (s *LocalityController) CreateLocality() gin.HandlerFunc {
 
 func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var (
+			reportSellers []localities.ReportSellers
+			resp          web.ResponseCode
+		)
 		id := c.Query("id")
-		reportSellers, resp := s.service.GetReportSellers(id)
+		if id != "" {
+			reportSellers, resp = s.service.GetReportOneSeller(id)
+		} else {
+			reportSellers, resp = s.service.GetAllReportSellers()
+		}
+
 		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
+				resp.Code,
 				web.DecodeError(resp.Err.Error()),
 			)
 			return
@@ -92,7 +101,6 @@ func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 			web.NewResponse(reportSellers),
 		)
 	}
-
 }
 
 func (s *LocalityController) GetReportCarriers() gin.HandlerFunc {

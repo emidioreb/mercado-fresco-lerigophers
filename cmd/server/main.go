@@ -64,7 +64,7 @@ func main() {
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
 	serviceLocality := localities.NewService(repoLocalities)
-	controllerLocality := localitiesController.NewSeller(serviceLocality)
+	controllerLocality := localitiesController.NewLocality(serviceLocality)
 	localityGroup := server.Group("/api/v1/localities")
 	{
 		localityGroup.POST("/", controllerLocality.CreateLocality())
