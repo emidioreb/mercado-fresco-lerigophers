@@ -16,7 +16,7 @@ type PurchaseOrdersController struct {
 type reqPurchaseOrders struct {
 	OrderNumber     string `json:"order_number" binding:"required"`
 	OrderDate       string `json:"order_date" binding:"required"`
-	TrackingCode    string `json:"tracking_code"`
+	TrackingCode    string `json:"tracking_code" binding:"required"`
 	BuyerId         int    `json:"buyer_id" binding:"required"`
 	ProductRecordId int    `json:"product_record_id" binding:"required"`
 	OrderStatusId   int    `json:"order_status_id" binding:"required"`
@@ -37,23 +37,7 @@ func (s *PurchaseOrdersController) CreatePurchaseOrder() gin.HandlerFunc {
 			return
 		}
 
-		if requestData.BuyerId < 0 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("buyer_id must be greather than 0"))
-			return
-		}
-
-		if requestData.ProductRecordId < 0 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("product_record_id must be greather than 0"))
-			return
-		}
-
-		if requestData.OrderStatusId < 0 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("order_status_id must be greather than 0"))
-			return
-		}
-
 		const layout = "2006-01-02"
-
 		orderDate, errDate := time.Parse(layout, requestData.OrderDate)
 
 		if errDate != nil {
