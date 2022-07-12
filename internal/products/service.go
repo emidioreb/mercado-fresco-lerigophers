@@ -2,7 +2,6 @@ package products
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
@@ -48,7 +47,9 @@ func (s service) Create(productCode, description string, width, height, length, 
 	product, err := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperature,
 		freezingRate, productTypeId, sellerId)
 
-	fmt.Println(err)
+	if err != nil {
+		return Product{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
 	return product, web.NewCodeResponse(http.StatusCreated, nil)
 }

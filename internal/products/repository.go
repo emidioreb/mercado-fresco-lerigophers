@@ -38,18 +38,6 @@ func (mariaDb mariaDbRepository) Create(productCode, description string, width, 
 	length, netWeight, expirationRate, recommendedFreezingTemperature,
 	freezingRate float64, productTypeId, sellerId int) (Product, error) {
 
-	insert := `INSERT INTO products (product_code,
-		description,
-		width,
-		height,
-		length,
-		net_weight,
-		expiration_rate,
-		recommended_freezing_temperature,
-		freezing_rate,
-		product_type_id,
-		seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
 	newProduct := Product{
 		ProductCode:                    productCode,
 		Description:                    description,
@@ -65,7 +53,7 @@ func (mariaDb mariaDbRepository) Create(productCode, description string, width, 
 	}
 
 	result, err := mariaDb.db.Exec(
-		insert,
+		queryCreateProduct,
 		productCode,
 		description,
 		width,
@@ -94,10 +82,9 @@ func (mariaDb mariaDbRepository) Create(productCode, description string, width, 
 }
 
 func (mariaDb mariaDbRepository) GetOne(id int) (Product, error) {
-	getOne := `SELECT * FROM products WHERE id = ?`
 	currentProduct := Product{}
 
-	row := mariaDb.db.QueryRow(getOne, id)
+	row := mariaDb.db.QueryRow(queryGetOneProduct, id)
 	err := row.Scan(&currentProduct.Id,
 		&currentProduct.ProductCode,
 		&currentProduct.Description,
@@ -124,10 +111,9 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Product, error) {
 }
 
 func (mariaDb mariaDbRepository) GetAll() ([]Product, error) {
-	getAll := `SELECT * FROM products`
 	products := []Product{}
 
-	rows, err := mariaDb.db.Query(getAll)
+	rows, err := mariaDb.db.Query(queryGetAllProducts)
 	if err != nil {
 		return []Product{}, errGetProducts
 	}
@@ -156,8 +142,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Product, error) {
 }
 
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	delete := "DELETE FROM products WHERE id = ?"
-	result, err := mariaDb.db.Exec(delete, id)
+	result, err := mariaDb.db.Exec(queryDeleteProduct, id)
 
 	if err != nil {
 		return err
@@ -176,68 +161,15 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 }
 
 func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Product, error) {
-	prefixQuery := "UPDATE products SET"
-	fieldsToUpdate := []string{}
-	valuesToUse := []interface{}{}
-	whereCase := "WHERE id = ?"
-	var finalQuery string
-
-	for key := range requestData {
-		switch key {
-		case "description":
-			fieldsToUpdate = append(fieldsToUpdate, " description = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "height":
-			fieldsToUpdate = append(fieldsToUpdate, " height = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "length":
-			fieldsToUpdate = append(fieldsToUpdate, " length = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "net_weight":
-			fieldsToUpdate = append(fieldsToUpdate, " net_weight = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "product_code":
-			fieldsToUpdate = append(fieldsToUpdate, " product_code = ?")
-			valuesToUse = append(valuesToUse, requestData[key])
-		case "width":
-			fieldsToUpdate = append(fieldsToUpdate, " width = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "expiration_rate":
-			fieldsToUpdate = append(fieldsToUpdate, " expiration_rate = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "recommended_freezing_temperature":
-			fieldsToUpdate = append(fieldsToUpdate, " recommended_freezing_temperature = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "freezing_rate":
-			fieldsToUpdate = append(fieldsToUpdate, " freezing_rate = ?")
-			valuesToUse = append(valuesToUse, requestData[key].(float64))
-		case "product_type_id":
-			fieldsToUpdate = append(fieldsToUpdate, " product_type_id = ?")
-			valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
-		case "seller_id":
-			fieldsToUpdate = append(fieldsToUpdate, " seller_id = ?")
-			valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
-		}
-	}
-
-	valuesToUse = append(valuesToUse, id)
-	finalQuery += prefixQuery
-	for index, field := range fieldsToUpdate {
-		if index+1 == len(fieldsToUpdate) {
-			finalQuery += field + " "
-		} else {
-			finalQuery += field + ", "
-		}
-	}
-	finalQuery += whereCase
+	finalQuery, valuesToUse := queryUpdateProduct(requestData, id)
 
 	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
 	if err != nil {
 		return Product{}, errUpdatedProduct
 	}
 
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 && err != nil {
+	_, err = result.RowsAffected()
+	if err != nil || errors.Is(err, sql.ErrNoRows) {
 		return Product{}, errUpdatedProduct
 	}
 
