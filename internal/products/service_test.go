@@ -7,6 +7,8 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/products/mocks"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
+	mockedSeller "github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -14,6 +16,7 @@ import (
 func TestServiceCreate(t *testing.T) {
 	t.Run("Test if create sucessfully", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
+		mockedSellerRepository := new(mockedSeller.Repository)
 
 		input := products.Product{
 			Id:                             1,
@@ -31,6 +34,7 @@ func TestServiceCreate(t *testing.T) {
 		}
 
 		mockedRepository.On("GetAll").Return([]products.Product{}, nil)
+		mockedSellerRepository.On("GetOne", mock.AnythingOfType("int")).Return(sellers.Seller{}, nil)
 		mockedRepository.On("Create",
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
@@ -45,7 +49,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 		).Return(input, nil)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, mockedSellerRepository)
 
 		result, err := service.Create(input.ProductCode, input.Description,
 			input.Width, input.Height, input.Length, input.NetWeight,
@@ -102,12 +106,12 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 		).Return(products.Product{}, expectedError)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 
 		_, err := service.Create(input[0].ProductCode, input[0].Description,
 			input[0].Width, input[0].Height, input[0].Length, input[0].NetWeight,
 			input[0].ExpirationRate, input[0].RecommendedFreezingTemperature,
-			input[0].FreezingRate, input[0].ProductTypeId)
+			input[0].FreezingRate, input[0].ProductTypeId, input[0].SellerId)
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
@@ -121,7 +125,7 @@ func TestServiceDelete(t *testing.T) {
 
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(nil)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 		result := service.Delete(1)
 		assert.Nil(t, result.Err)
 
@@ -136,7 +140,7 @@ func TestServiceDelete(t *testing.T) {
 		mockedRepository.On("Delete",
 			mock.AnythingOfType("int")).Return(expectedError)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 		result := service.Delete(1)
 		assert.NotNil(t, result.Err)
 
@@ -192,7 +196,7 @@ func TestServiceGetAll(t *testing.T) {
 
 		mockedRepository.On("GetAll").Return(input, nil)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 
 		result, err := service.GetAll()
 		assert.Nil(t, err.Err)
@@ -223,7 +227,7 @@ func TestServiceGetOne(t *testing.T) {
 
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input, nil)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 
 		result, err := service.GetOne(1)
 		assert.Nil(t, err.Err)
@@ -239,7 +243,7 @@ func TestServiceGetOne(t *testing.T) {
 		mockedRepository.On("GetOne",
 			mock.AnythingOfType("int")).Return(products.Product{}, expectedError)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 		_, err := service.GetOne(1)
 
 		assert.NotNil(t, err.Err)
@@ -305,7 +309,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(expectedProduct, nil)
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 		result, err := service.Update(1, requestData)
 
 		assert.Nil(t, err.Err)
@@ -329,7 +333,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(products.Product{}, nil).Once()
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 		_, err := service.Update(1, requestData)
 
 		assert.NotNil(t, err.Err)
@@ -381,7 +385,7 @@ func TestServiceUpdate(t *testing.T) {
 			mock.Anything,
 		).Return(products.Product{}, expectedError).Once()
 
-		service := products.NewService(mockedRepository)
+		service := products.NewService(mockedRepository, &mockedSeller.Repository{})
 
 		_, err := service.Update(input[1].Id, requestData)
 		assert.NotNil(t, err.Err)

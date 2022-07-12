@@ -45,7 +45,20 @@ const layout = "2006-01-02"
 
 var date, _ = time.Parse(layout, layout)
 
-var fakeInput = product_batches.ProductBatches{
+var fakeInput = controllers.ReqProductBatch{
+	BatchNumber:        1,
+	CurrentQuantity:    10,
+	CurrentTemperature: 2,
+	InitialQuantity:    500,
+	ManufacturingHour:  10,
+	MinimumTemperature: 8,
+	ProductId:          23,
+	SectionId:          56,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
+}
+
+var successfullyResponse = product_batches.ProductBatches{
 	BatchNumber:        1,
 	CurrentQuantity:    10,
 	CurrentTemperature: 2,
@@ -58,8 +71,7 @@ var fakeInput = product_batches.ProductBatches{
 	ManufacturingDate:  date,
 }
 
-var fakeProductBatches = []product_batches.ProductBatches{{
-	Id:                 1,
+var fakeProductBatches = []controllers.ReqProductBatch{{
 	BatchNumber:        1,
 	CurrentQuantity:    10,
 	CurrentTemperature: 2,
@@ -68,8 +80,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 8,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
 }, {
 	BatchNumber:        -1,
 	CurrentQuantity:    10,
@@ -79,8 +91,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    -10,
@@ -90,8 +102,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    10,
@@ -101,8 +113,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    10,
@@ -112,8 +124,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          -23,
 	SectionId:          56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    10,
@@ -123,8 +135,30 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          -56,
-	DueDate:            date,
-	ManufacturingDate:  date,
+	DueDate:            layout,
+	ManufacturingDate:  layout,
+}, {
+	BatchNumber:        1,
+	CurrentQuantity:    10,
+	CurrentTemperature: 2,
+	InitialQuantity:    500,
+	ManufacturingHour:  10,
+	MinimumTemperature: 890,
+	ProductId:          23,
+	SectionId:          56,
+	DueDate:            "2006-2",
+	ManufacturingDate:  layout,
+}, {
+	BatchNumber:        1,
+	CurrentQuantity:    10,
+	CurrentTemperature: 2,
+	InitialQuantity:    500,
+	ManufacturingHour:  10,
+	MinimumTemperature: 890,
+	ProductId:          23,
+	SectionId:          56,
+	DueDate:            layout,
+	ManufacturingDate:  "200",
 }}
 
 var fakeReports = []product_batches.ProductsQuantity{
@@ -162,7 +196,7 @@ func TestCreateProductBatch(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("time.Time"),
 			mock.AnythingOfType("time.Time"),
-		).Return(fakeProductBatches[0], web.ResponseCode{
+		).Return(successfullyResponse, web.ResponseCode{
 			Code: http.StatusCreated, Err: nil,
 		})
 
@@ -317,6 +351,50 @@ func TestCreateProductBatch(t *testing.T) {
 		_, ProductBatchController := newProductBatcheController()
 
 		parsedFakeProductBatch, err := json.Marshal(fakeProductBatches[5])
+		assert.NoError(t, err)
+
+		r := router()
+		r.POST(defaultURL, ProductBatchController.CreateProductBatch())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedFakeProductBatch),
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("Unprocessable entity 6 - due_date", func(t *testing.T) {
+		_, ProductBatchController := newProductBatcheController()
+
+		parsedFakeProductBatch, err := json.Marshal(fakeProductBatches[6])
+		assert.NoError(t, err)
+
+		r := router()
+		r.POST(defaultURL, ProductBatchController.CreateProductBatch())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedFakeProductBatch),
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("Unprocessable entity 7 - manufacturing_date", func(t *testing.T) {
+		_, ProductBatchController := newProductBatcheController()
+
+		parsedFakeProductBatch, err := json.Marshal(fakeProductBatches[7])
 		assert.NoError(t, err)
 
 		r := router()

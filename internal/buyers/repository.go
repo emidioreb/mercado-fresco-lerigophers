@@ -16,7 +16,7 @@ var (
 )
 
 type Repository interface {
-	Create(cardNumberId string, firstName, lastName string) (Buyer, error)
+	Create(cardNumberId, firstName, lastName string) (Buyer, error)
 	GetOne(id int) (Buyer, error)
 	GetAll() ([]Buyer, error)
 	Delete(id int) error
