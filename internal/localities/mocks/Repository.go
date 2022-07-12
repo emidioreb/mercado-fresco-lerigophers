@@ -54,6 +54,29 @@ func (_m *Repository) GetOne(id string) (localities.Locality, error) {
 	return r0, r1
 }
 
+// GetReportCarriers provides a mock function with given fields: localityId
+func (_m *Repository) GetReportCarriers(localityId string) ([]localities.ReportCarriers, error) {
+	ret := _m.Called(localityId)
+
+	var r0 []localities.ReportCarriers
+	if rf, ok := ret.Get(0).(func(string) []localities.ReportCarriers); ok {
+		r0 = rf(localityId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]localities.ReportCarriers)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(localityId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetReportSellers provides a mock function with given fields: localityId
 func (_m *Repository) GetReportSellers(localityId string) ([]localities.ReportSellers, error) {
 	ret := _m.Called(localityId)
