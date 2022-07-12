@@ -39,6 +39,19 @@ var fakeReports = []localities.ReportSellers{
 	},
 }
 
+var fakeCarriersReports = []localities.ReportCarriers{
+	{
+		LocalityId:    "123",
+		LocalityName:  "Locality",
+		CarriersCount: 1,
+	},
+	{
+		LocalityId:    "456",
+		LocalityName:  "Locality",
+		CarriersCount: 1,
+	},
+}
+
 func TestCreateLocality(t *testing.T) {
 	t.Run("Test if create successfully", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
@@ -187,6 +200,37 @@ func TestGetAllReportSellers(t *testing.T) {
 
 		service := localities.NewService(mockedRepository)
 		result, err := service.GetAllReportSellers()
+
+		assert.Error(t, err.Err)
+		assert.Len(t, result, 0)
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+}
+
+func TestGetAllReportCarriers(t *testing.T) {
+	t.Run("Test if get successfully", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		mockedRepository.On("GetReportCarriers", mock.AnythingOfType("string")).
+			Return(fakeCarriersReports, nil)
+
+		service := localities.NewService(mockedRepository)
+		result, err := service.GetReportCarriers("")
+
+		assert.Nil(t, err.Err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, http.StatusOK, err.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test fail case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportCarriers", mock.AnythingOfType("string")).
+			Return([]localities.ReportCarriers{}, errors.New("any error"))
+
+		service := localities.NewService(mockedRepository)
+		result, err := service.GetReportCarriers("")
 
 		assert.Error(t, err.Err)
 		assert.Len(t, result, 0)
