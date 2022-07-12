@@ -3,11 +3,13 @@ package product_records
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
 type Repository interface {
 	CreateProductRecord(LastUpdateDate string, PurchasePrice float64, SalePrice float64, ProductId int) (ProductRecords, error)
+	GetOne(id int) error
 }
 
 type mariaDbRepository struct {
@@ -48,4 +50,23 @@ func (mariaDb mariaDbRepository) CreateProductRecord(LastUpdateDate string, Purc
 	newProductRecord.Id = int(lastId)
 
 	return newProductRecord, nil
+}
+
+func (mariaDb mariaDbRepository) GetOne(id int) error {
+	var idSelected int
+
+	row := mariaDb.db.QueryRow(queryGetOneProductRecord, id)
+	err := row.Scan(
+		&idSelected,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("product_records with id %d not found", id)
+	}
+
+	if err != nil {
+		return errors.New("unexpected error to verify product_records")
+	}
+
+	return nil
 }
