@@ -114,7 +114,7 @@ func TestCreateLocality(t *testing.T) {
 	})
 }
 
-func TestGetReportSellers(t *testing.T) {
+func TestGetOneReportSeller(t *testing.T) {
 	t.Run("Test if get successfully", func(t *testing.T) {
 		mockedRepository := new(mocks.Repository)
 		mockedRepository.On("GetOne", mock.AnythingOfType("string")).
@@ -142,6 +142,51 @@ func TestGetReportSellers(t *testing.T) {
 
 		service := localities.NewService(mockedRepository)
 		result, err := service.GetReportOneSeller("")
+
+		assert.Error(t, err.Err)
+		assert.Len(t, result, 0)
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test fail case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetOne", mock.AnythingOfType("string")).
+			Return(localities.Locality{}, errors.New("locality with id 1 not found"))
+
+		service := localities.NewService(mockedRepository)
+		result, err := service.GetReportOneSeller("1")
+
+		assert.Error(t, err.Err)
+		assert.Len(t, result, 0)
+		assert.Equal(t, http.StatusNotFound, err.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+}
+
+func TestGetAllReportSellers(t *testing.T) {
+	t.Run("Test if get successfully", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+
+		mockedRepository.On("GetReportSellers", mock.AnythingOfType("string")).
+			Return(fakeReports, nil)
+
+		service := localities.NewService(mockedRepository)
+		result, err := service.GetAllReportSellers()
+
+		assert.Nil(t, err.Err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, http.StatusOK, err.Code)
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test fail case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportSellers", mock.AnythingOfType("string")).
+			Return([]localities.ReportSellers{}, errors.New("any error"))
+
+		service := localities.NewService(mockedRepository)
+		result, err := service.GetAllReportSellers()
 
 		assert.Error(t, err.Err)
 		assert.Len(t, result, 0)
