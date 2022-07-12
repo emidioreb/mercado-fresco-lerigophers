@@ -16,13 +16,7 @@ var (
 		fieldsToUpdate := []string{}
 		whereCase := "WHERE id = ?"
 
-		var fields = []string{
-			"company_name",
-			"address",
-			"telephone",
-			"locality_id",
-			"cid",
-		}
+		var fields = []string{"company_name", "address", "telephone", "locality_id", "cid"}
 		for _, currField := range fields {
 			if _, ok := requestData[currField]; ok {
 				fieldsToUpdate = append(fieldsToUpdate, fmt.Sprintf(" %s = ?", currField))
