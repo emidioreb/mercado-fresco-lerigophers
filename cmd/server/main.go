@@ -11,14 +11,17 @@ import (
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
 	productRecordsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productRecords"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
+	purchaseOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/purchaseOrders"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	order_status "github.com/emidioreb/mercado-fresco-lerigophers/internal/orderStatus"
 	product_records "github.com/emidioreb/mercado-fresco-lerigophers/internal/productRecords"
-	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+	product_types "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+	purchase_orders "github.com/emidioreb/mercado-fresco-lerigophers/internal/purchaseOrders"
 
 	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
@@ -35,7 +38,7 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
+	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -76,6 +79,7 @@ func main() {
 		buyerGroup.POST("/", controllerBuyer.Create())
 		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
 		buyerGroup.PATCH("/:id", controllerBuyer.Update())
+		buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
 	}
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
@@ -104,7 +108,7 @@ func main() {
 		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
 	}
 
-	repoProductType := producttypes.NewMariaDbRepository(conn)
+	repoProductType := product_types.NewMariaDbRepository(conn)
 
 	repoSection := sections.NewMariaDbRepository(conn)
 	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
@@ -164,5 +168,14 @@ func main() {
 		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
 	}
 
-	server.Run(":4401")
+	repoOrderStatus := order_status.NewMariaDbRepository(conn)
+	repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
+	servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
+	controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
+	PurchaseOrdersGroup := server.Group("/api/v1/purchaseOrders")
+	{
+		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
+	}
+
+	server.Run(":4400")
 }
