@@ -269,7 +269,7 @@ func TestDBGetReportCarriers(t *testing.T) {
 
 		localityRepo := NewMariaDbRepository(db)
 
-		sellerReports, err := localityRepo.GetReportCarriers("123")
+		carriersReports, err := localityRepo.GetReportCarriers("123")
 		assert.Nil(t, err)
 
 		assert.Len(t, sellerReports, 1)
