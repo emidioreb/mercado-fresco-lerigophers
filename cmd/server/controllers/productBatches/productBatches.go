@@ -15,7 +15,7 @@ type ProductBatchController struct {
 	service product_batches.Service
 }
 
-type reqProductBatch struct {
+type ReqProductBatch struct {
 	BatchNumber        int    `json:"batch_number" binding:"required"`
 	CurrentQuantity    int    `json:"current_quantity" binding:"required"`
 	CurrentTemperature int    `json:"current_temperature" binding:"required"`
@@ -36,7 +36,7 @@ func NewProductBatch(s product_batches.Service) *ProductBatchController {
 
 func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqProductBatch
+		var requestData ReqProductBatch
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			log.Println(err)
