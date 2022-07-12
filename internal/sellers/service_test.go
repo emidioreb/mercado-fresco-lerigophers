@@ -190,6 +190,26 @@ func TestServiceDelete(t *testing.T) {
 		assert.Equal(t, expectedError, result.Err)
 		mockedRepository.AssertExpectations(t)
 	})
+
+	t.Run("Fail when delete seller", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedLocality := new(mockLocalityRepository.Repository)
+		expectedError := errors.New("cannot delete seller")
+
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
+			Return(sellers.Seller{}, nil)
+
+		mockedRepository.On("Delete", mock.AnythingOfType("int")).
+			Return(expectedError)
+
+		service := sellers.NewService(mockedRepository, mockedLocality)
+		result := service.Delete(1)
+		assert.Error(t, result.Err)
+
+		assert.Equal(t, http.StatusInternalServerError, result.Code)
+		assert.Equal(t, expectedError, result.Err)
+		mockedRepository.AssertExpectations(t)
+	})
 }
 
 func TestServiceGetAll(t *testing.T) {
