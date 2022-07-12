@@ -128,6 +128,7 @@ func TestServiceDelete(t *testing.T) {
 		mockedWarehouseRepository := new(warehouses_mock.Repository)
 		mockedProductTypesRepository := new(product_types_mock.Repository)
 
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sections.Section{}, nil)
 		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(nil)
 
 		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
@@ -148,17 +149,15 @@ func TestServiceDelete(t *testing.T) {
 		mockedProductTypesRepository := new(product_types_mock.Repository)
 		expectedError := errNotFound
 
-		mockedRepository.On("Delete", mock.AnythingOfType("int")).Return(expectedError)
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(sections.Section{}, expectedError)
 
 		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
 
 		result := service.Delete(1)
 
 		assert.NotNil(t, result.Err)
-
+		assert.Equal(t, expectedError, result.Err)
 		assert.Equal(t, result.Code, http.StatusNotFound)
-
-		assert.Equal(t, result.Err, expectedError)
 
 		mockedRepository.AssertExpectations(t)
 	})
@@ -185,6 +184,22 @@ func TestServiceGetAll(t *testing.T) {
 
 		assert.Equal(t, input[1].SectionNumber, result[1].SectionNumber)
 
+		mockedRepository.AssertExpectations(t)
+	})
+
+	t.Run("Test internal server error when get all", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedWarehouseRepository := new(warehouses_mock.Repository)
+		mockedProductTypesRepository := new(product_types_mock.Repository)
+
+		expectedError := errors.New("any error")
+		mockedRepository.On("GetAll").Return([]sections.Section{}, expectedError)
+
+		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
+
+		_, err := service.GetAll()
+		assert.Error(t, err.Err)
+		assert.Equal(t, expectedError, err.Err)
 		mockedRepository.AssertExpectations(t)
 	})
 
@@ -243,11 +258,14 @@ func TestServiceUpdate(t *testing.T) {
 		mockedProductTypesRepository := new(product_types_mock.Repository)
 
 		requestData := map[string]interface{}{
+			"section_number":      1.0,
 			"current_temperature": 25,
 			"minimum_temperature": 0,
 			"current_capacity":    130,
 			"minimum_capacity":    50,
 			"maximum_capacity":    999,
+			"warehouse_id":        1.0,
+			"product_type_id":     1.0,
 		}
 
 		expectedSection := inputSections[0]
@@ -264,27 +282,21 @@ func TestServiceUpdate(t *testing.T) {
 			ProductTypeId:      71,
 		}
 
-		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
-			Return(input, nil)
-
-		mockedRepository.On("Update",
-			mock.AnythingOfType("int"),
-			mock.Anything,
-		).Return(expectedSection, nil)
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input, nil)
+		mockedRepository.On("GetBySectionNumber", mock.AnythingOfType("int")).Return(0, nil)
+		mockedWarehouseRepository.On("GetOne", mock.AnythingOfType("int")).Return(warehouses.Warehouse{}, nil)
+		mockedProductTypesRepository.On("GetOne", mock.AnythingOfType("int")).Return(nil)
+		mockedRepository.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(expectedSection, nil)
 
 		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
-
 		result, err := service.Update(1, requestData)
 
 		assert.Nil(t, err.Err)
-
 		assert.Equal(t, expectedSection, result)
-
 		mockedRepository.AssertExpectations(t)
 	})
 
 	t.Run("Return null when section id do not exists", func(t *testing.T) {
-		// TODO -> Refat this test, because the Update method was changed.
 		mockedRepository := new(mocks.Repository)
 		mockedWarehouseRepository := new(warehouses_mock.Repository)
 		mockedProductTypesRepository := new(product_types_mock.Repository)
@@ -295,20 +307,10 @@ func TestServiceUpdate(t *testing.T) {
 		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
 			Return(sections.Section{}, expectedError).Once()
 
-		mockedRepository.On("GetAll").
-			Return([]sections.Section{}, nil).Once()
-
-		mockedRepository.On("Update",
-			mock.AnythingOfType("int"),
-			mock.Anything,
-		).Return(sections.Section{}, nil).Once()
-
 		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
-
 		_, err := service.Update(1, requestData)
 
 		assert.NotNil(t, err.Err)
-
 		assert.Equal(t, http.StatusNotFound, err.Code)
 
 		assert.Equal(t, expectedError, err.Err)
@@ -325,11 +327,8 @@ func TestServiceUpdate(t *testing.T) {
 		expectedError := errAlreadyExists
 		input := inputSections
 
-		mockedRepository.On("GetOne", mock.AnythingOfType("int")).
-			Return(input[1], nil).Once()
-		mockedRepository.On("GetBySectionNumber", mock.AnythingOfType("int")).
-			Return(10, errAlreadyExists).Once()
-		mockedRepository.On("Update", mock.AnythingOfType("int"), mock.Anything).Return(sections.Section{}, nil).Once()
+		mockedRepository.On("GetOne", mock.AnythingOfType("int")).Return(input[1], nil).Once()
+		mockedRepository.On("GetBySectionNumber", mock.AnythingOfType("int")).Return(10, errAlreadyExists).Once()
 
 		service := sections.NewService(mockedRepository, mockedWarehouseRepository, mockedProductTypesRepository)
 		_, err := service.Update(2, requestData)

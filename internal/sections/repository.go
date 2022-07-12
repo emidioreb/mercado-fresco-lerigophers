@@ -134,16 +134,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Section, error) {
 
 }
 func (mariaDb mariaDbRepository) Delete(id int) error {
-	result, err := mariaDb.db.Exec(queryDeleteSection, id)
-	if err != nil {
-		return err
-	}
-
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 {
-		return GetErrSectionNotFound(id)
-	}
-
+	_, err := mariaDb.db.Exec(queryDeleteSection, id)
 	if err != nil {
 		return errDeleteSection
 	}
