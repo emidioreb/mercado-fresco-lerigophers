@@ -94,3 +94,23 @@ func (s *LocalityController) GetReportSellers() gin.HandlerFunc {
 	}
 
 }
+
+func (s *LocalityController) GetReportCarriers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Query("id")
+		reportCarries, resp := s.service.GetReportCarriers(id)
+		if resp.Err != nil {
+			c.JSON(
+				http.StatusNotFound,
+				web.DecodeError(resp.Err.Error()),
+			)
+			return
+		}
+
+		c.JSON(
+			http.StatusOK,
+			web.NewResponse(reportCarries),
+		)
+	}
+
+}

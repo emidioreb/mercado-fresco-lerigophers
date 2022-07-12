@@ -5,6 +5,7 @@ import (
 	"log"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
@@ -16,6 +17,7 @@ import (
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	product_records "github.com/emidioreb/mercado-fresco-lerigophers/internal/productRecords"
 	producttypes "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
@@ -35,7 +37,7 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:123456@tcp(localhost:4400)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -54,7 +56,7 @@ func main() {
 	ProductBatchesGroup := server.Group("/api/v1/productBatches")
 	{
 		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSellers())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
 	}
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
@@ -64,6 +66,7 @@ func main() {
 	{
 		localityGroup.POST("/", controllerLocality.CreateLocality())
 		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
 	}
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
@@ -154,8 +157,18 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
+
+	repoCarriers := carriers.NewMariaDbRepository(conn)
+	serviceCarriers := carriers.NewService(repoCarriers)
+	controllerCarriers := controllers.NewCarry(serviceCarriers)
+
+	carriersGroup := server.Group("/api/v1/carries")
+	{
+		carriersGroup.POST("/", controllerCarriers.Create())
+	}
+
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
-	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
 	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
 
 	inboundGroup := server.Group("/api/v1")

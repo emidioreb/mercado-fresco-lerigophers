@@ -29,16 +29,14 @@ func NewService(r Repository, w warehouses.Repository) Service {
 }
 
 func (s service) Create(cardNumber string, firstName, lastName string, warehouseId int) (Employee, web.ResponseCode) {
-	allEmployees, err := s.GetAll()
 
-	if err.Err != nil {
-		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, err.Err)
-	}
+	errGetByCardNumber := s.repository.GetOneByCardNumber(0, cardNumber)
 
-	for _, employee := range allEmployees {
-		if employee.CardNumberId == cardNumber {
+	if errGetByCardNumber != nil {
+		if errGetByCardNumber.Error() == "card_number_id already exists" {
 			return Employee{}, web.NewCodeResponse(http.StatusConflict, errors.New("card_number_id already exists"))
 		}
+		return Employee{}, web.NewCodeResponse(http.StatusInternalServerError, errGetByCardNumber)
 	}
 
 	if warehouseId != 0 {

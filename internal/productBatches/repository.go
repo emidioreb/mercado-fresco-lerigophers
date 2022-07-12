@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -53,11 +54,6 @@ func (mariaDb mariaDbRepository) GetOne(BatchNumber int) (ProductBatches, error)
 }
 
 func (mariaDb mariaDbRepository) CreateProductBatch(BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId int, DueDate, ManufacturingDate time.Time) (ProductBatches, error) {
-	_, err := mariaDb.db.Exec(QueryCreateProductBatch, BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId, DueDate, ManufacturingDate)
-	if err != nil {
-		return ProductBatches{}, errors.New("couldn't create a product_batch")
-	}
-
 	newProductBatch := ProductBatches{
 		BatchNumber:        BatchNumber,
 		CurrentQuantity:    CurrentQuantity,
@@ -70,6 +66,19 @@ func (mariaDb mariaDbRepository) CreateProductBatch(BatchNumber, CurrentQuantity
 		DueDate:            DueDate,
 		ManufacturingDate:  ManufacturingDate,
 	}
+
+	result, err := mariaDb.db.Exec(QueryCreateProductBatch, BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId, DueDate, ManufacturingDate)
+	if err != nil {
+		log.Println(err)
+		return ProductBatches{}, errors.New("couldn't create a product_batch")
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return ProductBatches{}, err
+	}
+
+	newProductBatch.Id = int(lastId)
 
 	return newProductBatch, nil
 }

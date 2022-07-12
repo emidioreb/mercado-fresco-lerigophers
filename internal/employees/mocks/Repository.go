@@ -91,6 +91,20 @@ func (_m *Repository) GetOne(id int) (employees.Employee, error) {
 	return r0, r1
 }
 
+// GetOneByCardNumber provides a mock function with given fields: id, cardNumber
+func (_m *Repository) GetOneByCardNumber(id int, cardNumber string) error {
+	ret := _m.Called(id, cardNumber)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, string) error); ok {
+		r0 = rf(id, cardNumber)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Update provides a mock function with given fields: id, requestData
 func (_m *Repository) Update(id int, requestData map[string]interface{}) (employees.Employee, error) {
 	ret := _m.Called(id, requestData)

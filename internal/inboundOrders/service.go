@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
@@ -15,16 +16,18 @@ type Service interface {
 }
 
 type service struct {
-	repository          Repository
-	warehouseRepository warehouses.Repository
-	employeeRepository  employees.Repository
+	repository               Repository
+	warehouseRepository      warehouses.Repository
+	employeeRepository       employees.Repository
+	productBatchesRepository product_batches.Repository
 }
 
-func NewService(r Repository, w warehouses.Repository, e employees.Repository) Service {
+func NewService(r Repository, w warehouses.Repository, e employees.Repository, pb product_batches.Repository) Service {
 	return &service{
-		repository:          r,
-		warehouseRepository: w,
-		employeeRepository:  e,
+		repository:               r,
+		warehouseRepository:      w,
+		employeeRepository:       e,
+		productBatchesRepository: pb,
 	}
 }
 
@@ -43,6 +46,14 @@ func (s service) CreateInboundOrders(orderNumber, orderDate string, employeeId, 
 			return InboundOrder{}, web.NewCodeResponse(http.StatusUnprocessableEntity, errWarehouse)
 		}
 		return InboundOrder{}, web.NewCodeResponse(http.StatusInternalServerError, errWarehouse)
+	}
+
+	_, errProductBat := s.productBatchesRepository.GetOne(productBatchId)
+	if errProductBat != nil {
+		if errProductBat.Error() == fmt.Sprintf("product_batch with batch_number %d not found", productBatchId) {
+			return InboundOrder{}, web.NewCodeResponse(http.StatusUnprocessableEntity, errProductBat)
+		}
+		return InboundOrder{}, web.NewCodeResponse(http.StatusInternalServerError, errProductBat)
 	}
 
 	result, err := s.repository.CreateInboundOrders(orderNumber, orderDate, employeeId, productBatchId, warehouseId)
