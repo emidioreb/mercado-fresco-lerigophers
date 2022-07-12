@@ -105,12 +105,8 @@ func (mariaDb mariaDbRepository) GetOneByCardNumber(id int, cardNumber string) e
 		)
 	}
 
-	if err == sql.ErrNoRows {
-		return nil
-	}
-
 	if err != nil {
-		return errors.New("ocurred an error during the validation of a card_number_id's unicity")
+		return errors.New("unexpected error to get employee")
 	}
 
 	if currentEmployee.Id != 0 {
@@ -149,11 +145,11 @@ func (mariaDb mariaDbRepository) Delete(id int) error {
 
 	result, err := mariaDb.db.Exec(queryDelete, id)
 	if err != nil {
-		return err
+		return errDeleteEmployee
 	}
 
-	affectedRows, err := result.RowsAffected()
-	if affectedRows == 0 {
+	_, err = result.RowsAffected()
+	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("employee with id %d not found", id)
 	}
 
