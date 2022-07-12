@@ -188,6 +188,5 @@ func main() {
 	{
 		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
 	}
-
 	server.Run(":4400")
 }
