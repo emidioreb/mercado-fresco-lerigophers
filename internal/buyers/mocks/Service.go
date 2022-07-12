@@ -93,6 +93,29 @@ func (_m *Service) GetOne(id int) (buyers.Buyer, web.ResponseCode) {
 	return r0, r1
 }
 
+// GetReportPurchaseOrders provides a mock function with given fields: SectionId
+func (_m *Service) GetReportPurchaseOrders(SectionId int) ([]buyers.ReportPurchaseOrders, web.ResponseCode) {
+	ret := _m.Called(SectionId)
+
+	var r0 []buyers.ReportPurchaseOrders
+	if rf, ok := ret.Get(0).(func(int) []buyers.ReportPurchaseOrders); ok {
+		r0 = rf(SectionId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]buyers.ReportPurchaseOrders)
+		}
+	}
+
+	var r1 web.ResponseCode
+	if rf, ok := ret.Get(1).(func(int) web.ResponseCode); ok {
+		r1 = rf(SectionId)
+	} else {
+		r1 = ret.Get(1).(web.ResponseCode)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: id, requestData
 func (_m *Service) Update(id int, requestData map[string]interface{}) (buyers.Buyer, web.ResponseCode) {
 	ret := _m.Called(id, requestData)

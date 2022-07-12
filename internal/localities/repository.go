@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateLocality(id, localityName, provinceName, countryName string) (Locality, error)
 	GetReportSellers(localityId string) ([]ReportSellers, error)
+	GetReportCarriers(localityId string) ([]ReportCarriers, error)
 	GetOne(id string) (Locality, error)
 }
 
@@ -99,6 +100,39 @@ func (mariaDb mariaDbRepository) GetReportSellers(localityId string) ([]ReportSe
 			&currentReport.SellersCount,
 		); err != nil {
 			return []ReportSellers{}, errors.New("error to report sellers by locality")
+		}
+		reports = append(reports, currentReport)
+	}
+
+	return reports, nil
+}
+
+func (mariaDb mariaDbRepository) GetReportCarriers(localityId string) ([]ReportCarriers, error) {
+	reports := []ReportCarriers{}
+
+	var (
+		rows *sql.Rows
+		err  error
+	)
+
+	if localityId != "" {
+		rows, err = mariaDb.db.Query(queryGetReportCarriersOne, localityId)
+	} else {
+		rows, err = mariaDb.db.Query(queryGetReportCarriersAll)
+	}
+
+	if err != nil {
+		return []ReportCarriers{}, errors.New("error to report carriers by locality")
+	}
+
+	for rows.Next() {
+		var currentReport ReportCarriers
+		if err := rows.Scan(
+			&currentReport.LocalityId,
+			&currentReport.LocalityName,
+			&currentReport.CarriersCount,
+		); err != nil {
+			return []ReportCarriers{}, errors.New("error to report carriers by locality")
 		}
 		reports = append(reports, currentReport)
 	}

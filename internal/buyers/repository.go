@@ -7,19 +7,21 @@ import (
 )
 
 var (
-	errUpdatedBuyer = errors.New("ocurred an error while updating the buyer")
-	errCreateBuyer  = errors.New("ocurred an error to create buyer")
-	errGetBuyers    = errors.New("couldn't get buyers")
-	errGetOneBuyer  = errors.New("unexpected error to get buyer")
-	errDeleteBuyer  = errors.New("unexpected error to delete buyer")
+	errUpdatedBuyer         = errors.New("ocurred an error while updating the buyer")
+	errCreateBuyer          = errors.New("ocurred an error to create buyer")
+	errGetBuyers            = errors.New("couldn't get buyers")
+	errGetOneBuyer          = errors.New("unexpected error to get buyer")
+	errDeleteBuyer          = errors.New("unexpected error to delete buyer")
+	errReportPurchaseOrders = errors.New("error to report purchase_orders by buyer")
 )
 
 type Repository interface {
-	Create(cardNumberId string, firstName, lastName string) (Buyer, error)
+	Create(cardNumberId, firstName, lastName string) (Buyer, error)
 	GetOne(id int) (Buyer, error)
 	GetAll() ([]Buyer, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Buyer, error)
+	GetReportPurchaseOrders(BuyerId int) ([]ReportPurchaseOrders, error)
 }
 
 type mariaDbRepository struct {
@@ -133,7 +135,7 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 	whereCase := "WHERE id = ?"
 	var finalQuery string
 
-	for key, _ := range requestData {
+	for key := range requestData {
 		switch key {
 		case "card_number_id":
 			fieldsToUpdate = append(fieldsToUpdate, " card_number_id = ?")
@@ -174,4 +176,39 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 	}
 
 	return currentBuyer, nil
+}
+
+func (mariaDb mariaDbRepository) GetReportPurchaseOrders(BuyerId int) ([]ReportPurchaseOrders, error) {
+	reports := []ReportPurchaseOrders{}
+
+	var (
+		rows *sql.Rows
+		err  error
+	)
+
+	if BuyerId != 0 {
+		rows, err = mariaDb.db.Query(QueryGetReportOne, BuyerId)
+	} else {
+		rows, err = mariaDb.db.Query(QueryGetReportAll)
+	}
+
+	if err != nil {
+		return []ReportPurchaseOrders{}, errReportPurchaseOrders
+	}
+
+	for rows.Next() {
+		var currentReport ReportPurchaseOrders
+		if err := rows.Scan(
+			&currentReport.BuyerId,
+			&currentReport.CardNumberId,
+			&currentReport.FirstName,
+			&currentReport.LastName,
+			&currentReport.PurchaseOrdersCount,
+		); err != nil {
+			return []ReportPurchaseOrders{}, errReportPurchaseOrders
+		}
+		reports = append(reports, currentReport)
+	}
+
+	return reports, nil
 }

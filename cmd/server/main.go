@@ -5,17 +5,26 @@ import (
 	"log"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
+	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
 	productBatchesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productBatches"
+	productRecordsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/productRecords"
 	productsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/products"
+	purchaseOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/purchaseOrders"
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
+	order_status "github.com/emidioreb/mercado-fresco-lerigophers/internal/orderStatus"
+	product_records "github.com/emidioreb/mercado-fresco-lerigophers/internal/productRecords"
+	product_types "github.com/emidioreb/mercado-fresco-lerigophers/internal/productTypes"
+	purchase_orders "github.com/emidioreb/mercado-fresco-lerigophers/internal/purchaseOrders"
+
 	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/localities"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
@@ -31,8 +40,7 @@ import (
 
 func main() {
 	server := gin.Default()
-
-	dataSource := "root:123456@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
 
 	conn, _ := sql.Open("mysql", dataSource)
 	_, err := conn.Query("USE mercado_fresco")
@@ -51,7 +59,7 @@ func main() {
 	ProductBatchesGroup := server.Group("/api/v1/productBatches")
 	{
 		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSellers())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
 	}
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
@@ -61,6 +69,7 @@ func main() {
 	{
 		localityGroup.POST("/", controllerLocality.CreateLocality())
 		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
 	}
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
@@ -73,6 +82,7 @@ func main() {
 		buyerGroup.POST("/", controllerBuyer.Create())
 		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
 		buyerGroup.PATCH("/:id", controllerBuyer.Update())
+		buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
 	}
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
@@ -101,8 +111,10 @@ func main() {
 		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
 	}
 
-	repoSection := sections.NewRepository()
-	serviceSection := sections.NewService(repoSection)
+	repoProductType := product_types.NewMariaDbRepository(conn)
+
+	repoSection := sections.NewMariaDbRepository(conn)
+	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
 	controllerSection := sectionsController.NewSection(serviceSection)
 
 	sectionGroup := server.Group("/api/v1/sections")
@@ -114,8 +126,8 @@ func main() {
 		sectionGroup.PATCH("/:id", controllerSection.Update())
 	}
 
-	repoProduct := products.NewRepository()
-	serviceProduct := products.NewService(repoProduct)
+	repoProduct := products.NewMariaDbRepository(conn)
+	serviceProduct := products.NewService(repoProduct, repoSellers)
 	controllerProduct := productsController.NewProduct(serviceProduct)
 
 	productGroup := server.Group("/api/v1/products")
@@ -125,6 +137,15 @@ func main() {
 		productGroup.POST("/", controllerProduct.Create())
 		productGroup.DELETE("/:id", controllerProduct.Delete())
 		productGroup.PATCH("/:id", controllerProduct.Update())
+		productGroup.GET("/reportRecords", controllerProduct.GetReportRecords())
+	}
+
+	repoProductRecords := product_records.NewMariaDbRepository(conn)
+	serviceProductRecords := product_records.NewService(repoProductRecords, repoProduct)
+	controllerProductRecords := productRecordsController.NewProductRecord(serviceProductRecords)
+	ProductRecordsGroup := server.Group("/api/v1/productRecords")
+	{
+		ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
 	}
 
 	repoEmployee := employees.NewMariaDbRepository(conn)
@@ -140,6 +161,15 @@ func main() {
 		employeeGroup.PATCH("/:id", controllerEmployee.Update())
 	}
 
+	repoCarriers := carriers.NewMariaDbRepository(conn)
+	serviceCarriers := carriers.NewService(repoCarriers)
+	controllerCarriers := controllers.NewCarry(serviceCarriers)
+
+	carriersGroup := server.Group("/api/v1/carries")
+	{
+		carriersGroup.POST("/", controllerCarriers.Create())
+	}
+
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
 	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
 	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
@@ -150,5 +180,13 @@ func main() {
 		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
 	}
 
+	repoOrderStatus := order_status.NewMariaDbRepository(conn)
+	repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
+	servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
+	controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
+	PurchaseOrdersGroup := server.Group("/api/v1/purchaseOrders")
+	{
+		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
+	}
 	server.Run(":4400")
 }

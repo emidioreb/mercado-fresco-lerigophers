@@ -4,16 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-var duedate, _ = time.Parse("2006-02-01", "2021-04-01")
-var manufacturingdate, _ = time.Parse("2006-02-01", "2021-04-01")
 
 var fakeProductBatches = []product_batches.ProductBatches{{
 	BatchNumber:        1,
@@ -24,8 +20,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            duedate,
-	ManufacturingDate:  manufacturingdate,
+	DueDate:            date,
+	ManufacturingDate:  date,
 }, {
 	BatchNumber:        1,
 	CurrentQuantity:    10,
@@ -35,8 +31,8 @@ var fakeProductBatches = []product_batches.ProductBatches{{
 	MinimumTemperature: 890,
 	ProductId:          23,
 	SectionId:          56,
-	DueDate:            duedate,
-	ManufacturingDate:  manufacturingdate,
+	DueDate:            date,
+	ManufacturingDate:  date,
 }}
 
 func TestServiceCreate(t *testing.T) {
@@ -127,5 +123,32 @@ func TestServiceCreate(t *testing.T) {
 			fakeProductBatches[0].ManufacturingDate)
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Code, http.StatusInternalServerError)
+	})
+}
+
+func TestServiceGetReport(t *testing.T) {
+	t.Run("get report - success case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportSection", mock.AnythingOfType("int")).Return([]product_batches.ProductsQuantity{}, nil)
+		service := product_batches.NewService(mockedRepository)
+
+		result, err := service.GetReportSection(0)
+		assert.NoError(t, err.Err)
+
+		assert.Equal(t, result, []product_batches.ProductsQuantity{})
+		assert.Equal(t, http.StatusOK, err.Code)
+	})
+
+	t.Run("get report - error case", func(t *testing.T) {
+		mockedRepository := new(mocks.Repository)
+		mockedRepository.On("GetReportSection", mock.AnythingOfType("int")).Return([]product_batches.ProductsQuantity{}, errors.New("error to report sections by product_batches"))
+		service := product_batches.NewService(mockedRepository)
+
+		result, err := service.GetReportSection(0)
+		assert.NotNil(t, err.Err)
+
+		assert.Equal(t, result, []product_batches.ProductsQuantity{})
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
+		assert.Equal(t, "error to report sections by product_batches", err.Err.Error())
 	})
 }

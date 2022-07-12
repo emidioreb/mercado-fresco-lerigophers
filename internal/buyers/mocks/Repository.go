@@ -91,6 +91,29 @@ func (_m *Repository) GetOne(id int) (buyers.Buyer, error) {
 	return r0, r1
 }
 
+// GetReportPurchaseOrders provides a mock function with given fields: BuyerId
+func (_m *Repository) GetReportPurchaseOrders(BuyerId int) ([]buyers.ReportPurchaseOrders, error) {
+	ret := _m.Called(BuyerId)
+
+	var r0 []buyers.ReportPurchaseOrders
+	if rf, ok := ret.Get(0).(func(int) []buyers.ReportPurchaseOrders); ok {
+		r0 = rf(BuyerId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]buyers.ReportPurchaseOrders)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(BuyerId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: id, requestData
 func (_m *Repository) Update(id int, requestData map[string]interface{}) (buyers.Buyer, error) {
 	ret := _m.Called(id, requestData)

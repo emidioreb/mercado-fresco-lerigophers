@@ -70,6 +70,27 @@ func (_m *Repository) GetAll() ([]sections.Section, error) {
 	return r0, r1
 }
 
+// GetBySectionNumber provides a mock function with given fields: sectionNumber
+func (_m *Repository) GetBySectionNumber(sectionNumber int) (int, error) {
+	ret := _m.Called(sectionNumber)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(int) int); ok {
+		r0 = rf(sectionNumber)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(sectionNumber)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOne provides a mock function with given fields: id
 func (_m *Repository) GetOne(id int) (sections.Section, error) {
 	ret := _m.Called(id)

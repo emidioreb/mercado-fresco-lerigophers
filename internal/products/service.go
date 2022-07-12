@@ -4,30 +4,34 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/emidioreb/mercado-fresco-lerigophers/internal/sellers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/pkg/web"
 )
 
 type Service interface {
 	Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate float64, productTypeId int) (Product, web.ResponseCode)
+		freezingRate float64, productTypeId, sellerId int) (Product, web.ResponseCode)
 	GetOne(id int) (Product, web.ResponseCode)
 	GetAll() ([]Product, web.ResponseCode)
 	Delete(id int) web.ResponseCode
 	Update(id int, requestData map[string]interface{}) (Product, web.ResponseCode)
+	GetReportRecord(ProductId int) ([]ProductRecords, web.ResponseCode)
 }
 
 type service struct {
-	repository Repository
+	repository       Repository
+	sellerRepository sellers.Repository
 }
 
-func NewService(r Repository) Service {
+func NewService(r Repository, sr sellers.Repository) Service {
 	return &service{
-		repository: r,
+		repository:       r,
+		sellerRepository: sr,
 	}
 }
 
-func (s service) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-	freezingRate float64, productTypeId int) (Product, web.ResponseCode) {
+func (s service) Create(productCode, description string, width, height, length, netWeight, expirationRate, recommendedFreezingTemperature,
+	freezingRate float64, productTypeId, sellerId int) (Product, web.ResponseCode) {
 	allProducts, _ := s.repository.GetAll()
 
 	for _, product := range allProducts {
@@ -36,8 +40,16 @@ func (s service) Create(productCode, description string, width, height, length, 
 		}
 	}
 
-	product, _ := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperaturechan,
-		freezingRate, productTypeId)
+	if _, err := s.sellerRepository.GetOne(sellerId); err != nil {
+		return Product{}, web.NewCodeResponse(http.StatusConflict, errors.New("informed seller_id don't exists"))
+	}
+
+	product, err := s.repository.Create(productCode, description, width, height, length, netWeight, expirationRate, recommendedFreezingTemperature,
+		freezingRate, productTypeId, sellerId)
+
+	if err != nil {
+		return Product{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
 	return product, web.NewCodeResponse(http.StatusCreated, nil)
 }
@@ -83,4 +95,14 @@ func (s service) Update(id int, requestData map[string]interface{}) (Product, we
 	product, _ := s.repository.Update(id, requestData)
 
 	return product, web.ResponseCode{Code: http.StatusOK, Err: nil}
+}
+
+func (s service) GetReportRecord(ProductId int) ([]ProductRecords, web.ResponseCode) {
+	report, err := s.repository.GetReportProduct(ProductId)
+
+	if err != nil {
+		return []ProductRecords{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
+	return report, web.NewCodeResponse(http.StatusOK, nil)
 }
