@@ -87,15 +87,7 @@ func main() {
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
 	service := sellers.NewService(repoSellers, repoLocalities)
-	controller := sellersController.NewSeller(service)
-	sellerGroup := server.Group("/api/v1/sellers")
-	{
-		sellerGroup.GET("/:id", controller.GetOne())
-		sellerGroup.GET("/", controller.GetAll())
-		sellerGroup.POST("/", controller.Create())
-		sellerGroup.DELETE("/:id", controller.Delete())
-		sellerGroup.PATCH("/:id", controller.Update())
-	}
+	sellersController.NewSellerHandler(server, service)
 
 	repoWarehouse := warehouses.NewMariaDbRepository(conn)
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
