@@ -99,17 +99,7 @@ func main() {
 
 	repoWarehouse := warehouses.NewMariaDbRepository(conn)
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
-	controllerWarehouse := warehousesController.NewWarehouse(serviceWarehouse)
-
-	warehouseGroup := server.Group("/warehouses")
-
-	{
-		warehouseGroup.GET("/", controllerWarehouse.GetAll())
-		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
-		warehouseGroup.POST("/", controllerWarehouse.Create())
-		warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
-		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
-	}
+	warehousesController.NewWarehouse(serviceWarehouse)
 
 	repoProductType := product_types.NewMariaDbRepository(conn)
 
