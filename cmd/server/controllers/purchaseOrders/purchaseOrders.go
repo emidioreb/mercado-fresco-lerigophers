@@ -13,7 +13,7 @@ type PurchaseOrdersController struct {
 	service purchase_orders.Service
 }
 
-type reqPurchaseOrders struct {
+type ReqPurchaseOrders struct {
 	OrderNumber     string `json:"order_number" binding:"required"`
 	OrderDate       string `json:"order_date" binding:"required"`
 	TrackingCode    string `json:"tracking_code" binding:"required"`
@@ -30,7 +30,7 @@ func NewPurchaseOrder(s purchase_orders.Service) *PurchaseOrdersController {
 
 func (s *PurchaseOrdersController) CreatePurchaseOrder() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqPurchaseOrders
+		var requestData ReqPurchaseOrders
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
