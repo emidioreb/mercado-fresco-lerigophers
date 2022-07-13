@@ -138,6 +138,20 @@ func TestDBGetOneProduct(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, "unexpected error to get product", err.Error())
 	})
+
+	t.Run("Product_code not found", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneProduct)).
+			WillReturnError(sql.ErrNoRows)
+
+		productsRepo := NewMariaDbRepository(db)
+		_, err = productsRepo.GetOne(20)
+		assert.Error(t, err)
+		assert.Equal(t, "product with id 20 not found", err.Error())
+	})
 }
 
 func TestDBgetAllProducts(t *testing.T) {
@@ -183,6 +197,36 @@ func TestDBgetAllProducts(t *testing.T) {
 
 		mock.ExpectQuery(regexp.QuoteMeta(queryGetAllProducts)).
 			WillReturnError(errors.New("couldn't get products"))
+
+		productsRepo := NewMariaDbRepository(db)
+
+		_, err = productsRepo.GetAll()
+		assert.Error(t, err)
+	})
+
+	t.Run("Scan Error", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		newRow := sqlmock.NewRows([]string{
+			"id",
+			"product_code",
+			"description",
+			"width",
+			"height",
+			"length",
+			"net_weight",
+			"expiration_rate",
+			"recommended_freezing_temperature",
+			"freezing_rate",
+			"product_type_id",
+			"seller_id",
+		}).
+			AddRow("", "", "", "", "", "", "", "", "", "", "", "")
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetAllProducts)).
+			WillReturnRows(newRow)
 
 		productsRepo := NewMariaDbRepository(db)
 
@@ -327,4 +371,80 @@ func TestDBUpdateProduct(t *testing.T) {
 		assert.Equal(t, "ABX0001", products.ProductCode)
 	})
 
+	t.Run("Exec error", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnError(errors.New("any error"))
+
+		productsRepo := NewMariaDbRepository(db)
+
+		_, err = productsRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedProduct, err)
+	})
+
+	t.Run("Not found case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		newResult := sqlmock.NewResult(0, 0)
+		newErrorResult := sqlmock.NewErrorResult(errors.New("any error"))
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnResult(newResult).
+			WillReturnResult(newErrorResult)
+
+		productsRepo := NewMariaDbRepository(db)
+
+		_, err = productsRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedProduct, err)
+	})
+
+	t.Run("Return updated product case", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		newResult := sqlmock.NewResult(0, 0)
+		newErrorResult := sqlmock.NewErrorResult(errors.New("any error"))
+		mock.ExpectExec(regexp.QuoteMeta(query)).
+			WillReturnResult(newResult)
+
+		mock.ExpectExec(regexp.QuoteMeta(queryGetOneProduct)).
+			WillReturnResult(newErrorResult)
+
+		productsRepo := NewMariaDbRepository(db)
+
+		_, err = productsRepo.Update(1, requestData)
+		assert.Error(t, err)
+		assert.Equal(t, errUpdatedProduct, err)
+	})
+}
+
+func TestReportProduct(t *testing.T) {
+	t.Run("Report for wrong product_id", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		defer db.Close()
+
+		rows := sqlmock.NewRows([]string{
+			"product_id",
+			"description",
+			"records_count",
+		}).AddRow(1, "abacaxi", 4)
+
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetReportOne)).
+			WillReturnRows(rows)
+
+		productsRepo := NewMariaDbRepository(db)
+
+		productsReports, err := productsRepo.GetReportProduct(1)
+		assert.NoError(t, err)
+
+		assert.Len(t, productsReports, 1)
+	})
 }

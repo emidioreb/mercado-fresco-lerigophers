@@ -120,7 +120,7 @@ func (mariaDb mariaDbRepository) GetAll() ([]Product, error) {
 
 	for rows.Next() {
 		var currentProduct Product
-		if err := rows.Scan(
+		err := rows.Scan(
 			&currentProduct.Id,
 			&currentProduct.ProductCode,
 			&currentProduct.Description,
@@ -133,7 +133,8 @@ func (mariaDb mariaDbRepository) GetAll() ([]Product, error) {
 			&currentProduct.FreezingRate,
 			&currentProduct.ProductTypeId,
 			&currentProduct.SellerId,
-		); err != nil {
+		)
+		if err != nil {
 			return []Product{}, errGetProducts
 		}
 		products = append(products, currentProduct)
@@ -196,7 +197,6 @@ func (mariaDb mariaDbRepository) GetReportProduct(ProductId int) ([]ProductRecor
 	}
 
 	if err != nil {
-		fmt.Print(err, 267)
 		return []ProductRecords{}, errors.New("error to report products by product_id")
 	}
 

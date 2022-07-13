@@ -53,11 +53,16 @@ func (mariaDb mariaDbRepository) CreateProductRecord(LastUpdateDate string, Purc
 }
 
 func (mariaDb mariaDbRepository) GetOne(id int) error {
-	var idSelected int
+
+	currentProductRecord := ProductRecords{}
 
 	row := mariaDb.db.QueryRow(queryGetOneProductRecord, id)
 	err := row.Scan(
-		&idSelected,
+		&currentProductRecord.Id,
+		&currentProductRecord.LastUpdateDate,
+		&currentProductRecord.PurchasePrice,
+		&currentProductRecord.SalePrice,
+		&currentProductRecord.ProductId,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
