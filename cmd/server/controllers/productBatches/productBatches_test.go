@@ -177,6 +177,7 @@ var fakeReports = []product_batches.ProductsQuantity{
 const (
 	defaultURL       = "/api/v1/productBatches/"
 	reportOne        = "/api/v1/productBatches/reportProducts?id=1"
+	reportOneError   = "/api/v1/productBatches/reportProducts?id=a"
 	reportAll        = "/api/v1/productBatches/reportProducts/"
 	defaultReportURL = "/api/v1/productBatches/reportProducts"
 )
@@ -462,6 +463,36 @@ func TestGetReportSections(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Test get report by one 2", func(t *testing.T) {
+		mockedService, ProductBatchController := newProductBatcheController()
+		mockedService.On(
+			"GetReportSection",
+			mock.AnythingOfType("int"),
+		).Return([]product_batches.ProductsQuantity{}, web.ResponseCode{
+			Code: http.StatusInternalServerError,
+			Err:  errors.New("any error"),
+		},
+		)
+
+		r := router()
+		r.GET(
+			defaultReportURL,
+			ProductBatchController.GetReportSection(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportOneError,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 
 	t.Run("Test get report", func(t *testing.T) {
