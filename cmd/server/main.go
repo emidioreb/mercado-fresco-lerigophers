@@ -105,16 +105,7 @@ func main() {
 
 	repoSection := sections.NewMariaDbRepository(conn)
 	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
-	controllerSection := sectionsController.NewSection(serviceSection)
-
-	sectionGroup := server.Group("/sections")
-	{
-		sectionGroup.GET("/:id", controllerSection.GetOne())
-		sectionGroup.GET("/", controllerSection.GetAll())
-		sectionGroup.POST("/", controllerSection.Create())
-		sectionGroup.DELETE("/:id", controllerSection.Delete())
-		sectionGroup.PATCH("/:id", controllerSection.Update())
-	}
+	sectionsController.NewSectionHandler(server, serviceSection)
 
 	repoProduct := products.NewMariaDbRepository(conn)
 	serviceProduct := products.NewService(repoProduct, repoSellers)
@@ -171,13 +162,10 @@ func main() {
 	}
 
 	repoOrderStatus := order_status.NewMariaDbRepository(conn)
+
 	repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
 	servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
-	controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
-	PurchaseOrdersGroup := server.Group("/purchaseOrders")
-	{
-		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
-	}
+	purchaseOrdersController.NewPurchaseOrderHandler(server, servicePurchaseOrders)
 
 	server.Run(PORT)
 }
