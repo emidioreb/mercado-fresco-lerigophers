@@ -31,13 +31,13 @@ func NewWarehouse(s warehouses.Service) *WarehouseController {
 
 func NewWarehouseHandler(r *gin.Engine, wh warehouses.Service) {
 	controllerWarehouse := NewWarehouse(wh)
-	sellerGroup := r.Group("/api/v1/sellers")
+	warehousesGroup := r.Group("/api/v1/warehouses")
 	{
-		sellerGroup.GET("/:id", controllerWarehouse.GetOne())
-		sellerGroup.GET("/", controllerWarehouse.GetAll())
-		sellerGroup.POST("/", controllerWarehouse.Create())
-		sellerGroup.DELETE("/:id", controllerWarehouse.Delete())
-		sellerGroup.PATCH("/:id", controllerWarehouse.Update())
+		warehousesGroup.GET("/:id", controllerWarehouse.GetOne())
+		warehousesGroup.GET("/", controllerWarehouse.GetAll())
+		warehousesGroup.POST("/", controllerWarehouse.Create())
+		warehousesGroup.DELETE("/:id", controllerWarehouse.Delete())
+		warehousesGroup.PATCH("/:id", controllerWarehouse.Update())
 	}
 }
 
