@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,7 +59,7 @@ var successfullyResponse = purchase_orders.PurchaseOrders{
 	OrderStatusId:   1,
 }
 
-var fakePurchaseOrder = controllers.ReqPurchaseOrders{
+var fakePurchaseOrderErrDate = controllers.ReqPurchaseOrders{
 	OrderNumber:     "#order1",
 	OrderDate:       "2006-2",
 	TrackingCode:    "QB123400",
@@ -127,7 +128,7 @@ func TestCreatePurchaseOrder(t *testing.T) {
 	t.Run("Unprocessable entity - order_date", func(t *testing.T) {
 		_, PurchaseOrderController := newPurchaseOrdersController()
 
-		parsedFakePurchaseOrder, err := json.Marshal(fakePurchaseOrder)
+		parsedFakePurchaseOrder, err := json.Marshal(fakePurchaseOrderErrDate)
 		assert.NoError(t, err)
 
 		r := router()
@@ -146,4 +147,38 @@ func TestCreatePurchaseOrder(t *testing.T) {
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
+	t.Run("Fail on create purchase_order", func(t *testing.T) {
+		mockedService, PurchaseOrderController := newPurchaseOrdersController()
+		mockedService.On("CreatePurchaseOrders",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("time.Time"),
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+			mock.AnythingOfType("int"),
+		).Return(
+			purchase_orders.PurchaseOrders{},
+			web.ResponseCode{
+				Code: http.StatusConflict,
+				Err:  errors.New("any error"),
+			})
+
+		parsedFakePurchaseOrder, err := json.Marshal(fakeInput)
+		assert.NoError(t, err)
+
+		r := router()
+		r.POST(defaultURL, PurchaseOrderController.CreatePurchaseOrder())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedFakePurchaseOrder),
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
 }
