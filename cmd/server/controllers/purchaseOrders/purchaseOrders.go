@@ -30,10 +30,7 @@ func NewPurchaseOrder(s purchase_orders.Service) *PurchaseOrdersController {
 
 func NewPurchaseOrderHandler(r *gin.Engine, pos purchase_orders.Service) {
 	purchaseOrderController := NewPurchaseOrder(pos)
-	purchaseOrderGroup := r.Group("/api/v1/purchaseOrders")
-	{
-		purchaseOrderGroup.POST("/", purchaseOrderController.CreatePurchaseOrder())
-	}
+	r.POST("/api/v1/purchaseOrders/", purchaseOrderController.CreatePurchaseOrder())
 }
 
 func (s *PurchaseOrdersController) CreatePurchaseOrder() gin.HandlerFunc {
@@ -63,9 +60,7 @@ func (s *PurchaseOrdersController) CreatePurchaseOrder() gin.HandlerFunc {
 		)
 
 		if resp.Err != nil {
-			c.JSON(resp.Code, gin.H{
-				"error": resp.Err.Error(),
-			})
+			c.JSON(resp.Code, gin.H{"error": resp.Err.Error()})
 			return
 		}
 
