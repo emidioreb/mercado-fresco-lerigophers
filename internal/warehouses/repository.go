@@ -32,21 +32,19 @@ func NewMariaDbRepository(db *sql.DB) Repository {
 	}
 }
 
-func (mariaDb mariaDbRepository) Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error) {
-	insert := `INSERT INTO warehouses (warehouse_code, address, telephone, minimum_capacity, minimum_temperature) VALUES (?, ?, ?, ?, ?)`
-
+func (mariaDb mariaDbRepository) Create(warehouseCode, address, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error) {
 	newWarehouse := Warehouse{
 		WarehouseCode:      warehouseCode,
-		Address:            adress,
+		Address:            address,
 		Telephone:          telephone,
 		MinimumCapacity:    minimumCapacity,
 		MinimumTemperature: minimumTemperature,
 	}
 
 	result, err := mariaDb.db.Exec(
-		insert,
+		queryCreateWarehouse,
 		warehouseCode,
-		adress,
+		address,
 		telephone,
 		minimumCapacity,
 		minimumTemperature,
@@ -67,10 +65,9 @@ func (mariaDb mariaDbRepository) Create(warehouseCode, adress, telephone string,
 }
 
 func (mariaDb mariaDbRepository) GetOne(id int) (Warehouse, error) {
-	getOne := "SELECT * FROM warehouses WHERE id = ?"
 	currentWarehouse := Warehouse{}
 
-	row := mariaDb.db.QueryRow(getOne, id)
+	row := mariaDb.db.QueryRow(queryGetOneWarehouse, id)
 
 	err := row.Scan(
 		&currentWarehouse.Id,
@@ -107,8 +104,8 @@ func (mariaDb mariaDbRepository) GetAll() ([]Warehouse, error) {
 			&currentWarehouse.WarehouseCode,
 			&currentWarehouse.Address,
 			&currentWarehouse.Telephone,
-			&currentWarehouse.MinimumCapacity,
 			&currentWarehouse.MinimumTemperature,
+			&currentWarehouse.MinimumCapacity,
 		); err != nil {
 			return []Warehouse{}, errGetWarehouses
 		}
