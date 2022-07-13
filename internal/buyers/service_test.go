@@ -271,3 +271,5 @@ func TestServiceUpdate(t *testing.T) {
 		assert.Equal(t, http.StatusConflict, err.Code)
 	})
 }
+
+//TODO Create test GetReportPurchaseOrders

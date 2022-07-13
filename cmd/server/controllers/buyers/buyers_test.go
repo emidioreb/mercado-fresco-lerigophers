@@ -548,3 +548,5 @@ func TestCreateBuyer(t *testing.T) {
 		assert.Equal(t, errCardNumberIdExists.Error(), bodyResponse.Error)
 	})
 }
+
+// TODO - implement test GetReportPurchaseOrders

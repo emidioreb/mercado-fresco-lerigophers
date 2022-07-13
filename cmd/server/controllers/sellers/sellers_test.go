@@ -70,11 +70,14 @@ var (
 	errIdNotNumber    = errors.New("id must be a number")
 	errInvalidRequest = errors.New("invalid request data")
 	errNeedBody       = errors.New("invalid request data - body needed")
-	errCidZero        = errors.New("cid must be greather than 0")
-	errCidNeeded      = errors.New("cid must be informed and greather than 0")
 	errTypeData       = errors.New("invalid type of data")
 	errInvalidInput   = errors.New("invalid request input")
 	errCidExists      = errors.New("cid already exists")
+	errCompanyName    = errors.New("company_name too long: max 255 characters")
+	errAddress        = errors.New("address too long: max 255 characters")
+	errTelephone      = errors.New("telephone too long: max 20 characters")
+	errLocalityId     = errors.New("locality_id too long: max 255 characters")
+	errCidZero        = errors.New("cid must be greather than 0")
 )
 
 func TestGetSeller(t *testing.T) {
@@ -387,29 +390,6 @@ func TestUpdateSeller(t *testing.T) {
 		assert.Equal(t, errNeedBody.Error(), bodyResponse.Error)
 	})
 
-	t.Run("CID greather than 0", func(t *testing.T) {
-		mockedService, sellerController := newSellerController()
-		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
-			Return(sellers.Seller{}, web.ResponseCode{})
-
-		router := routerSellers()
-		router.PATCH(idRequest, sellerController.Update())
-
-		req, err := http.NewRequest(http.MethodPatch, idNumber1, bytes.NewBuffer([]byte(`{"cid": 0 }`)))
-		assert.Nil(t, err)
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-
-		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
-		assert.Nil(t, err)
-
-		assert.Equal(t, errCidZero.Error(), bodyResponse.Error)
-	})
-
 	t.Run("Syntax error on body", func(t *testing.T) {
 		mockedService, sellerController := newSellerController()
 		mockedService.On("Update", mock.AnythingOfType("int"), mock.Anything).
@@ -432,6 +412,185 @@ func TestUpdateSeller(t *testing.T) {
 
 		assert.Equal(t, errTypeData.Error(), bodyResponse.Error)
 	})
+
+	t.Run("Unprocessable entity 1 - company_name", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.Telephone = "123"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.CompanyName = fakeSeller.CompanyName + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
+
+		req, err := http.NewRequest(
+			http.MethodPatch,
+			idNumber1,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errCompanyName.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 2 - address", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.CompanyName = "Nações Unidas"
+		fakeSeller.Telephone = "123"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.Address = fakeSeller.Address + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
+
+		req, err := http.NewRequest(
+			http.MethodPatch,
+			idNumber1,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errAddress.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 3 - telephone", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.CompanyName = "123"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.Telephone = fakeSeller.Telephone + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
+
+		req, err := http.NewRequest(
+			http.MethodPatch,
+			idNumber1,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errTelephone.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 4 - locality_id", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.Telephone = "123"
+		fakeSeller.CompanyName = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.LocalityId = fakeSeller.LocalityId + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
+
+		req, err := http.NewRequest(
+			http.MethodPatch,
+			idNumber1,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errLocalityId.Error(), bodyResponse.Error)
+	})
+
+	t.Run("CID greather than zero", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 0
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.PATCH(idRequest, sellerController.Update())
+
+		req, err := http.NewRequest(
+			http.MethodPatch,
+			idNumber1,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errCidZero.Error(), bodyResponse.Error)
+	})
 }
 
 func TestCreateSeller(t *testing.T) {
@@ -440,6 +599,7 @@ func TestCreateSeller(t *testing.T) {
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
@@ -498,40 +658,13 @@ func TestCreateSeller(t *testing.T) {
 		assert.Equal(t, errInvalidInput.Error(), bodyResponse.Error)
 	})
 
-	t.Run("CID must be greather than 0", func(t *testing.T) {
-		mockedService, sellerController := newSellerController()
-		mockedService.On(
-			"Create",
-			mock.AnythingOfType("int"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(sellers.Seller{}, web.ResponseCode{})
-
-		router := routerSellers()
-		router.POST(defaultURL, sellerController.Create())
-
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 0}`)))
-		assert.Nil(t, err)
-
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-
-		var bodyResponse ObjectErrorResponse
-		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
-		assert.Nil(t, err)
-
-		assert.Equal(t, errCidNeeded.Error(), bodyResponse.Error)
-	})
-
 	t.Run("Conflict CID", func(t *testing.T) {
 		mockedService, sellerController := newSellerController()
 		mockedService.On("GetAll").Return(fakeSellers, nil)
 		mockedService.On(
 			"Create",
 			mock.AnythingOfType("int"),
+			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
 			mock.AnythingOfType("string"),
@@ -543,7 +676,7 @@ func TestCreateSeller(t *testing.T) {
 		r := routerSellers()
 		r.POST(defaultURL, sellerController.Create())
 
-		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid": 2}`)))
+		req, err := http.NewRequest(http.MethodPost, defaultURL, bytes.NewBuffer([]byte(`{"cid":1,"address":"a","company_name":"a","locality_id":"123","telephone":"123"}`)))
 		assert.Nil(t, err)
 
 		w := httptest.NewRecorder()
@@ -556,4 +689,153 @@ func TestCreateSeller(t *testing.T) {
 
 		assert.Equal(t, errCidExists.Error(), bodyResponse.Error)
 	})
+
+	t.Run("Unprocessable entity 1 - company_name", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.Telephone = "123"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.CompanyName = fakeSeller.CompanyName + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errCompanyName.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 2 - address", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.CompanyName = "Meli"
+		fakeSeller.Telephone = "123"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.Address = fakeSeller.Address + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errAddress.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 3 - telephone", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.CompanyName = "Meli"
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.LocalityId = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.Telephone = fakeSeller.Telephone + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errTelephone.Error(), bodyResponse.Error)
+	})
+
+	t.Run("Unprocessable entity 4 - locality_id", func(t *testing.T) {
+		fakeSeller := sellers.Seller{}
+		fakeSeller.Cid = 1
+		fakeSeller.CompanyName = "Meli"
+		fakeSeller.Address = "Nações Unidas"
+		fakeSeller.Telephone = "123"
+		for i := 0; i < 256; i++ {
+			fakeSeller.LocalityId = fakeSeller.LocalityId + "a"
+		}
+
+		parsedSeller, err := json.Marshal(fakeSeller)
+		assert.NoError(t, err)
+
+		_, sellerController := newSellerController()
+
+		r := routerSellers()
+		r.POST(defaultURL, sellerController.Create())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedSeller),
+		)
+		assert.Nil(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var bodyResponse ObjectErrorResponse
+		err = json.Unmarshal(w.Body.Bytes(), &bodyResponse)
+		assert.Nil(t, err)
+
+		assert.Equal(t, errLocalityId.Error(), bodyResponse.Error)
+	})
+
 }

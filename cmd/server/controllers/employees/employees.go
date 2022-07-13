@@ -61,7 +61,7 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 			return
 		}
 
-		seller, resp := s.service.Create(
+		employee, resp := s.service.Create(
 			requestData.CardNumberId,
 			requestData.FirstName,
 			requestData.LastName, requestData.WarehouseId,
@@ -76,7 +76,7 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 
 		c.JSON(
 			resp.Code,
-			web.NewResponse(seller),
+			web.NewResponse(employee),
 		)
 	}
 }
@@ -95,7 +95,7 @@ func (s *EmployeeController) GetOne() gin.HandlerFunc {
 
 		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
+				resp.Code,
 				web.DecodeError(resp.Err.Error()),
 			)
 			return

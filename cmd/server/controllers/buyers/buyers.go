@@ -169,3 +169,46 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 		c.JSON(resp.Code, web.NewResponse(buyer))
 	}
 }
+
+func (s *BuyerController) GetReportPurchaseOrders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Query("id")
+		if id != "" {
+			parsedId, err := strconv.Atoi(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+				return
+			}
+
+			reportPurchaseOrders, resp := s.service.GetReportPurchaseOrders(parsedId)
+			if resp.Err != nil {
+				c.JSON(
+					resp.Code,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
+			c.JSON(
+				resp.Code,
+				web.NewResponse(reportPurchaseOrders),
+			)
+		} else {
+			reportPurchaseOrders, resp := s.service.GetReportPurchaseOrders(0)
+			if resp.Err != nil {
+				c.JSON(
+					resp.Code,
+					web.DecodeError(resp.Err.Error()),
+				)
+				return
+			}
+
+			c.JSON(
+				resp.Code,
+				web.NewResponse(reportPurchaseOrders),
+			)
+		}
+
+	}
+
+}
