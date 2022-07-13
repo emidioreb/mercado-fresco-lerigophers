@@ -130,17 +130,17 @@ func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface
 
 	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
 	if err != nil {
-		return Buyer{}, errors.New("ocurred an error while updating the buyer")
+		return Buyer{}, errUpdatedBuyer
 	}
 
 	_, err = result.RowsAffected()
 	if err != nil || errors.Is(err, sql.ErrNoRows) {
-		return Buyer{}, errors.New("ocurred an error while updating the buyer")
+		return Buyer{}, errUpdatedBuyer
 	}
 
 	currentbuyer, err := mariaDb.GetOne(id)
 	if err != nil {
-		return Buyer{}, errors.New("ocurred an error while updating the buyer")
+		return Buyer{}, errUpdatedBuyer
 	}
 
 	return currentbuyer, nil

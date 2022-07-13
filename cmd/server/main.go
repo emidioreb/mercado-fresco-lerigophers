@@ -77,16 +77,7 @@ func main() {
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
-	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
-	buyerGroup := server.Group("/buyers")
-	{
-		buyerGroup.GET("/:id", controllerBuyer.GetOne())
-		buyerGroup.GET("/", controllerBuyer.GetAll())
-		buyerGroup.POST("/", controllerBuyer.Create())
-		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
-		buyerGroup.PATCH("/:id", controllerBuyer.Update())
-		buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
-	}
+	buyersController.NewBuyerHandler(server, serviceBuyer)
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
 	service := sellers.NewService(repoSellers, repoLocalities)
