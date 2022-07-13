@@ -66,7 +66,7 @@ func (s *WarehouseController) Create() gin.HandlerFunc {
 		}
 
 		if len(requestData.Telephone) > 20 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characteres"))
 			return
 		}
 
