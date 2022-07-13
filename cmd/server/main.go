@@ -63,12 +63,7 @@ func main() {
 
 	repoProductBatches := product_batches.NewMariaDbRepository(conn)
 	serviceProductBatches := product_batches.NewService(repoProductBatches)
-	controllerProductBatches := productBatchesController.NewProductBatch(serviceProductBatches)
-	ProductBatchesGroup := server.Group("/productBatches")
-	{
-		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
-	}
+	productBatchesController.NewProductBatchHandler(server, serviceProductBatches)
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
 	serviceLocality := localities.NewService(repoLocalities)
@@ -99,7 +94,7 @@ func main() {
 
 	repoWarehouse := warehouses.NewMariaDbRepository(conn)
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
-	warehousesController.NewWarehouse(serviceWarehouse)
+	warehousesController.NewWarehouseHandler(server, serviceWarehouse)
 
 	repoProductType := product_types.NewMariaDbRepository(conn)
 
