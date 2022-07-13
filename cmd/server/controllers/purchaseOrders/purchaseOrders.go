@@ -28,6 +28,14 @@ func NewPurchaseOrder(s purchase_orders.Service) *PurchaseOrdersController {
 	}
 }
 
+func NewPurchaseOrderHandler(r *gin.Engine, pos purchase_orders.Service) {
+	purchaseOrderController := NewPurchaseOrder(pos)
+	purchaseOrderGroup := r.Group("/api/v1/purchaseOrders")
+	{
+		purchaseOrderGroup.POST("/", purchaseOrderController.CreatePurchaseOrder())
+	}
+}
+
 func (s *PurchaseOrdersController) CreatePurchaseOrder() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData ReqPurchaseOrders
