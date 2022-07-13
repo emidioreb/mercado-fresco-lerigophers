@@ -37,6 +37,18 @@ func NewSeller(s sellers.Service) *SellerController {
 	}
 }
 
+func NewSellerHandler(r *gin.Engine, ss sellers.Service) {
+	sellerController := NewSeller(ss)
+	sellerGroup := r.Group("/api/v1/sellers")
+	{
+		sellerGroup.GET("/:id", sellerController.GetOne())
+		sellerGroup.GET("/", sellerController.GetAll())
+		sellerGroup.POST("/", sellerController.Create())
+		sellerGroup.DELETE("/:id", sellerController.Delete())
+		sellerGroup.PATCH("/:id", sellerController.Update())
+	}
+}
+
 func (s *SellerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqSellersCreate

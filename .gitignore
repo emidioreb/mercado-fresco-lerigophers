@@ -16,8 +16,6 @@
 # Go workspace file
 go.work
 
-
-
 ### Go Patch ###
 /vendor/
 /Godeps/
@@ -30,3 +28,4 @@ go.work
 
 # Additional cconfigs
 .vscode
+.env
