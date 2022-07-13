@@ -102,7 +102,7 @@ func TestServiceCreate(t *testing.T) {
 
 		assert.NotNil(t, err.Err)
 		assert.Equal(t, err.Err.Error(), expectedError.Error())
-		assert.Equal(t, http.StatusConflict, err.Code)
+		assert.Equal(t, http.StatusInternalServerError, err.Code)
 	})
 }
 

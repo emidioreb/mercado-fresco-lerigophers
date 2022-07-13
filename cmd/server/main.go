@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
@@ -16,6 +17,7 @@ import (
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
+	"github.com/joho/godotenv"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
@@ -40,10 +42,16 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dataSource := os.Getenv("SERVER_URI")
+	PORT := ":" + os.Getenv("PORT")
 
 	conn, _ := sql.Open("mysql", dataSource)
-	_, err := conn.Query("USE mercado_fresco")
+	_, err = conn.Query("USE mercado_fresco")
 	if err != nil {
 		log.Fatal("Couldn't connect to database: mercado_fresco do not exists")
 	}
@@ -55,17 +63,12 @@ func main() {
 
 	repoProductBatches := product_batches.NewMariaDbRepository(conn)
 	serviceProductBatches := product_batches.NewService(repoProductBatches)
-	controllerProductBatches := productBatchesController.NewProductBatch(serviceProductBatches)
-	ProductBatchesGroup := server.Group("/api/v1/productBatches")
-	{
-		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
-	}
+	productBatchesController.NewProductBatchHandler(server, serviceProductBatches)
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
 	serviceLocality := localities.NewService(repoLocalities)
 	controllerLocality := localitiesController.NewLocality(serviceLocality)
-	localityGroup := server.Group("/api/v1/localities")
+	localityGroup := server.Group("/localities")
 	{
 		localityGroup.POST("/", controllerLocality.CreateLocality())
 		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
@@ -75,7 +78,7 @@ func main() {
 	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
 	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
-	buyerGroup := server.Group("/api/v1/buyers")
+	buyerGroup := server.Group("/buyers")
 	{
 		buyerGroup.GET("/:id", controllerBuyer.GetOne())
 		buyerGroup.GET("/", controllerBuyer.GetAll())
@@ -87,50 +90,23 @@ func main() {
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
 	service := sellers.NewService(repoSellers, repoLocalities)
-	controller := sellersController.NewSeller(service)
-	sellerGroup := server.Group("/api/v1/sellers")
-	{
-		sellerGroup.GET("/:id", controller.GetOne())
-		sellerGroup.GET("/", controller.GetAll())
-		sellerGroup.POST("/", controller.Create())
-		sellerGroup.DELETE("/:id", controller.Delete())
-		sellerGroup.PATCH("/:id", controller.Update())
-	}
+	sellersController.NewSellerHandler(server, service)
 
 	repoWarehouse := warehouses.NewMariaDbRepository(conn)
 	serviceWarehouse := warehouses.NewService(repoWarehouse)
-	controllerWarehouse := warehousesController.NewWarehouse(serviceWarehouse)
-
-	warehouseGroup := server.Group("/api/v1/warehouses")
-
-	{
-		warehouseGroup.GET("/", controllerWarehouse.GetAll())
-		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
-		warehouseGroup.POST("/", controllerWarehouse.Create())
-		warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
-		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
-	}
+	warehousesController.NewWarehouseHandler(server, serviceWarehouse)
 
 	repoProductType := product_types.NewMariaDbRepository(conn)
 
 	repoSection := sections.NewMariaDbRepository(conn)
 	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
-	controllerSection := sectionsController.NewSection(serviceSection)
-
-	sectionGroup := server.Group("/api/v1/sections")
-	{
-		sectionGroup.GET("/:id", controllerSection.GetOne())
-		sectionGroup.GET("/", controllerSection.GetAll())
-		sectionGroup.POST("/", controllerSection.Create())
-		sectionGroup.DELETE("/:id", controllerSection.Delete())
-		sectionGroup.PATCH("/:id", controllerSection.Update())
-	}
+	sectionsController.NewSectionHandler(server, serviceSection)
 
 	repoProduct := products.NewMariaDbRepository(conn)
 	serviceProduct := products.NewService(repoProduct, repoSellers)
 	controllerProduct := productsController.NewProduct(serviceProduct)
 
-	productGroup := server.Group("/api/v1/products")
+	productGroup := server.Group("/products")
 	{
 		productGroup.GET("/:id", controllerProduct.GetOne())
 		productGroup.GET("/", controllerProduct.GetAll())
@@ -143,7 +119,7 @@ func main() {
 	repoProductRecords := product_records.NewMariaDbRepository(conn)
 	serviceProductRecords := product_records.NewService(repoProductRecords, repoProduct)
 	controllerProductRecords := productRecordsController.NewProductRecord(serviceProductRecords)
-	ProductRecordsGroup := server.Group("/api/v1/productRecords")
+	ProductRecordsGroup := server.Group("/productRecords")
 	{
 		ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
 	}
@@ -152,7 +128,7 @@ func main() {
 	serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
 	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
 
-	employeeGroup := server.Group("/api/v1/employees")
+	employeeGroup := server.Group("/employees")
 	{
 		employeeGroup.GET("/:id", controllerEmployee.GetOne())
 		employeeGroup.GET("/", controllerEmployee.GetAll())
@@ -165,7 +141,7 @@ func main() {
 	serviceCarriers := carriers.NewService(repoCarriers)
 	controllerCarriers := controllers.NewCarry(serviceCarriers)
 
-	carriersGroup := server.Group("/api/v1/carries")
+	carriersGroup := server.Group("/carries")
 	{
 		carriersGroup.POST("/", controllerCarriers.Create())
 	}
@@ -181,12 +157,10 @@ func main() {
 	}
 
 	repoOrderStatus := order_status.NewMariaDbRepository(conn)
+
 	repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
 	servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
-	controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
-	PurchaseOrdersGroup := server.Group("/api/v1/purchaseOrders")
-	{
-		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
-	}
-	server.Run(":4400")
+	purchaseOrdersController.NewPurchaseOrderHandler(server, servicePurchaseOrders)
+
+	server.Run(PORT)
 }

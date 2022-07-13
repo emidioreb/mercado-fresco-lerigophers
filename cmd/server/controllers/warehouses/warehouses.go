@@ -29,6 +29,18 @@ func NewWarehouse(s warehouses.Service) *WarehouseController {
 	}
 }
 
+func NewWarehouseHandler(r *gin.Engine, wh warehouses.Service) {
+	controllerWarehouse := NewWarehouse(wh)
+	warehousesGroup := r.Group("/api/v1/warehouses")
+	{
+		warehousesGroup.GET("/:id", controllerWarehouse.GetOne())
+		warehousesGroup.GET("/", controllerWarehouse.GetAll())
+		warehousesGroup.POST("/", controllerWarehouse.Create())
+		warehousesGroup.DELETE("/:id", controllerWarehouse.Delete())
+		warehousesGroup.PATCH("/:id", controllerWarehouse.Update())
+	}
+}
+
 func (s *WarehouseController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqWarehouses

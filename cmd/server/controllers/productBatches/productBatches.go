@@ -34,6 +34,15 @@ func NewProductBatch(s product_batches.Service) *ProductBatchController {
 	}
 }
 
+func NewProductBatchHandler(r *gin.Engine, pb product_batches.Service) {
+	controllerProductBatches := NewProductBatch(pb)
+	ProductBatchesGroup := r.Group("/api/v1/productBatches")
+	{
+		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
+	}
+}
+
 func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData ReqProductBatch

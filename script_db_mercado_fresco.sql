@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS `mercado_fresco`.`sections` (
   `product_type_id` INT UNSIGNED NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE,
-  UNIQUE INDEX `cid_UNIQUE` (`section_number` ASC) VISIBLE,
+  UNIQUE INDEX `section_number_UNIQUE` (`section_number` ASC) VISIBLE,
   INDEX `fk_sections_warehouses_idx` (`warehouse_id` ASC) VISIBLE,
   INDEX `fk_sections_product_type_idx` (`product_type_id` ASC) VISIBLE,
   CONSTRAINT `fk_sections_product_type`
@@ -371,3 +371,19 @@ INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `w
 INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('3', '3', 'RAM 16GB DDR5', '260', '250', '250', '10', '70', '34', '50', '3', '3');
 INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('4', '4', 'RTX 3080 16GB', '250', '250', '250', '10', '90', '34', '50', '4', '4');
 INSERT INTO `mercado_fresco`.`products` (`id`, `product_code`, `description`, `width`, `height`, `length`, `net_weight`, `expiration_rate`, `recommended_freezing_temperature`, `freezing_rate`, `product_type_id`, `seller_id`) VALUES ('5', '5', 'Intel Core i9', '250', '250', '250', '10', '80', '34', '50', '5', '5');
+
+-- Warehouses
+INSERT INTO `mercado_fresco`.`warehouses`(`warehouse_code`,`address`,`telephone`,`minimum_temperature`,`minimum_capacity`)VALUES("Cod#1","Rua Hercílio Luz, Florianópolis","48999001122",10,10);
+INSERT INTO `mercado_fresco`.`warehouses`(`warehouse_code`,`address`,`telephone`,`minimum_temperature`,`minimum_capacity`)VALUES("Cod#2","Avenida Paulista, SP","11999001133",5,20);
+
+-- Buyers
+INSERT INTO `mercado_fresco`.`buyers`(`card_number_id`,`first_name`,`last_name`)VALUES("Card#1","Vitor","Souza");
+INSERT INTO `mercado_fresco`.`buyers`(`card_number_id`,`first_name`,`last_name`)VALUES("Card#2","Lucas","Bulhões");
+
+-- Product Records
+INSERT INTO `mercado_fresco`.`product_records`(`last_update_date`,`purchase_price`,`sale_price`,`product_id`)VALUES("2022-01-01",5,25,2);
+INSERT INTO `mercado_fresco`.`product_records`(`last_update_date`,`purchase_price`,`sale_price`,`product_id`)VALUES("2022-01-05",6,23,2);
+
+-- Sections
+INSERT INTO `mercado_fresco`.`sections`(`section_number`,`current_temperature`,`minimum_temperature`,`current_capacity`,`minimum_capacity`,`maximum_capacity`,`warehouse_id`,`product_type_id`)VALUES(1,25,5,200,5,800,1,1);
+INSERT INTO `mercado_fresco`.`sections`(`section_number`,`current_temperature`,`minimum_temperature`,`current_capacity`,`minimum_capacity`,`maximum_capacity`,`warehouse_id`,`product_type_id`)VALUES(13,25,5,200,5,800,2,2);
