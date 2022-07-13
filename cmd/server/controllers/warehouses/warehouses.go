@@ -29,7 +29,7 @@ func NewWarehouse(s warehouses.Service) *WarehouseController {
 	}
 }
 
-func NewSellerHandler(r *gin.Engine, wh warehouses.Service) {
+func NewWarehouseHandler(r *gin.Engine, wh warehouses.Service) {
 	controllerWarehouse := NewWarehouse(wh)
 	sellerGroup := r.Group("/api/v1/sellers")
 	{
