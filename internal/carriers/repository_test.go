@@ -15,15 +15,12 @@ func TestCreate(t *testing.T) {
 		Telephone:   "4567-4567",
 		LocalityId:  "456",
 	}
-
-	query := `INSERT INTO carriers (cid, company_name, address, telephone,locality_id) VALUES (?, ?, ?, ?,?)`
-
 	t.Run("success create_carry_repository ", func(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 		defer db.Close()
 
-		mock.ExpectExec(regexp.QuoteMeta(query)).
+		mock.ExpectExec(regexp.QuoteMeta(queryCreateCarry)).
 			WithArgs(
 				mockCarriers.Cid,
 				mockCarriers.CompanyName,
@@ -49,7 +46,7 @@ func TestCreate(t *testing.T) {
 		assert.NoError(t, err)
 		defer db.Close()
 
-		mock.ExpectExec(regexp.QuoteMeta(query)).
+		mock.ExpectExec(regexp.QuoteMeta(queryCreateCarry)).
 			WithArgs(0, 0, 0, 0, 0).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		carriersRepo := NewMariaDbRepository(db)
@@ -77,7 +74,6 @@ func TestGetOne(t *testing.T) {
 		defer db.Close()
 
 
-		query := `SELECT * FROM carriers WHERE cid=?`
 		rows := sqlmock.NewRows([]string{
 			"id",
 			"cid",
@@ -88,7 +84,7 @@ func TestGetOne(t *testing.T) {
 		}).
 			AddRow(mockCarriers.Id, mockCarriers.Cid, mockCarriers.CompanyName, mockCarriers.Address, mockCarriers.Telephone, mockCarriers.LocalityId)
 
-		mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneCarry)).WillReturnRows(rows)
 
 		carriersRepo := NewMariaDbRepository(db)
 
@@ -107,9 +103,6 @@ func TestGetOne(t *testing.T) {
 		assert.NoError(t, err)
 		defer db.Close()
 
-
-
-		query := `SELECT * FROM carriers WHERE cid=?`
 		rows := sqlmock.NewRows([]string{
 			"id",
 			"cid",
@@ -120,7 +113,7 @@ func TestGetOne(t *testing.T) {
 		}).
 			AddRow("", "", "", "", "", "")
 
-		mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
+		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneCarry)).WillReturnRows(rows)
 
 		carriersRepo := NewMariaDbRepository(db)
 
