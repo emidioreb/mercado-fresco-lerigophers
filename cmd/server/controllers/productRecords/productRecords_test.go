@@ -105,6 +105,5 @@ func TestCreateProductRecord(t *testing.T) {
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
 		// var bodyResponse ObjectErrorResponse
-		// assert.Error(t, err)
 	})
 }
