@@ -36,7 +36,7 @@ func NewProductBatch(s product_batches.Service) *ProductBatchController {
 
 func NewProductBatchHandler(r *gin.Engine, pb product_batches.Service) {
 	controllerProductBatches := NewProductBatch(pb)
-	ProductBatchesGroup := r.Group("/productBatches")
+	ProductBatchesGroup := r.Group("/api/v1/productBatches")
 	{
 		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
 		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
