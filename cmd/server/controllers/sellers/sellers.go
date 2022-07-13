@@ -37,9 +37,9 @@ func NewSeller(s sellers.Service) *SellerController {
 	}
 }
 
-func NewSellerHandler(r *gin.RouterGroup, ss sellers.Service) {
+func NewSellerHandler(r *gin.Engine, ss sellers.Service) {
 	sellerController := NewSeller(ss)
-	sellerGroup := r.Group("/sellers")
+	sellerGroup := r.Group("/api/v1/sellers")
 	{
 		sellerGroup.GET("/:id", sellerController.GetOne())
 		sellerGroup.GET("/", sellerController.GetAll())

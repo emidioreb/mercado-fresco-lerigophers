@@ -53,136 +53,133 @@ func main() {
 		log.Fatal("failed to connect to mariadb")
 	}
 
-	router := server.Group("/api/v1")
+	repoProductBatches := product_batches.NewMariaDbRepository(conn)
+	serviceProductBatches := product_batches.NewService(repoProductBatches)
+	controllerProductBatches := productBatchesController.NewProductBatch(serviceProductBatches)
+	ProductBatchesGroup := server.Group("/productBatches")
 	{
-		repoProductBatches := product_batches.NewMariaDbRepository(conn)
-		serviceProductBatches := product_batches.NewService(repoProductBatches)
-		controllerProductBatches := productBatchesController.NewProductBatch(serviceProductBatches)
-		ProductBatchesGroup := router.Group("/productBatches")
-		{
-			ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
-			ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
-		}
-
-		repoLocalities := localities.NewMariaDbRepository(conn)
-		serviceLocality := localities.NewService(repoLocalities)
-		controllerLocality := localitiesController.NewLocality(serviceLocality)
-		localityGroup := router.Group("/localities")
-		{
-			localityGroup.POST("/", controllerLocality.CreateLocality())
-			localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
-			localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
-		}
-
-		repoBuyer := buyers.NewMariaDbRepository(conn)
-		serviceBuyer := buyers.NewService(repoBuyer)
-		controllerBuyer := buyersController.NewBuyer(serviceBuyer)
-		buyerGroup := router.Group("/buyers")
-		{
-			buyerGroup.GET("/:id", controllerBuyer.GetOne())
-			buyerGroup.GET("/", controllerBuyer.GetAll())
-			buyerGroup.POST("/", controllerBuyer.Create())
-			buyerGroup.DELETE("/:id", controllerBuyer.Delete())
-			buyerGroup.PATCH("/:id", controllerBuyer.Update())
-			buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
-		}
-
-		repoSellers := sellers.NewMariaDbRepository(conn)
-		service := sellers.NewService(repoSellers, repoLocalities)
-		sellersController.NewSellerHandler(router, service)
-
-		repoWarehouse := warehouses.NewMariaDbRepository(conn)
-		serviceWarehouse := warehouses.NewService(repoWarehouse)
-		controllerWarehouse := warehousesController.NewWarehouse(serviceWarehouse)
-
-		warehouseGroup := router.Group("/warehouses")
-
-		{
-			warehouseGroup.GET("/", controllerWarehouse.GetAll())
-			warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
-			warehouseGroup.POST("/", controllerWarehouse.Create())
-			warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
-			warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
-		}
-
-		repoProductType := product_types.NewMariaDbRepository(conn)
-
-		repoSection := sections.NewMariaDbRepository(conn)
-		serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
-		controllerSection := sectionsController.NewSection(serviceSection)
-
-		sectionGroup := router.Group("/sections")
-		{
-			sectionGroup.GET("/:id", controllerSection.GetOne())
-			sectionGroup.GET("/", controllerSection.GetAll())
-			sectionGroup.POST("/", controllerSection.Create())
-			sectionGroup.DELETE("/:id", controllerSection.Delete())
-			sectionGroup.PATCH("/:id", controllerSection.Update())
-		}
-
-		repoProduct := products.NewMariaDbRepository(conn)
-		serviceProduct := products.NewService(repoProduct, repoSellers)
-		controllerProduct := productsController.NewProduct(serviceProduct)
-
-		productGroup := router.Group("/products")
-		{
-			productGroup.GET("/:id", controllerProduct.GetOne())
-			productGroup.GET("/", controllerProduct.GetAll())
-			productGroup.POST("/", controllerProduct.Create())
-			productGroup.DELETE("/:id", controllerProduct.Delete())
-			productGroup.PATCH("/:id", controllerProduct.Update())
-			productGroup.GET("/reportRecords", controllerProduct.GetReportRecords())
-		}
-
-		repoProductRecords := product_records.NewMariaDbRepository(conn)
-		serviceProductRecords := product_records.NewService(repoProductRecords, repoProduct)
-		controllerProductRecords := productRecordsController.NewProductRecord(serviceProductRecords)
-		ProductRecordsGroup := router.Group("/productRecords")
-		{
-			ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
-		}
-
-		repoEmployee := employees.NewMariaDbRepository(conn)
-		serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
-		controllerEmployee := employeesController.NewEmployee(serviceEmployee)
-
-		employeeGroup := router.Group("/employees")
-		{
-			employeeGroup.GET("/:id", controllerEmployee.GetOne())
-			employeeGroup.GET("/", controllerEmployee.GetAll())
-			employeeGroup.POST("/", controllerEmployee.Create())
-			employeeGroup.DELETE("/:id", controllerEmployee.Delete())
-			employeeGroup.PATCH("/:id", controllerEmployee.Update())
-		}
-
-		repoCarriers := carriers.NewMariaDbRepository(conn)
-		serviceCarriers := carriers.NewService(repoCarriers)
-		controllerCarriers := controllers.NewCarry(serviceCarriers)
-
-		carriersGroup := router.Group("/carries")
-		{
-			carriersGroup.POST("/", controllerCarriers.Create())
-		}
-
-		repoInbound := inboundorders.NewMariaDbRepository(conn)
-		serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
-		controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
-
-		inboundGroup := router.Group("/api/v1")
-		{
-			inboundGroup.GET("employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
-			inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
-		}
-
-		repoOrderStatus := order_status.NewMariaDbRepository(conn)
-		repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
-		servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
-		controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
-		PurchaseOrdersGroup := router.Group("/purchaseOrders")
-		{
-			PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
-		}
-
+		ProductBatchesGroup.POST("/", controllerProductBatches.CreateProductBatch())
+		ProductBatchesGroup.GET("/reportProducts", controllerProductBatches.GetReportSection())
 	}
+
+	repoLocalities := localities.NewMariaDbRepository(conn)
+	serviceLocality := localities.NewService(repoLocalities)
+	controllerLocality := localitiesController.NewLocality(serviceLocality)
+	localityGroup := server.Group("/localities")
+	{
+		localityGroup.POST("/", controllerLocality.CreateLocality())
+		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
+		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
+	}
+
+	repoBuyer := buyers.NewMariaDbRepository(conn)
+	serviceBuyer := buyers.NewService(repoBuyer)
+	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
+	buyerGroup := server.Group("/buyers")
+	{
+		buyerGroup.GET("/:id", controllerBuyer.GetOne())
+		buyerGroup.GET("/", controllerBuyer.GetAll())
+		buyerGroup.POST("/", controllerBuyer.Create())
+		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
+		buyerGroup.PATCH("/:id", controllerBuyer.Update())
+		buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
+	}
+
+	repoSellers := sellers.NewMariaDbRepository(conn)
+	service := sellers.NewService(repoSellers, repoLocalities)
+	sellersController.NewSellerHandler(server, service)
+
+	repoWarehouse := warehouses.NewMariaDbRepository(conn)
+	serviceWarehouse := warehouses.NewService(repoWarehouse)
+	controllerWarehouse := warehousesController.NewWarehouse(serviceWarehouse)
+
+	warehouseGroup := server.Group("/warehouses")
+
+	{
+		warehouseGroup.GET("/", controllerWarehouse.GetAll())
+		warehouseGroup.GET("/:id", controllerWarehouse.GetOne())
+		warehouseGroup.POST("/", controllerWarehouse.Create())
+		warehouseGroup.DELETE("/:id", controllerWarehouse.Delete())
+		warehouseGroup.PATCH("/:id", controllerWarehouse.Update())
+	}
+
+	repoProductType := product_types.NewMariaDbRepository(conn)
+
+	repoSection := sections.NewMariaDbRepository(conn)
+	serviceSection := sections.NewService(repoSection, repoWarehouse, repoProductType)
+	controllerSection := sectionsController.NewSection(serviceSection)
+
+	sectionGroup := server.Group("/sections")
+	{
+		sectionGroup.GET("/:id", controllerSection.GetOne())
+		sectionGroup.GET("/", controllerSection.GetAll())
+		sectionGroup.POST("/", controllerSection.Create())
+		sectionGroup.DELETE("/:id", controllerSection.Delete())
+		sectionGroup.PATCH("/:id", controllerSection.Update())
+	}
+
+	repoProduct := products.NewMariaDbRepository(conn)
+	serviceProduct := products.NewService(repoProduct, repoSellers)
+	controllerProduct := productsController.NewProduct(serviceProduct)
+
+	productGroup := server.Group("/products")
+	{
+		productGroup.GET("/:id", controllerProduct.GetOne())
+		productGroup.GET("/", controllerProduct.GetAll())
+		productGroup.POST("/", controllerProduct.Create())
+		productGroup.DELETE("/:id", controllerProduct.Delete())
+		productGroup.PATCH("/:id", controllerProduct.Update())
+		productGroup.GET("/reportRecords", controllerProduct.GetReportRecords())
+	}
+
+	repoProductRecords := product_records.NewMariaDbRepository(conn)
+	serviceProductRecords := product_records.NewService(repoProductRecords, repoProduct)
+	controllerProductRecords := productRecordsController.NewProductRecord(serviceProductRecords)
+	ProductRecordsGroup := server.Group("/productRecords")
+	{
+		ProductRecordsGroup.POST("/", controllerProductRecords.CreateProductRecord())
+	}
+
+	repoEmployee := employees.NewMariaDbRepository(conn)
+	serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
+	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
+
+	employeeGroup := server.Group("/employees")
+	{
+		employeeGroup.GET("/:id", controllerEmployee.GetOne())
+		employeeGroup.GET("/", controllerEmployee.GetAll())
+		employeeGroup.POST("/", controllerEmployee.Create())
+		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
+		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+
+	repoCarriers := carriers.NewMariaDbRepository(conn)
+	serviceCarriers := carriers.NewService(repoCarriers)
+	controllerCarriers := controllers.NewCarry(serviceCarriers)
+
+	carriersGroup := server.Group("/carries")
+	{
+		carriersGroup.POST("/", controllerCarriers.Create())
+	}
+
+	repoInbound := inboundorders.NewMariaDbRepository(conn)
+	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
+	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
+
+	inboundGroup := server.Group("/api/v1")
+	{
+		inboundGroup.GET("employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
+		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
+	}
+
+	repoOrderStatus := order_status.NewMariaDbRepository(conn)
+	repoPurchaseOrders := purchase_orders.NewMariaDbRepository(conn)
+	servicePurchaseOrders := purchase_orders.NewService(repoPurchaseOrders, repoBuyer, repoProductRecords, repoOrderStatus)
+	controllerPurchaseOrders := purchaseOrdersController.NewPurchaseOrder(servicePurchaseOrders)
+	PurchaseOrdersGroup := server.Group("/purchaseOrders")
+	{
+		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
+	}
+
 	server.Run(":4400")
 }
