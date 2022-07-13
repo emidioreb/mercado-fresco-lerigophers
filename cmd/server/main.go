@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
 	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
@@ -16,6 +17,7 @@ import (
 	sectionsController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sections"
 	sellersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/sellers"
 	warehousesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/warehouses"
+	"github.com/joho/godotenv"
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/buyers"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/carriers"
@@ -40,10 +42,16 @@ import (
 
 func main() {
 	server := gin.Default()
-	dataSource := "root:root@tcp(localhost:4000)/mercado_fresco?parseTime=true"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	dataSource := os.Getenv("SERVER_URI")
+	PORT := ":" + os.Getenv("PORT")
 
 	conn, _ := sql.Open("mysql", dataSource)
-	_, err := conn.Query("USE mercado_fresco")
+	_, err = conn.Query("USE mercado_fresco")
 	if err != nil {
 		log.Fatal("Couldn't connect to database: mercado_fresco do not exists")
 	}
@@ -181,5 +189,5 @@ func main() {
 		PurchaseOrdersGroup.POST("/", controllerPurchaseOrders.CreatePurchaseOrder())
 	}
 
-	server.Run(":4400")
+	server.Run(PORT)
 }
