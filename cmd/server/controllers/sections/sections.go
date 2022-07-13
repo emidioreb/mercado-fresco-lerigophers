@@ -31,6 +31,18 @@ func NewSection(s sections.Service) *SectionController {
 	}
 }
 
+func NewSectionHandler(r *gin.Engine, ss sections.Service) {
+	sectionController := NewSection(ss)
+	sectionGroup := r.Group("/api/v1/sections")
+	{
+		sectionGroup.GET("/:id", sectionController.GetOne())
+		sectionGroup.GET("/", sectionController.GetAll())
+		sectionGroup.POST("/", sectionController.Create())
+		sectionGroup.DELETE("/:id", sectionController.Delete())
+		sectionGroup.PATCH("/:id", sectionController.Update())
+	}
+}
+
 func (s *SectionController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqSections
