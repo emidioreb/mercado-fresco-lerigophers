@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,8 +29,30 @@ type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
 
+var fakeInput = controllers.ReqProductRecord{
+	LastUpdateDate: "2022-02-07",
+	PurchasePrice:  3.0,
+	SalePrice:      2.0,
+	ProductId:      1,
+}
+
+const (
+	defaultURL = "/api/v1/productRecords/"
+)
+
+func router() *gin.Engine {
+	router := gin.Default()
+	return router
+}
+
+func newProductRecordController() (*mocks.Service, *controllers.ProductRecordController) {
+	mockedService := new(mocks.Service)
+	productRecordsController := controllers.NewProductRecord(mockedService)
+	return mockedService, productRecordsController
+}
+
 func TestCreateProductRecord(t *testing.T) {
-	t.Run("Success case", func(t *testing.T) {
+	t.Run("Successfully on create product record", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		productRecordsController := controllers.NewProductRecord(mockedService)
 
@@ -77,7 +100,7 @@ func TestCreateProductRecord(t *testing.T) {
 
 	})
 
-	t.Run("Fail on create product_record", func(t *testing.T) {
+	t.Run("Invalid request data", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		productRecordsController := controllers.NewProductRecord(mockedService)
 
@@ -104,5 +127,38 @@ func TestCreateProductRecord(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 
+	})
+
+	t.Run("Fail on create product_record", func(t *testing.T) {
+		mockedService, ProductRecordController := newProductRecordController()
+		mockedService.On("CreateProductRecord",
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("float64"),
+			mock.AnythingOfType("int"),
+		).Return(
+			product_records.ProductRecords{},
+			web.ResponseCode{
+				Code: http.StatusConflict,
+				Err:  errors.New("any error"),
+			})
+
+		parsedFakeProductRecord, err := json.Marshal(fakeInput)
+		assert.NoError(t, err)
+
+		r := router()
+		r.POST(defaultURL, ProductRecordController.CreateProductRecord())
+
+		req, err := http.NewRequest(
+			http.MethodPost,
+			defaultURL,
+			bytes.NewBuffer(parsedFakeProductRecord),
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 }
