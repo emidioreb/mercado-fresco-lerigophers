@@ -25,6 +25,16 @@ func NewLocality(s localities.Service) *LocalityController {
 	}
 }
 
+func NewLocalityHandle(r *gin.Engine, ls localities.Service) {
+	localitiesController := NewLocality(ls)
+	localityGroup := r.Group("/localities")
+	{
+		localityGroup.POST("/", localitiesController.CreateLocality())
+		localityGroup.GET("/reportSellers", localitiesController.GetReportSellers())
+		localityGroup.GET("/reportCarries", localitiesController.GetReportCarriers())
+	}
+}
+
 func (s *LocalityController) CreateLocality() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqLocality
