@@ -26,6 +26,11 @@ func NewCarry(s carriers.Service) *CarryController {
 	}
 }
 
+func NewCarryHandler(r *gin.Engine, cs carriers.Service) {
+	carryController := NewCarry(cs)
+	r.POST("/api/v1/carries/", carryController.Create())
+}
+
 func (s *CarryController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqCarries

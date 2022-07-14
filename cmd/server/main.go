@@ -6,7 +6,7 @@ import (
 	"os"
 
 	buyersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/buyers"
-	controllers "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
+	carriersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/carriers"
 	employeesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/employees"
 	inboundOrdersController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/inboundOrders"
 	localitiesController "github.com/emidioreb/mercado-fresco-lerigophers/cmd/server/controllers/localities"
@@ -77,16 +77,7 @@ func main() {
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
-	controllerBuyer := buyersController.NewBuyer(serviceBuyer)
-	buyerGroup := server.Group("/buyers")
-	{
-		buyerGroup.GET("/:id", controllerBuyer.GetOne())
-		buyerGroup.GET("/", controllerBuyer.GetAll())
-		buyerGroup.POST("/", controllerBuyer.Create())
-		buyerGroup.DELETE("/:id", controllerBuyer.Delete())
-		buyerGroup.PATCH("/:id", controllerBuyer.Update())
-		buyerGroup.GET("/reportPurchaseOrders", controllerBuyer.GetReportPurchaseOrders())
-	}
+	buyersController.NewBuyerHandler(server, serviceBuyer)
 
 	repoSellers := sellers.NewMariaDbRepository(conn)
 	service := sellers.NewService(repoSellers, repoLocalities)
@@ -139,12 +130,8 @@ func main() {
 
 	repoCarriers := carriers.NewMariaDbRepository(conn)
 	serviceCarriers := carriers.NewService(repoCarriers)
-	controllerCarriers := controllers.NewCarry(serviceCarriers)
+	carriersController.NewCarryHandler(server, serviceCarriers)
 
-	carriersGroup := server.Group("/carries")
-	{
-		carriersGroup.POST("/", controllerCarriers.Create())
-	}
 
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
 	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)

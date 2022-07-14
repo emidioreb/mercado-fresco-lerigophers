@@ -31,11 +31,6 @@ type ObjectErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func routerCarry() *gin.Engine {
-	router := gin.Default()
-	return router
-}
-
 func newCarryController() (*mocks.Service, *controllers.CarryController) {
 	mockedService := new(mocks.Service)
 	carryController := controllers.NewCarry(mockedService)

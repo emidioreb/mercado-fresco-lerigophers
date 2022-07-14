@@ -70,7 +70,6 @@ func (mariaDb mariaDbRepository) GetOne(id int) error {
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		return errors.New("unexpected error to verify product_records")
 	}
 
