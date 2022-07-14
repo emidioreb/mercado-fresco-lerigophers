@@ -27,6 +27,15 @@ func NewInboud(s inboundorders.Service) *InboundOrdersController {
 	}
 }
 
+func NewInboundHandler(r *gin.Engine, is inboundorders.Service) {
+	controllerInbound := NewInboud(is)
+	inboundGroup := r.Group("/api/v1")
+	{
+		inboundGroup.GET("/employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
+		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
+	}
+}
+
 func (s *InboundOrdersController) CreateInboundOrders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqInboundOrder

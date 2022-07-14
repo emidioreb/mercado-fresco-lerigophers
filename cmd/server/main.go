@@ -104,16 +104,7 @@ func main() {
 
 	repoEmployee := employees.NewMariaDbRepository(conn)
 	serviceEmployee := employees.NewService(repoEmployee, repoWarehouse)
-	controllerEmployee := employeesController.NewEmployee(serviceEmployee)
-
-	employeeGroup := server.Group("/employees")
-	{
-		employeeGroup.GET("/:id", controllerEmployee.GetOne())
-		employeeGroup.GET("/", controllerEmployee.GetAll())
-		employeeGroup.POST("/", controllerEmployee.Create())
-		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
-		employeeGroup.PATCH("/:id", controllerEmployee.Update())
-	}
+	employeesController.NewEmployeeHandler(server, serviceEmployee)
 
 	repoCarriers := carriers.NewMariaDbRepository(conn)
 	serviceCarriers := carriers.NewService(repoCarriers)
@@ -121,13 +112,7 @@ func main() {
 
 	repoInbound := inboundorders.NewMariaDbRepository(conn)
 	serviceInbound := inboundorders.NewService(repoInbound, repoWarehouse, repoEmployee, repoProductBatches)
-	controllerInbound := inboundOrdersController.NewInboud(serviceInbound)
-
-	inboundGroup := server.Group("/api/v1")
-	{
-		inboundGroup.GET("employees/reportInboundOrders", controllerInbound.GetReportInboundOrders())
-		inboundGroup.POST("/inboundOrders", controllerInbound.CreateInboundOrders())
-	}
+	inboundOrdersController.NewInboundHandler(server, serviceInbound)
 
 	repoOrderStatus := order_status.NewMariaDbRepository(conn)
 

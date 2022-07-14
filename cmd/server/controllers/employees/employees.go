@@ -27,6 +27,18 @@ func NewEmployee(s employees.Service) *EmployeeController {
 	}
 }
 
+func NewEmployeeHandler(r *gin.Engine, es employees.Service) {
+	controllerEmployee := NewEmployee(es)
+	employeeGroup := r.Group("/api/v1/employees")
+	{
+		employeeGroup.GET("/:id", controllerEmployee.GetOne())
+		employeeGroup.GET("/", controllerEmployee.GetAll())
+		employeeGroup.POST("/", controllerEmployee.Create())
+		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
+		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+}
+
 func (s *EmployeeController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqEmployee
