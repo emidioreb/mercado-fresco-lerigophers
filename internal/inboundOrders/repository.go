@@ -6,9 +6,7 @@ import (
 )
 
 type Repository interface {
-	// POST /api/v1/inboundOrders - TIRAR
 	CreateInboundOrders(orderNumber, orderDate string, employeeId, productBatchId, warehouseId int) (InboundOrder, error)
-	// GET /api/v1/employees/reportInboundOrders?id=1 - TIRAR
 	GetReportInboundOrders(employeeId string) ([]ReportInboundOrder, error)
 }
 
@@ -33,21 +31,20 @@ func (mariaDb mariaDbRepository) CreateInboundOrders(orderNumber, orderDate stri
 	}
 
 	result, err := mariaDb.db.Exec(
-		queryCreate,
+		QueryCreate,
 		orderNumber,
 		orderDate,
 		employeeId,
 		productBatchId,
 		warehouseId,
 	)
-
 	if err != nil {
-		return InboundOrder{}, err
+		return InboundOrder{}, errors.New("couldn't create a inbound order")
 	}
 
 	lastId, err := result.LastInsertId()
 	if err != nil {
-		return InboundOrder{}, err
+		return InboundOrder{}, errors.New("couldn't load the inbound order created")
 	}
 
 	newInbound.Id = int(lastId)
@@ -64,9 +61,9 @@ func (mariaDb mariaDbRepository) GetReportInboundOrders(employeeId string) ([]Re
 	)
 
 	if employeeId != "" {
-		rows, err = mariaDb.db.Query(queryReportGetOne, employeeId)
+		rows, err = mariaDb.db.Query(QueryReportGetOne, employeeId)
 	} else {
-		rows, err = mariaDb.db.Query(queryReportGetAll)
+		rows, err = mariaDb.db.Query(QueryReportGetAll)
 	}
 
 	if err != nil {
