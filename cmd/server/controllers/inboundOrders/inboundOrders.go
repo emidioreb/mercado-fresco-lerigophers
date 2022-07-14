@@ -77,7 +77,7 @@ func (s *InboundOrdersController) GetReportInboundOrders() gin.HandlerFunc {
 		reportInbounds, resp := s.service.GetReportInboundOrders(id)
 		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
+				http.StatusInternalServerError,
 				web.DecodeError(resp.Err.Error()),
 			)
 			return
