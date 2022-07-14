@@ -6,8 +6,8 @@ import (
 
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/employees"
 	employeeRepository "github.com/emidioreb/mercado-fresco-lerigophers/internal/employees/mocks"
-	inboundorders "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
-	"github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundorders/mocks"
+	inboundOrdersInternal "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders"
+	inboundOrdersMock "github.com/emidioreb/mercado-fresco-lerigophers/internal/inboundOrders/mocks"
 	product_batches "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches"
 	productBatchesRepository "github.com/emidioreb/mercado-fresco-lerigophers/internal/productBatches/mocks"
 	"github.com/emidioreb/mercado-fresco-lerigophers/internal/warehouses"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var fakeInbounds = []inboundorders.InboundOrder{
+var fakeInbounds = []inboundOrdersInternal.InboundOrder{
 	{
 		Id:             1,
 		OrderNumber:    "43",
@@ -35,7 +35,7 @@ var fakeInbounds = []inboundorders.InboundOrder{
 	},
 }
 
-var fakeReports = []inboundorders.ReportInboundOrder{
+var fakeReports = []inboundOrdersInternal.ReportInboundOrder{
 	{
 		Id:                 1,
 		CardNumberId:       "456",
@@ -56,7 +56,7 @@ var fakeReports = []inboundorders.ReportInboundOrder{
 
 func TestServiceCreate(t *testing.T) {
 	t.Run("Test if create successfully", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -85,7 +85,7 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 		).Return(fakeInbounds[0], nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		result, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -100,7 +100,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if employee dont exists", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -127,9 +127,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -144,7 +144,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if employee error", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -171,9 +171,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -188,7 +188,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if warehouse dont exists", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -215,9 +215,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -232,7 +232,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if warehouse error", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -259,9 +259,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -276,7 +276,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if productbatches exists", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -303,9 +303,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -320,7 +320,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if productbatches error", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -347,9 +347,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, nil)
+		).Return(inboundOrdersInternal.InboundOrder{}, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -364,7 +364,7 @@ func TestServiceCreate(t *testing.T) {
 	})
 
 	t.Run("Test if create error", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -391,9 +391,9 @@ func TestServiceCreate(t *testing.T) {
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
 			mock.AnythingOfType("int"),
-		).Return(inboundorders.InboundOrder{}, errors.New("error"))
+		).Return(inboundOrdersInternal.InboundOrder{}, errors.New("error"))
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.CreateInboundOrders(
 			fakeInbounds[0].OrderNumber,
 			fakeInbounds[0].OrderDate,
@@ -410,7 +410,7 @@ func TestServiceCreate(t *testing.T) {
 
 func TestServiceGet(t *testing.T) {
 	t.Run("Test if getreport success", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -420,7 +420,7 @@ func TestServiceGet(t *testing.T) {
 			mock.AnythingOfType("string"),
 		).Return(fakeReports, nil)
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		result, err := service.GetReportInboundOrders("1")
 
 		assert.Nil(t, err.Err)
@@ -429,7 +429,7 @@ func TestServiceGet(t *testing.T) {
 	})
 
 	t.Run("Test if getreport error", func(t *testing.T) {
-		mockedRepository := new(mocks.Repository)
+		mockedRepository := new(inboundOrdersMock.Repository)
 		employeeRepo := new(employeeRepository.Repository)
 		warehouseRepo := new(warehouseRepository.Repository)
 		productBatcheRepo := new(productBatchesRepository.Repository)
@@ -437,9 +437,9 @@ func TestServiceGet(t *testing.T) {
 		mockedRepository.On(
 			"GetReportInboundOrders",
 			mock.AnythingOfType("string"),
-		).Return([]inboundorders.ReportInboundOrder{}, errors.New("error"))
+		).Return([]inboundOrdersInternal.ReportInboundOrder{}, errors.New("error"))
 
-		service := inboundorders.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
+		service := inboundOrdersInternal.NewService(mockedRepository, warehouseRepo, employeeRepo, productBatcheRepo)
 		_, err := service.GetReportInboundOrders("1")
 
 		assert.NotNil(t, err.Err)
