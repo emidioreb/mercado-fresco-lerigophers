@@ -67,13 +67,7 @@ func main() {
 
 	repoLocalities := localities.NewMariaDbRepository(conn)
 	serviceLocality := localities.NewService(repoLocalities)
-	controllerLocality := localitiesController.NewLocality(serviceLocality)
-	localityGroup := server.Group("/localities")
-	{
-		localityGroup.POST("/", controllerLocality.CreateLocality())
-		localityGroup.GET("/reportSellers", controllerLocality.GetReportSellers())
-		localityGroup.GET("/reportCarries", controllerLocality.GetReportCarriers())
-	}
+	localitiesController.NewLocalityHandle(server, serviceLocality)
 
 	repoBuyer := buyers.NewMariaDbRepository(conn)
 	serviceBuyer := buyers.NewService(repoBuyer)
