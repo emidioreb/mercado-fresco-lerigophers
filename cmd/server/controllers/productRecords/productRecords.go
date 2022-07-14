@@ -12,7 +12,7 @@ type ProductRecordController struct {
 	service product_records.Service
 }
 
-type reqProductRecord struct {
+type ReqProductRecord struct {
 	LastUpdateDate string  `json:"last_update_date" binding:"required"`
 	PurchasePrice  float64 `json:"purchase_price" binding:"required"`
 	SalePrice      float64 `json:"sale_price" binding:"required"`
@@ -25,9 +25,14 @@ func NewProductRecord(s product_records.Service) *ProductRecordController {
 	}
 }
 
+func NewProductRecordHandler(r *gin.Engine, cs product_records.Service) {
+	productRecordController := NewProductRecord(cs)
+	r.POST("/api/v1/productRecords", productRecordController.CreateProductRecord())
+}
+
 func (s *ProductRecordController) CreateProductRecord() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqProductRecord
+		var requestData ReqProductRecord
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))

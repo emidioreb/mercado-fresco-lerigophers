@@ -71,11 +71,26 @@ var fakeProducts = []products.Product{
 	},
 }
 
+var fakeProductRecords = []products.ProductRecords{
+	{
+		ProductId:    1,
+		Description:  "Test Report",
+		RecordsCount: 2,
+	},
+	{
+		ProductId:    2,
+		Description:  "Test Report",
+		RecordsCount: 2,
+	},
+}
+
 const (
-	defaultURL = "/api/v1/products/"
-	idString   = "/api/v1/products/string"
-	idNumber1  = "/api/v1/products/1"
-	idRequest  = "api/v1/products/:id"
+	defaultURL               = "/api/v1/products/"
+	reportOneProduct         = "/api/v1/products/reportRecords?id=1"
+	defaultProductsRecordURL = "/api/v1/products/reportRecords"
+	idString                 = "/api/v1/products/string"
+	idNumber1                = "/api/v1/products/1"
+	idRequest                = "api/v1/products/:id"
 )
 
 var (
@@ -635,5 +650,37 @@ func TestCreateProduct(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, errServer.Error(), bodyResponse.Error)
+	})
+}
+
+func TestGetReportRecords(t *testing.T) {
+	t.Run("Test get report by one", func(t *testing.T) {
+		mockedService, productsController := newProductController()
+		mockedService.On(
+			"GetReportRecord",
+			mock.AnythingOfType("int"),
+		).
+			Return(
+				[]products.ProductRecords{fakeProductRecords[0]},
+				web.ResponseCode{Code: http.StatusOK},
+			)
+
+		r := routerProducts()
+		r.GET(
+			defaultProductsRecordURL,
+			productsController.GetReportRecords(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportOneProduct,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }

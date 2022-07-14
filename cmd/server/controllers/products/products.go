@@ -36,6 +36,20 @@ func NewProduct(s products.Service) *ProductController {
 	}
 }
 
+func NewProductHandler(r *gin.Engine, cs products.Service) {
+	productController := NewProduct(cs)
+	productGroup := r.Group("/api/v1/products")
+	{
+		productGroup.GET("/:id", productController.GetOne())
+		productGroup.GET("/", productController.GetAll())
+		productGroup.POST("/", productController.Create())
+		productGroup.DELETE("/:id", productController.Delete())
+		productGroup.PATCH("/:id", productController.Update())
+		productGroup.GET("/reportRecords", productController.GetReportRecords())
+	}
+
+}
+
 func (s *ProductController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqProducts
@@ -182,6 +196,11 @@ func (s *ProductController) Update() gin.HandlerFunc {
 
 func (s *ProductController) GetReportRecords() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var (
+			reportRecords []products.ProductRecords
+			resp          web.ResponseCode
+		)
+
 		id := c.Query("id")
 		if id != "" {
 			parsedId, err := strconv.Atoi(id)
@@ -189,34 +208,20 @@ func (s *ProductController) GetReportRecords() gin.HandlerFunc {
 				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
 				return
 			}
-
-			reportRecords, resp := s.service.GetReportRecord(parsedId)
-			if resp.Err != nil {
-				c.JSON(
-					http.StatusNotFound,
-					web.DecodeError(resp.Err.Error()),
-				)
-				return
-			}
-
-			c.JSON(
-				http.StatusOK,
-				web.NewResponse(reportRecords),
-			)
+			reportRecords, resp = s.service.GetReportRecord(parsedId)
 		} else {
-			reportRecords, resp := s.service.GetReportRecord(0)
-			if resp.Err != nil {
-				c.JSON(
-					http.StatusNotFound,
-					web.DecodeError(resp.Err.Error()),
-				)
-				return
-			}
-
-			c.JSON(
-				http.StatusOK,
-				web.NewResponse(reportRecords),
-			)
+			reportRecords, resp = s.service.GetReportRecord(0)
 		}
+		if resp.Err != nil {
+			c.JSON(
+				http.StatusNotFound,
+				web.DecodeError(resp.Err.Error()),
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			web.NewResponse(reportRecords),
+		)
 	}
 }
