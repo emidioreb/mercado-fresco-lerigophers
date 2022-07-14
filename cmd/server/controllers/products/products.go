@@ -27,12 +27,27 @@ type reqProducts struct {
 	RecommendedFreezingTemperature float64 `json:"recommended_freezing_temperature"`
 	FreezingRate                   float64 `json:"freezing_rate"`
 	ProductTypeId                  int     `json:"product_type_id"`
+	SellerId                       int     `json:"seller_id"`
 }
 
 func NewProduct(s products.Service) *ProductController {
 	return &ProductController{
 		service: s,
 	}
+}
+
+func NewProductHandler(r *gin.Engine, cs products.Service) {
+	productController := NewProduct(cs)
+	productGroup := r.Group("/api/v1/products")
+	{
+		productGroup.GET("/:id", productController.GetOne())
+		productGroup.GET("/", productController.GetAll())
+		productGroup.POST("/", productController.Create())
+		productGroup.DELETE("/:id", productController.Delete())
+		productGroup.PATCH("/:id", productController.Update())
+		productGroup.GET("/reportRecords", productController.GetReportRecords())
+	}
+
 }
 
 func (s *ProductController) Create() gin.HandlerFunc {
@@ -51,7 +66,7 @@ func (s *ProductController) Create() gin.HandlerFunc {
 
 		product, resp := s.service.Create(requestData.ProductCode, requestData.Description,
 			requestData.Width, requestData.Height, requestData.Length, requestData.NetWeight, requestData.ExpirationRate,
-			requestData.RecommendedFreezingTemperature, requestData.FreezingRate, requestData.ProductTypeId)
+			requestData.RecommendedFreezingTemperature, requestData.FreezingRate, requestData.ProductTypeId, requestData.SellerId)
 
 		if resp.Err != nil {
 			c.JSON(resp.Code, gin.H{
@@ -176,5 +191,37 @@ func (s *ProductController) Update() gin.HandlerFunc {
 		}
 
 		c.JSON(resp.Code, web.NewResponse(product))
+	}
+}
+
+func (s *ProductController) GetReportRecords() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var (
+			reportRecords []products.ProductRecords
+			resp          web.ResponseCode
+		)
+
+		id := c.Query("id")
+		if id != "" {
+			parsedId, err := strconv.Atoi(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+				return
+			}
+			reportRecords, resp = s.service.GetReportRecord(parsedId)
+		} else {
+			reportRecords, resp = s.service.GetReportRecord(0)
+		}
+		if resp.Err != nil {
+			c.JSON(
+				http.StatusNotFound,
+				web.DecodeError(resp.Err.Error()),
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			web.NewResponse(reportRecords),
+		)
 	}
 }

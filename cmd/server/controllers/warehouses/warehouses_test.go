@@ -156,11 +156,46 @@ func TestControllerWarehouseCreate(t *testing.T) {
 		assert.Equal(t, expectedError.Error(), currentResponse.Error)
 	})
 
+	t.Run("Unprocessable entity 1 - telephone", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		warehouseController := controllers.NewWarehouse(mockedService)
+
+		input := map[string]interface{}{
+			"warehouse_code":     "21",
+			"address":            "102",
+			"telephone":          "0312321312321321321321321321312",
+			"minimumCapacity":    0,
+			"minimumTemperature": 30,
+		}
+
+		parsedInput, err := json.Marshal(input)
+		assert.Nil(t, err)
+
+		expectedError := errors.New("telephone too long: max 20 characteres")
+
+		router := gin.Default()
+		router.POST("/api/v1/warehouses", warehouseController.Create())
+
+		req, err := http.NewRequest(http.MethodPost, "/api/v1/warehouses", bytes.NewBuffer(parsedInput))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+
 	t.Run("create, success case", func(t *testing.T) {
 		mockedService := new(mocks.Service)
 		warehouseController := controllers.NewWarehouse(mockedService)
 
-		input := controllers.ReqWarehouses{
+		input := warehouses.Warehouse{
+			Id:                 1,
 			WarehouseCode:      "1",
 			Address:            "rua do bobo",
 			Telephone:          "0",
@@ -543,6 +578,34 @@ func TestControllerWarehouseUpdate(t *testing.T) {
 
 		router.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+
+		var currentResponse ObjectErrorResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedError.Error(), currentResponse.Error)
+	})
+
+	t.Run("return error when send an telephone with more than 20 characteres", func(t *testing.T) {
+		mockedService := new(mocks.Service)
+		WarehouseController := controllers.NewWarehouse(mockedService)
+
+		expectedError := errors.New("telephone too long: max 20 characters")
+
+		router := gin.Default()
+		router.PATCH("/api/v1/warehouses/:id", WarehouseController.Update())
+
+		input := map[string]interface{}{
+			"warehouse_code": "23",
+			"telephone":      "321321321326731283823168723123123"}
+		parsedInput, _ := json.Marshal(input)
+
+		req, err := http.NewRequest(http.MethodPatch, "/api/v1/warehouses/1", bytes.NewBuffer(parsedInput))
+		assert.Nil(t, err)
+
+		rec := httptest.NewRecorder()
+
+		router.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusUnprocessableEntity, rec.Code)
 
 		var currentResponse ObjectErrorResponse
 		err = json.Unmarshal(rec.Body.Bytes(), &currentResponse)

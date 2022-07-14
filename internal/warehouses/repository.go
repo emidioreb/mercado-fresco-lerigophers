@@ -1,11 +1,18 @@
 package warehouses
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 )
 
-var warehouses = []Warehouse{}
-var globalID = 1
+var (
+	errUpdatedWarehouse = errors.New("ocurred an error while updating the warehouse")
+	errCreateWarehouse  = errors.New("ocurred an error to create warehouse")
+	errGetWarehouses    = errors.New("couldn't get warehouses")
+	errGetOneWarehouse  = errors.New("unexpected error to get warehouse")
+	errDeleteWarehouse  = errors.New("unexpected error to delete warehouse")
+)
 
 type Repository interface {
 	Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error)
@@ -15,76 +22,168 @@ type Repository interface {
 	Update(id int, requestData map[string]interface{}) (Warehouse, error)
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(warehouseCode, adress, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error) {
-
+func (mariaDb mariaDbRepository) Create(warehouseCode, address, telephone string, minimumCapacity, minimumTemperature int) (Warehouse, error) {
 	newWarehouse := Warehouse{
-		Id:                 globalID,
 		WarehouseCode:      warehouseCode,
-		Address:            adress,
+		Address:            address,
 		Telephone:          telephone,
 		MinimumCapacity:    minimumCapacity,
 		MinimumTemperature: minimumTemperature,
 	}
 
-	warehouses = append(warehouses, newWarehouse)
-	globalID++
+	result, err := mariaDb.db.Exec(
+		queryCreateWarehouse,
+		warehouseCode,
+		address,
+		telephone,
+		minimumCapacity,
+		minimumTemperature,
+	)
+
+	if err != nil {
+		return Warehouse{}, errCreateWarehouse
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return Warehouse{}, errCreateWarehouse
+	}
+
+	newWarehouse.Id = int(lastId)
 
 	return newWarehouse, nil
 }
 
-func (repository) GetOne(id int) (Warehouse, error) {
-	for _, warehouse := range warehouses {
-		if warehouse.Id == id {
-			return warehouse, nil
-		}
+func (mariaDb mariaDbRepository) GetOne(id int) (Warehouse, error) {
+	currentWarehouse := Warehouse{}
+
+	row := mariaDb.db.QueryRow(queryGetOneWarehouse, id)
+
+	err := row.Scan(
+		&currentWarehouse.Id,
+		&currentWarehouse.WarehouseCode,
+		&currentWarehouse.Address,
+		&currentWarehouse.Telephone,
+		&currentWarehouse.MinimumCapacity,
+		&currentWarehouse.MinimumTemperature,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Warehouse{}, fmt.Errorf("warehouse with id %d not found", id)
 	}
 
-	return Warehouse{}, fmt.Errorf("warehouse with id %d not found", id)
+	if err != nil {
+		return Warehouse{}, errGetOneWarehouse
+	}
+
+	return currentWarehouse, nil
 }
-func (repository) GetAll() ([]Warehouse, error) {
+
+func (mariaDb mariaDbRepository) GetAll() ([]Warehouse, error) {
+	query := `SELECT * FROM warehouses`
+	warehouses := []Warehouse{}
+
+	rows, err := mariaDb.db.Query(query)
+	if err != nil {
+		return []Warehouse{}, errGetWarehouses
+	}
+	for rows.Next() {
+		var currentWarehouse Warehouse
+		if err := rows.Scan(
+			&currentWarehouse.Id,
+			&currentWarehouse.WarehouseCode,
+			&currentWarehouse.Address,
+			&currentWarehouse.Telephone,
+			&currentWarehouse.MinimumTemperature,
+			&currentWarehouse.MinimumCapacity,
+		); err != nil {
+			return []Warehouse{}, errGetWarehouses
+		}
+		warehouses = append(warehouses, currentWarehouse)
+
+	}
 	return warehouses, nil
-}
-func (repository) Delete(id int) error {
-	for i, warehouse := range warehouses {
-		if warehouse.Id == id {
-			warehouses = append(warehouses[:i], warehouses[i+1:]...)
-			return nil
-		}
-	}
-	return fmt.Errorf("warehouse with id %d not found", id)
+
 }
 
-func (repository) Update(id int, requestData map[string]interface{}) (Warehouse, error) {
-	var w *Warehouse
-
-	for i, warehouse := range warehouses {
-		if warehouse.Id == id {
-			w = &warehouses[i]
-
-			for key, value := range requestData {
-				switch key {
-				case "warehouse_code":
-					w.WarehouseCode = value.(string)
-				case "adress":
-					w.Address = value.(string)
-				case "telephone":
-					w.Telephone = value.(string)
-				case "minimum_capacity":
-					w.MinimumCapacity = int(value.(float64))
-				case "minimum_temperature":
-					w.MinimumTemperature = int(value.(float64))
-				}
-			}
-			return *w, nil
-		}
-
+func (mariaDb mariaDbRepository) Delete(id int) error {
+	delete := "DELETE FROM warehouses WHERE id = ?"
+	result, err := mariaDb.db.Exec(delete, id)
+	if err != nil {
+		return err
 	}
-	return Warehouse{}, fmt.Errorf("warehouse with id %d not found", id)
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 {
+		return fmt.Errorf("warehouse with id %d not found", id)
+	}
+
+	if err != nil {
+		return errDeleteWarehouse
+	}
+
+	return nil
+}
+
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Warehouse, error) {
+	prefixQuery := "UPDATE warehouses SET"
+	fieldsToUpdate := []string{}
+	valuesToUse := []interface{}{}
+	whereCase := "WHERE id = ?"
+	var finalQuery string
+
+	for key := range requestData {
+		switch key {
+		case "warehouse_code":
+			fieldsToUpdate = append(fieldsToUpdate, " warehouse_code = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
+		case "address":
+			fieldsToUpdate = append(fieldsToUpdate, " address = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
+		case "telephone":
+			fieldsToUpdate = append(fieldsToUpdate, " telephone = ?")
+			valuesToUse = append(valuesToUse, requestData[key])
+		case "minimum_capacity":
+			fieldsToUpdate = append(fieldsToUpdate, " minimum_capacity = ?")
+			valuesToUse = append(valuesToUse, int(requestData[key].(float64)))
+		}
+	}
+
+	valuesToUse = append(valuesToUse, id)
+	finalQuery += prefixQuery
+	for index, field := range fieldsToUpdate {
+		if index+1 == len(fieldsToUpdate) {
+			finalQuery += field + " "
+		} else {
+			finalQuery += field + ", "
+		}
+	}
+	finalQuery += whereCase
+
+	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
+	if err != nil {
+		return Warehouse{}, errUpdatedWarehouse
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 && err != nil {
+		return Warehouse{}, errUpdatedWarehouse
+	}
+
+	currentWarehouse, err := mariaDb.GetOne(id)
+	if err != nil {
+		return Warehouse{}, errUpdatedWarehouse
+	}
+
+	return currentWarehouse, nil
 }

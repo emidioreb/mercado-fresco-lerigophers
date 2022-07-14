@@ -1,9 +1,24 @@
 package sections
 
-import "fmt"
+import (
+	"database/sql"
+	"errors"
+	"fmt"
+)
 
-var sections = []Section{}
-var globalID = 1
+var (
+	errUpdatedSection             = errors.New("ocurred an error while updating the section")
+	errCreateSection              = errors.New("ocurred an error to create section")
+	errGetSections                = errors.New("couldn't get sections")
+	errGetOneSection              = errors.New("unexpected error to get section")
+	errDeleteSection              = errors.New("unexpected error to delete section")
+	errVerifySectionNumber        = errors.New("failed to verify if section_number already exists")
+	errSectionNumberAlreadyExists = errors.New("section number already exists")
+)
+
+func GetErrSectionNotFound(id int) error {
+	return fmt.Errorf("section with id %d not found", id)
+}
 
 type Repository interface {
 	Create(sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error)
@@ -11,18 +26,21 @@ type Repository interface {
 	GetAll() ([]Section, error)
 	Delete(id int) error
 	Update(id int, requestData map[string]interface{}) (Section, error)
+	GetBySectionNumber(sectionNumber int) (int, error)
 }
 
-type repository struct {
+type mariaDbRepository struct {
+	db *sql.DB
 }
 
-func NewRepository() Repository {
-	return &repository{}
+func NewMariaDbRepository(db *sql.DB) Repository {
+	return &mariaDbRepository{
+		db: db,
+	}
 }
 
-func (repository) Create(sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error) {
+func (mariaDb mariaDbRepository) Create(sectionNumber, currentTemperature, minimumTemperature, currentCapacity, mininumCapacity, maximumCapacity, warehouseId, productTypeId int) (Section, error) {
 	newSection := Section{
-		Id:                 globalID,
 		SectionNumber:      sectionNumber,
 		CurrentTemperature: currentTemperature,
 		MinimumTemperature: minimumTemperature,
@@ -33,64 +51,131 @@ func (repository) Create(sectionNumber, currentTemperature, minimumTemperature, 
 		ProductTypeId:      productTypeId,
 	}
 
-	sections = append(sections, newSection)
-	globalID++
+	result, err := mariaDb.db.Exec(
+		queryCreateSection,
+		sectionNumber,
+		currentTemperature,
+		minimumTemperature,
+		currentCapacity,
+		mininumCapacity,
+		maximumCapacity,
+		warehouseId,
+		productTypeId,
+	)
+
+	if err != nil {
+		return Section{}, errCreateSection
+	}
+
+	lastId, err := result.LastInsertId()
+	if err != nil {
+		return Section{}, errCreateSection
+	}
+
+	newSection.Id = int(lastId)
 
 	return newSection, nil
 }
 
-func (repository) GetOne(id int) (Section, error) {
-	for _, section := range sections {
-		if section.Id == id {
-			return section, nil
-		}
+func (mariaDb mariaDbRepository) GetOne(id int) (Section, error) {
+	currentSection := Section{}
+
+	row := mariaDb.db.QueryRow(queryGetOneSection, id)
+	err := row.Scan(
+		&currentSection.Id,
+		&currentSection.SectionNumber,
+		&currentSection.CurrentTemperature,
+		&currentSection.MinimumTemperature,
+		&currentSection.CurrentCapacity,
+		&currentSection.MininumCapacity,
+		&currentSection.MaximumCapacity,
+		&currentSection.WarehouseId,
+		&currentSection.ProductTypeId,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return Section{}, GetErrSectionNotFound(id)
 	}
 
-	return Section{}, fmt.Errorf("section with id %d not found", id)
+	if err != nil {
+		return Section{}, errGetOneSection
+	}
+
+	return currentSection, nil
 }
-func (repository) GetAll() ([]Section, error) {
+
+func (mariaDb mariaDbRepository) GetAll() ([]Section, error) {
+	sections := []Section{}
+
+	rows, err := mariaDb.db.Query(queryGetAllSections)
+	if err != nil {
+		return []Section{}, errGetSections
+	}
+
+	for rows.Next() {
+		var currentSection Section
+		if err := rows.Scan(
+			&currentSection.Id,
+			&currentSection.SectionNumber,
+			&currentSection.CurrentTemperature,
+			&currentSection.MinimumTemperature,
+			&currentSection.CurrentCapacity,
+			&currentSection.MininumCapacity,
+			&currentSection.MaximumCapacity,
+			&currentSection.WarehouseId,
+			&currentSection.ProductTypeId,
+		); err != nil {
+			return []Section{}, errGetSections
+		}
+		sections = append(sections, currentSection)
+	}
+
 	return sections, nil
+
 }
-func (repository) Delete(id int) error {
-	for i, section := range sections {
-		if section.Id == id {
-			sections = append(sections[:i], sections[i+1:]...)
-			return nil
-		}
-	}
-	return fmt.Errorf("section with id %d not found", id)
-}
-func (repository) Update(id int, requestData map[string]interface{}) (Section, error) {
-	var s *Section
-
-	for i, section := range sections {
-		if section.Id == id {
-			s = &sections[i]
-
-			for key, value := range requestData {
-				switch key {
-				case "section_number":
-					s.SectionNumber = int(value.(float64))
-				case "current_temperature":
-					s.CurrentTemperature = int(value.(float64))
-				case "minimum_temperature":
-					s.MinimumTemperature = int(value.(float64))
-				case "current_capacity":
-					s.CurrentCapacity = int(value.(float64))
-				case "minimum_capacity":
-					s.MininumCapacity = int(value.(float64))
-				case "maximum_capacity":
-					s.MaximumCapacity = int(value.(float64))
-				case "warehouse_id":
-					s.WarehouseId = int(value.(float64))
-				case "product_type_id":
-					s.ProductTypeId = int(value.(float64))
-				}
-			}
-			return *s, nil
-		}
-
+func (mariaDb mariaDbRepository) Delete(id int) error {
+	_, err := mariaDb.db.Exec(queryDeleteSection, id)
+	if err != nil {
+		return errDeleteSection
 	}
 
-	return Section{}, fmt.Errorf("section with id %d not found", id)
+	return nil
+}
+
+func (mariaDb mariaDbRepository) Update(id int, requestData map[string]interface{}) (Section, error) {
+	finalQuery, valuesToUse := queryUpdateSection(requestData, id)
+
+	result, err := mariaDb.db.Exec(finalQuery, valuesToUse...)
+	if err != nil {
+		return Section{}, errUpdatedSection
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows == 0 && err != nil {
+		return Section{}, errUpdatedSection
+	}
+
+	currentSection, err := mariaDb.GetOne(id)
+	if err != nil {
+		return Section{}, errUpdatedSection
+	}
+
+	return currentSection, nil
+}
+
+func (mariaDb mariaDbRepository) GetBySectionNumber(sectionNumber int) (int, error) {
+	var selectedSectionNumber, selectedId int
+
+	row := mariaDb.db.QueryRow(queryValidSectionNumber, sectionNumber)
+	err := row.Scan(&selectedId, &selectedSectionNumber)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+
+	if err != nil {
+		return 0, errVerifySectionNumber
+	}
+
+	return selectedId, errSectionNumberAlreadyExists
 }

@@ -15,11 +15,20 @@ type SellerController struct {
 	service sellers.Service
 }
 
-type reqSellers struct {
+type reqSellersCreate struct {
+	Cid         int    `json:"cid" binding:"required"`
+	CompanyName string `json:"company_name" binding:"required"`
+	Address     string `json:"address" binding:"required"`
+	Telephone   string `json:"telephone" binding:"required"`
+	LocalityId  string `json:"locality_id" binding:"required"`
+}
+
+type reqSellersUpdate struct {
 	Cid         int    `json:"cid"`
 	CompanyName string `json:"company_name"`
 	Address     string `json:"address"`
 	Telephone   string `json:"telephone"`
+	LocalityId  string `json:"locality_id"`
 }
 
 func NewSeller(s sellers.Service) *SellerController {
@@ -28,24 +37,53 @@ func NewSeller(s sellers.Service) *SellerController {
 	}
 }
 
+func NewSellerHandler(r *gin.Engine, ss sellers.Service) {
+	sellerController := NewSeller(ss)
+	sellerGroup := r.Group("/api/v1/sellers")
+	{
+		sellerGroup.GET("/:id", sellerController.GetOne())
+		sellerGroup.GET("/", sellerController.GetAll())
+		sellerGroup.POST("/", sellerController.Create())
+		sellerGroup.DELETE("/:id", sellerController.Delete())
+		sellerGroup.PATCH("/:id", sellerController.Update())
+	}
+}
+
 func (s *SellerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestData reqSellers
+		var requestData reqSellersCreate
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}
 
-		if requestData.Cid < 1 {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("cid must be informed and greather than 0"))
+		if len(requestData.CompanyName) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("company_name too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Address) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("address too long: max 255 characters"))
+			return
+		}
+
+		if len(requestData.Telephone) > 20 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("telephone too long: max 20 characters"))
+			return
+		}
+
+		if len(requestData.LocalityId) > 255 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("locality_id too long: max 255 characters"))
 			return
 		}
 
 		seller, resp := s.service.Create(
 			requestData.Cid,
 			requestData.CompanyName,
-			requestData.Address, requestData.Telephone,
+			requestData.Address,
+			requestData.Telephone,
+			requestData.LocalityId,
 		)
 
 		if resp.Err != nil {
@@ -131,11 +169,10 @@ func (s *SellerController) Delete() gin.HandlerFunc {
 
 func (s *SellerController) Update() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestValidatorType reqSellers
+		var requestValidatorType reqSellersUpdate
 		var requestData map[string]interface{}
 
 		id := c.Param("id")
-
 		parsedId, err := strconv.Atoi(id)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
@@ -162,6 +199,46 @@ func (s *SellerController) Update() gin.HandlerFunc {
 				c.AbortWithStatusJSON(
 					http.StatusUnprocessableEntity,
 					web.DecodeError("cid must be greather than 0"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["address"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("address too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["company_name"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("company_name too long: max 255 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["telephone"].(string); ok {
+			if len(value) > 20 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("telephone too long: max 20 characters"),
+				)
+				return
+			}
+		}
+
+		if value, ok := requestData["locality_id"].(string); ok {
+			if len(value) > 255 {
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					web.DecodeError("locality_id too long: max 255 characters"),
 				)
 				return
 			}

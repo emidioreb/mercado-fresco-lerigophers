@@ -28,6 +28,19 @@ func NewBuyer(s buyers.Service) *BuyerController {
 	}
 }
 
+func NewBuyerHandler(r *gin.Engine, bs buyers.Service) {
+	buyerController := NewBuyer(bs)
+	buyerGroup := r.Group("/api/v1/buyers")
+	{
+		buyerGroup.GET("/:id", buyerController.GetOne())
+		buyerGroup.GET("/", buyerController.GetAll())
+		buyerGroup.POST("/", buyerController.Create())
+		buyerGroup.DELETE("/:id", buyerController.Delete())
+		buyerGroup.PATCH("/:id", buyerController.Update())
+		buyerGroup.GET("/reportPurchaseOrders", buyerController.GetReportPurchaseOrders())
+	}
+}
+
 func (s *BuyerController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqBuyers
@@ -168,4 +181,41 @@ func (s *BuyerController) Update() gin.HandlerFunc {
 
 		c.JSON(resp.Code, web.NewResponse(buyer))
 	}
+}
+
+func (s *BuyerController) GetReportPurchaseOrders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var (
+			reportPurchaseOrders []buyers.ReportPurchaseOrders
+			resp                 web.ResponseCode
+		)
+
+		id := c.Query("id")
+		if id != "" {
+			parsedId, err := strconv.Atoi(id)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, web.DecodeError("id must be a number"))
+				return
+			}
+			reportPurchaseOrders, resp = s.service.GetReportPurchaseOrders(parsedId)
+
+		} else {
+			reportPurchaseOrders, resp = s.service.GetReportPurchaseOrders(0)
+		}
+
+		if resp.Err != nil {
+			c.JSON(
+				resp.Code,
+				web.DecodeError(resp.Err.Error()),
+			)
+			return
+		}
+
+		c.JSON(
+			resp.Code,
+			web.NewResponse(reportPurchaseOrders),
+		)
+
+	}
+
 }

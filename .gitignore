@@ -16,8 +16,6 @@
 # Go workspace file
 go.work
 
-
-
 ### Go Patch ###
 /vendor/
 /Godeps/
@@ -27,3 +25,7 @@ go.work
 
 *DS_STORE
 # End of https://www.toptal.com/developers/gitignore/api/go
+
+# Additional cconfigs
+.vscode
+.env

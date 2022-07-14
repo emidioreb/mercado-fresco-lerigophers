@@ -12,20 +12,20 @@ type Repository struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: cid, companyName, address, telephone
-func (_m *Repository) Create(cid int, companyName string, address string, telephone string) (sellers.Seller, error) {
-	ret := _m.Called(cid, companyName, address, telephone)
+// Create provides a mock function with given fields: cid, companyName, address, telephone, localityId
+func (_m *Repository) Create(cid int, companyName string, address string, telephone string, localityId string) (sellers.Seller, error) {
+	ret := _m.Called(cid, companyName, address, telephone, localityId)
 
 	var r0 sellers.Seller
-	if rf, ok := ret.Get(0).(func(int, string, string, string) sellers.Seller); ok {
-		r0 = rf(cid, companyName, address, telephone)
+	if rf, ok := ret.Get(0).(func(int, string, string, string, string) sellers.Seller); ok {
+		r0 = rf(cid, companyName, address, telephone, localityId)
 	} else {
 		r0 = ret.Get(0).(sellers.Seller)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int, string, string, string) error); ok {
-		r1 = rf(cid, companyName, address, telephone)
+	if rf, ok := ret.Get(1).(func(int, string, string, string, string) error); ok {
+		r1 = rf(cid, companyName, address, telephone, localityId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -45,6 +45,27 @@ func (_m *Repository) Delete(id int) error {
 	}
 
 	return r0
+}
+
+// FindByCID provides a mock function with given fields: cid
+func (_m *Repository) FindByCID(cid int) (int, error) {
+	ret := _m.Called(cid)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(int) int); ok {
+		r0 = rf(cid)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(cid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetAll provides a mock function with given fields:

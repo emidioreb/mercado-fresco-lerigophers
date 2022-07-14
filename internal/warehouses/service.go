@@ -34,7 +34,13 @@ func (s service) Create(warehouseCode, adress, telephone string, minimumCapacity
 		}
 	}
 
-	warehouse, _ := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, minimumTemperature)
+	warehouse, err := s.repository.Create(warehouseCode, adress, telephone, minimumCapacity, minimumTemperature)
+	if err != nil {
+		return Warehouse{}, web.NewCodeResponse(
+			http.StatusInternalServerError,
+			err,
+		)
+	}
 
 	return warehouse, web.NewCodeResponse(http.StatusCreated, nil)
 }
@@ -50,6 +56,10 @@ func (s service) GetOne(id int) (Warehouse, web.ResponseCode) {
 
 func (s service) GetAll() ([]Warehouse, web.ResponseCode) {
 	warehouse, err := s.repository.GetAll()
+	if err != nil {
+		return []Warehouse{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
+
 	return warehouse, web.NewCodeResponse(http.StatusOK, err)
 }
 
@@ -64,20 +74,25 @@ func (s service) Delete(id int) web.ResponseCode {
 
 func (s service) Update(id int, requestData map[string]interface{}) (Warehouse, web.ResponseCode) {
 	_, err := s.repository.GetOne(id)
+	if err != nil {
+		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, err)
+	}
+
 	allWarehouses, _ := s.repository.GetAll()
 	warehouseCodeReqData := requestData["warehouse_code"]
 
-	if err != nil {
-		return Warehouse{}, web.NewCodeResponse(http.StatusNotFound, errors.New("warehouse not found"))
-	}
-
-	for _, warehouse := range allWarehouses {
-		if warehouse.WarehouseCode == warehouseCodeReqData && warehouse.Id != id {
-			return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
+	if warehouseCodeReqData != nil {
+		for _, warehouse := range allWarehouses {
+			if warehouse.WarehouseCode == warehouseCodeReqData && warehouse.Id != id {
+				return Warehouse{}, web.NewCodeResponse(http.StatusConflict, errors.New("warehouse_code already exists"))
+			}
 		}
 	}
 
-	warehouse, _ := s.repository.Update(id, requestData)
+	warehouse, err := s.repository.Update(id, requestData)
+	if err != nil {
+		return Warehouse{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	}
 
 	return warehouse, web.ResponseCode{Code: http.StatusOK, Err: nil}
 }

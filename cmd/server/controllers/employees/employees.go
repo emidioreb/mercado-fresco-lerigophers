@@ -27,6 +27,18 @@ func NewEmployee(s employees.Service) *EmployeeController {
 	}
 }
 
+func NewEmployeeHandler(r *gin.Engine, es employees.Service) {
+	controllerEmployee := NewEmployee(es)
+	employeeGroup := r.Group("/api/v1/employees")
+	{
+		employeeGroup.GET("/:id", controllerEmployee.GetOne())
+		employeeGroup.GET("/", controllerEmployee.GetAll())
+		employeeGroup.POST("/", controllerEmployee.Create())
+		employeeGroup.DELETE("/:id", controllerEmployee.Delete())
+		employeeGroup.PATCH("/:id", controllerEmployee.Update())
+	}
+}
+
 func (s *EmployeeController) Create() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var requestData reqEmployee
@@ -41,7 +53,27 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 			return
 		}
 
-		seller, resp := s.service.Create(
+		if len(requestData.CardNumberId) > 45 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("card_number_id too long: max 45 characters"))
+			return
+		}
+
+		if len(requestData.FirstName) > 45 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("first_name too long: max 45 characters"))
+			return
+		}
+
+		if len(requestData.LastName) > 45 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("last_name too long: max 45 characters"))
+			return
+		}
+
+		if requestData.WarehouseId == 0 {
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("warehouse_id must be informed and greather than 0"))
+			return
+		}
+
+		employee, resp := s.service.Create(
 			requestData.CardNumberId,
 			requestData.FirstName,
 			requestData.LastName, requestData.WarehouseId,
@@ -56,7 +88,7 @@ func (s *EmployeeController) Create() gin.HandlerFunc {
 
 		c.JSON(
 			resp.Code,
-			web.NewResponse(seller),
+			web.NewResponse(employee),
 		)
 	}
 }
@@ -75,7 +107,7 @@ func (s *EmployeeController) GetOne() gin.HandlerFunc {
 
 		if resp.Err != nil {
 			c.JSON(
-				http.StatusNotFound,
+				resp.Code,
 				web.DecodeError(resp.Err.Error()),
 			)
 			return
@@ -142,23 +174,48 @@ func (s *EmployeeController) Update() gin.HandlerFunc {
 		}
 
 		if err := c.ShouldBindBodyWith(&requestData, binding.JSON); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data"))
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request data"))
 			return
 		}
 
 		if len(requestData) == 0 {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid request data - body needed"))
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request data - body needed"))
 			return
 		}
 
 		if err := c.ShouldBindBodyWith(&requestValidatorType, binding.JSON); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, web.DecodeError("invalid type of data"))
+			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid type of data"))
 			return
 		}
 
 		if requestData["card_number_id"] != nil {
 			if strings.ReplaceAll(requestData["card_number_id"].(string), " ", "") == "" {
 				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("empty card_number_id not allowed"))
+				return
+			}
+			if len(requestData["card_number_id"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("card_number_id too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["first_name"] != nil {
+			if len(requestData["first_name"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("first_name too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["last_name"] != nil {
+			if len(requestData["last_name"].(string)) > 45 {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("last_name too long: max 45 characters"))
+				return
+			}
+		}
+
+		if requestData["warehouse_id"] != nil {
+			if int(requestData["warehouse_id"].(float64)) == 0 {
+				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("warehouse_id must be greather than 0"))
 				return
 			}
 		}

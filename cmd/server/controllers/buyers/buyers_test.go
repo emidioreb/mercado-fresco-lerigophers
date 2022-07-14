@@ -52,11 +52,28 @@ var fakeBuyers = []buyers.Buyer{{
 	LastName:     "Beltrano"},
 }
 
+var fakeBuyerReports = []buyers.ReportPurchaseOrders{
+	{
+		BuyerId:      1,
+		CardNumberId: "12345",
+		FirstName:    "Fulano",
+		LastName:     "Beltrano",
+	},
+	{
+		BuyerId:      2,
+		CardNumberId: "12345",
+		FirstName:    "Fulano",
+		LastName:     "Beltrano",
+	},
+}
+
 const (
-	defaultURL = "/api/v1/buyers/"
-	idString   = "/api/v1/buyers/string"
-	idNumber1  = "/api/v1/buyers/1"
-	idRequest  = "/api/v1/buyers/:id"
+	defaultURL             = "/api/v1/buyers/"
+	reportOneBuyer         = "/api/v1/buyers/reportPurchaseOrders?id=1"
+	defaultBuyersReportURL = "/api/v1/buyers/reportPurchaseOrders"
+	idString               = "/api/v1/buyers/string"
+	idNumber1              = "/api/v1/buyers/1"
+	idRequest              = "/api/v1/buyers/:id"
 )
 
 var (
@@ -546,5 +563,37 @@ func TestCreateBuyer(t *testing.T) {
 		assert.Nil(t, err)
 
 		assert.Equal(t, errCardNumberIdExists.Error(), bodyResponse.Error)
+	})
+}
+
+func TestGetReportPurchaseOrders(t *testing.T) {
+	t.Run("Test get report by one", func(t *testing.T) {
+		mockedService, buyersController := newBuyerController()
+		mockedService.On(
+			"GetReportPurchaseOrders",
+			mock.AnythingOfType("int"),
+		).
+			Return(
+				[]buyers.ReportPurchaseOrders{fakeBuyerReports[0]},
+				web.ResponseCode{Code: http.StatusOK},
+			)
+
+		r := routerBuyers()
+		r.GET(
+			defaultBuyersReportURL,
+			buyersController.GetReportPurchaseOrders(),
+		)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			reportOneBuyer,
+			nil,
+		)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }
