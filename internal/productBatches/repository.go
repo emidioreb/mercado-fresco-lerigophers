@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -69,7 +68,6 @@ func (mariaDb mariaDbRepository) CreateProductBatch(BatchNumber, CurrentQuantity
 
 	result, err := mariaDb.db.Exec(QueryCreateProductBatch, BatchNumber, CurrentQuantity, CurrentTemperature, InitialQuantity, ManufacturingHour, MinimumTemperature, ProductId, SectionId, DueDate, ManufacturingDate)
 	if err != nil {
-		log.Println(err)
 		return ProductBatches{}, errors.New("couldn't create a product_batch")
 	}
 

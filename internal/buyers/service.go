@@ -84,14 +84,13 @@ func (s service) Update(id int, requestData map[string]interface{}) (Buyer, web.
 }
 
 func (s service) GetReportPurchaseOrders(BuyerId int) ([]ReportPurchaseOrders, web.ResponseCode) {
-	report, err := s.repository.GetReportPurchaseOrders(BuyerId)
-
-	if err != nil {
-		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusInternalServerError, err)
+	if _, err := s.repository.GetOne(BuyerId); err != nil && BuyerId != 0 {
+		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusNotFound, err)
 	}
 
-	if len(report) == 0 {
-		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusNotFound, errors.New("buyer not found"))
+	report, err := s.repository.GetReportPurchaseOrders(BuyerId)
+	if err != nil {
+		return []ReportPurchaseOrders{}, web.NewCodeResponse(http.StatusInternalServerError, err)
 	}
 
 	return report, web.NewCodeResponse(http.StatusOK, nil)
