@@ -17,7 +17,7 @@ func TestCreateProductRecord(t *testing.T) {
 		defer db.Close()
 
 		layout := "2006-01-02"
-		lastUpdateDate, err := time.Parse(layout, "2022-02-07")
+		lastUpdateDate, _ := time.Parse(layout, "2022-02-07")
 
 		mock.ExpectExec(regexp.QuoteMeta(queryCreateProductRecord)).
 			WithArgs(
@@ -46,7 +46,7 @@ func TestCreateProductRecord(t *testing.T) {
 		defer db.Close()
 
 		layout := "2006-01-02"
-		lastUpdateDate, err := time.Parse(layout, "2022-30-07")
+		lastUpdateDate, _ := time.Parse(layout, "2022-30-07")
 
 		mock.ExpectExec(regexp.QuoteMeta(queryCreateProductRecord)).
 			WithArgs(
@@ -117,13 +117,7 @@ func TestDBGetOneProductRecord(t *testing.T) {
 		assert.NoError(t, err)
 		defer db.Close()
 
-		rows := sqlmock.NewRows([]string{
-			"id",
-			"last_update_date",
-			"purchase_price",
-			"sale_price",
-			"product_id",
-		}).AddRow(1, "2022-02-07", 3.0, 4.0, 4)
+		rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
 
 		mock.ExpectQuery(regexp.QuoteMeta(queryGetOneProductRecord)).WillReturnRows(rows)
 
