@@ -89,27 +89,30 @@ func (mariaDb mariaDbRepository) GetOne(id int) (Employee, error) {
 }
 
 func (mariaDb mariaDbRepository) GetOneByCardNumber(id int, cardNumber string) error {
-
 	var err error
-	currentEmployee := Employee{}
+	var currentEmployeeId int
 
 	if id != 0 {
 		row := mariaDb.db.QueryRow(queryByCardNumberUpdate, cardNumber, id)
 		err = row.Scan(
-			&currentEmployee.Id,
+			&currentEmployeeId,
 		)
 	} else {
 		row := mariaDb.db.QueryRow(queryByCardNumberCreate, cardNumber)
 		err = row.Scan(
-			&currentEmployee.Id,
+			&currentEmployeeId,
 		)
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
 	}
 
 	if err != nil {
 		return errors.New("unexpected error to get employee")
 	}
 
-	if currentEmployee.Id != 0 {
+	if currentEmployeeId != 0 {
 		return errors.New("card_number_id already exists")
 	}
 

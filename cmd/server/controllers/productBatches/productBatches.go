@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -48,7 +47,6 @@ func (s *ProductBatchController) CreateProductBatch() gin.HandlerFunc {
 		var requestData ReqProductBatch
 
 		if err := c.ShouldBindJSON(&requestData); err != nil {
-			log.Println(err)
 			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, web.DecodeError("invalid request input"))
 			return
 		}

@@ -7,8 +7,8 @@ var (
 	queryGetOne             = `SELECT * FROM employees WHERE id = ?`
 	queryGetAll             = `SELECT * FROM employees`
 	queryDelete             = "DELETE FROM employees WHERE id = ?"
-	queryByCardNumberUpdate = `SELECT id FROM mercado_fresco.employees WHERE card_number_id = ? AND id <> ?`
-	queryByCardNumberCreate = `SELECT id FROM mercado_fresco.employees WHERE card_number_id = ?`
+	queryByCardNumberUpdate = `SELECT id FROM employees WHERE card_number_id = ? AND id <> ?`
+	queryByCardNumberCreate = `SELECT id FROM employees WHERE card_number_id = ?`
 	queryUpdate             = func(
 		requestData map[string]interface{},
 		id int) (
